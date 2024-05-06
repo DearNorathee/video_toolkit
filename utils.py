@@ -1406,7 +1406,7 @@ def srt_to_df(srt_path,
 # remove_newline will remove '\n' from the extracted text
     import pysrt
     import pandas as pd
-    if ".srt" in srt_path:
+    if ".srt" in str(srt_path):
         # 1 file case
         subs = pysrt.open(srt_path)
         # Initialize empty lists for storing data
