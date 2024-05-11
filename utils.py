@@ -641,7 +641,7 @@ def get_all_metadata(media_path):
     
     return info_df
 
-def get_metadata(media_path, media, language = None, file_extension = None):
+def get_metadata(media_path, media:Literal["video","audio","subtitle"], language = None, file_extension = None):
     #  not tested
     if language is None:
         language_in = None
