@@ -1079,6 +1079,10 @@ def is_ffmpeg_installed():
         # FFmpeg is not in PATH
         print("FFmpeg is installed but not in PATH.")
 
+def language_name_list():
+    import pycountry
+    language_names = [lang.name for lang in pycountry.languages if hasattr(lang, 'name')]
+    return language_names
 
 def closest_language(misspelled_language):
     
