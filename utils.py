@@ -15,6 +15,211 @@ import seaborn as sns
 # get_subtitle_index,get_audio_index,get_video_index,_get_media_index,get_subtitle_extension,
 # get_audio_extension,get_video_extension, _get_media_extension
 
+def extract_audio3(
+        video_folder:     Union[Path,str],
+        output_folder:    Union[Path,str],
+        video_extension:  Union[list,str] = [".mp4",".mkv"],
+        output_extension: Union[list,str] = ".mp3",
+        overwrite_file:   bool = True,
+        n_limit:          int = 150,
+        output_prefix:    str = "",
+        output_suffix:    str = "",
+        play_alarm:       bool = True,
+        alarm_done_path:str = r"H:\D_Music\Sound Effect positive-logo-opener.mp3"
+):
+    """
+    the diff between 
+    extract_audio1 - use manually code to loop through folder
+    extract_audio2 - powered by _extract_media_setup while 
+    extract_audio3 - use extract_audio_1file as a base(which is more general than extract_audio1 & extract_audio2), but need more testing to see if it works
+    
+    # after testing I would then rename extract_audio3 to just extract_audio
+    
+    """
+    input_param = {
+        'video_path': 6
+    }
+
+    _extract_media_setup(
+        input_folder = video_folder,
+        output_folder = output_folder,
+        input_extension = video_extension,
+        output_extension = output_extension,
+        extract_1_file_func = extract_1_audio,
+        overwrite_file = overwrite_file,
+        n_limit = n_limit,
+        output_prefix = output_prefix,
+        output_suffix = output_suffix,
+        play_alarm = play_alarm,
+        alarm_done_path = alarm_done_path,
+
+    )
+
+
+def extract_audio_1file(
+        video_path:     Union[str,Path],
+        output_folder:  Union[str,Path],
+        output_name:    Union[str,Path, None] = None, 
+        output_extension: Union[str,list] = ".mp3",
+        play_alarm: Union[str,bool] = False,
+        overwrite_file: bool = True,
+        one_output_per_lang: bool = True,
+        languages: Union[List[str],None] = None,
+        
+                    ) -> None:
+    # time spend 5 hr
+    # this support multiple output_extension
+    # medium tested
+    
+    
+    #  tested Parameters:
+        # all default parameters
+        # when languages is str
+    
+    # untested Parameters
+        # output_extension as list
+        # overwrite_file = False
+        # one_output_per_lang = False
+        # languages as list
+        
+    # Not Done 
+    # Next right now I got a name BigBang_FR_S06E01.mp3_EN which is wrong
+    
+    from langcodes import Language
+    """
+    Extract audio from a video file. If video has multiple audio in different languages,
+    this function also support that
+    
+    it's more general than extract_audio. These functions need to be tested and merge in the future
+
+    Parameters
+    ----------
+    video_path : Union[str,Path]
+        DESCRIPTION.
+    output_folder : Union[str,Path]
+        DESCRIPTION.
+    output_name : Union[str,Path]
+        DESCRIPTION.
+    file_extension : Union[str,list], optional
+        DESCRIPTION. The default is ".mp3".
+    play_alarm : bool, optional
+        DESCRIPTION. The default is True.
+    overwrite_file : bool, optional
+        DESCRIPTION. The default is True.
+    
+    one_output_per_lang : bool, optional
+        If there are more than 1 audio files for each langauge, if True then it would one extract 1 file per
+        language, if not it would extract all of them seperately.
+        The default is True.
+        False is still not in production because I have to create index suffix at the end
+    Returns
+    -------
+    bool
+        DESCRIPTION.
+
+    """
+    from tqdm import tqdm
+    from langcodes import Language
+    from pathlib import Path
+    import subprocess
+    from playsound import playsound
+    import os
+    
+    codec_dict = {'.mp3': "libmp3lame",
+                  'mp3' : "libmp3lame",
+                  '.wav': "pcm_s24le",
+                  'wav' : "pcm_s24le"
+                  }
+    
+    codec = codec_dict[output_extension]
+    
+    output_folder_in = Path(output_folder)
+    
+    file_extension_in = [output_extension] if isinstance(output_extension, str) else list(output_extension)
+    
+
+    if output_name is None:
+        output_name_in = Path(video_path).stem
+    else:
+        output_name_in = output_name
+    
+    filter_lang = [languages] if isinstance(languages,str) else languages
+    
+    if languages is None:
+        filter_lang_3chr = None
+    else:
+        filter_lang_3chr = []
+    
+        for language in filter_lang:
+            lang_obj =  closest_language_obj(language)
+            # variant = "B" would return fre for french
+            filter_lang_3chr.append(lang_obj.to_alpha3(variant = "B"))
+    
+    play_alarm = r"H:\D_Music\Sound Effect positive-logo-opener.mp3"
+    audio_index = get_audio_index(video_path)
+    metadata = get_metadata(video_path,"audio",language=filter_lang_3chr)
+    
+    if one_output_per_lang:
+        metadata_filter = metadata.drop_duplicates(subset=['language'], keep='first')
+    else:
+        metadata_filter = metadata.copy()
+    
+    audio_index = list(metadata_filter.index)
+    video_lang_list = metadata_filter['language'].tolist()
+
+
+    output_name_list = []
+    output_path_list = []
+
+    
+    for i, language_3_str in tqdm(enumerate(video_lang_list),total=len(video_lang_list)):
+        
+        lang_obj =  Language.get(language_3_str)
+        language_2_str = str(lang_obj).upper()
+        lang_obj.to_alpha3()
+        for j, curr_file_ext in enumerate(file_extension_in):
+            
+            if curr_file_ext not in output_name_in:
+                if "." not in curr_file_ext:
+                    file_extension_in[j] = "." + curr_file_ext
+                else:
+                    file_extension_in[j] = curr_file_ext
+                curr_output_name = output_name_in + "_" + language_2_str + file_extension_in[j]
+                output_name_list.append(curr_output_name)
+                output_path = output_folder_in / curr_output_name
+                output_path_list.append(output_path)
+                
+                command = [
+                    "ffmpeg",
+                    "-i", str(video_path),
+                    "-map", f"0:{audio_index[i]}",
+                    "-c:a", codec,
+                    "-q:a", "0",
+                    str(output_path)
+                ]
+                # keep command_line for debugging
+                command_line = " ".join(command)
+ 
+                if os.path.exists(str(output_path)):
+                    if overwrite_file:
+                        os.remove(str(output_path))
+                    else:
+                        print("\nThe output path is already existed. Please delete the file or set the overwrite parameter to TRUE")
+                        return False
+                result = subprocess.run(command, text=True, stderr=subprocess.PIPE)
+                
+                if result.returncode != 0:
+                    print(f"\nError encountered: {curr_output_name}")
+                    print(result.stderr)
+                
+                elif result.returncode == 0:
+                    print(f"\nExtract audio successfully: {curr_output_name}!!!")
+                    
+                    if play_alarm:
+                        playsound(play_alarm)
+
+
+
 
 def make_1_season_Excel_unaligned(EN_folder_path: Union[str,Path],
                                   PT_folder_path: Union[str,Path], 
@@ -64,7 +269,7 @@ def make_1_season_Excel_unaligned(EN_folder_path: Union[str,Path],
     import python_wizard01 as pw
     import os_01 as ost
     
-    en_df = vt.combine_files_1_season(str(EN_folder_path))
+    en_df = combine_files_1_season(str(EN_folder_path))
     en_df = en_df.add_suffix('_EN')
     # en_df.rename(columns = {'sentence':'sentence_EN',
     #                                 'start':'start_EN',
@@ -83,7 +288,7 @@ def make_1_season_Excel_unaligned(EN_folder_path: Union[str,Path],
 
 
 
-    pt_df = vt.combine_files_1_season(str(PT_folder_path))
+    pt_df = combine_files_1_season(str(PT_folder_path))
     pt_df = pt_df.add_suffix('_PT')
     pt_df["Episode"] = pt_df["Episode_PT"]
     pt_df = pt_df.drop(columns = ["Episode_PT"])
@@ -745,6 +950,15 @@ def extract_audio2(
         play_alarm:       bool = True,
         alarm_done_path:str = r"H:\D_Music\Sound Effect positive-logo-opener.mp3"
 ):
+    """
+    the diff between 
+    extract_audio1 - use manually code to loop through folder
+    extract_audio2 - powered by _extract_media_setup while 
+    extract_audio3 - use extract_audio_1file as a base(which is more general than extract_audio1 & extract_audio2), but need more testing to see if it works
+    
+    # after testing I would then rename extract_audio3 to just extract_audio
+    
+    """
     input_param = {
         'video_path': 6
     }
@@ -793,6 +1007,7 @@ def extract_subtitle(
         alarm_done_path = alarm_done_path,
     )
 
+# Sub
 def _extract_media_setup(
         input_folder: Union[str,Path],
         output_folder: Union[str,Path],
@@ -805,21 +1020,32 @@ def _extract_media_setup(
         output_prefix:    str = "",
         output_suffix:    str = "",
         play_alarm: bool = True,
-        alarm_done_path:str = r"H:\D_Music\Sound Effect positive-logo-opener.mp3"
-):
+        alarm_done_path:str = r"H:\D_Music\Sound Effect positive-logo-opener.mp3",
+
+        one_output_per_lang: bool = True,
+        languages: Union[List[str],None] = None,
+) -> None :
+    # 
+    
     """
     helper function to reduce code redundancy
     it would setup which/ how many files should be extracted in inputs
     how many files should be created in output 
 
+    extract_1_file_func that are compatible with this function will contain these parameters(no more no less)
+    
+    (video_path ,output_extension ,output_folder ,output_name,play_alarm,overwrite_file)
+
+    if extract_1_file_func doesn't have this requirement you need to modify the code in this function to support that manually
 
     """
+    import inspect_py as inp
     import sys
     from pathlib import Path
     from playsound import playsound
     from time import time, perf_counter
-    sys.path.append(r'C:\Users\Heng2020\OneDrive\Python MyLib\Python MyLib 01\08 Other')
-    import lib08_Other as pw
+    import python_wizard as pw
+
 
     ts01 = time()
     output_extension = [output_extension]
@@ -855,18 +1081,49 @@ def _extract_media_setup(
         # the problem here is that the input parameter name in extract_1_file_func
         # could be different and 
 
+        # extract_1_file_func should support only 1 output
+        # if multiple output is supported in extract_1_file_func, it could create multiple files(not tested)
+
         for j, extension in enumerate(output_extension_in):
             # input_dict = {
             #     input_param_name[0]:path_list[i],
             #     input_param_name[1]:extension,
             # }
-            extract_1_file_func(
-                video_path = path_list[i],
-                output_extension = extension,
-                output_folder = output_folder,
-                output_name = output_name,
-                play_alarm=False,
-                overwrite_file=overwrite_file)
+            extract_1_file_params = inp.input_params(extract_1_file_func)
+
+            if "languages" in extract_1_file_params:
+                if "one_output_per_lang" in extract_1_file_params:
+                    extract_1_file_func(
+                        video_path = path_list[i],
+                        output_extension = extension,
+                        output_folder = output_folder,
+                        output_name = output_name,
+                        play_alarm=False,
+                        overwrite_file=overwrite_file,
+                        one_output_per_lang = one_output_per_lang,
+                        languages = languages,
+
+                        )
+                else:
+                    extract_1_file_func(
+                        video_path = path_list[i],
+                        output_extension = extension,
+                        output_folder = output_folder,
+                        output_name = output_name,
+                        play_alarm=False,
+                        overwrite_file=overwrite_file,
+                        languages = languages,
+
+                        )
+            else:
+
+                extract_1_file_func(
+                    video_path = path_list[i],
+                    output_extension = extension,
+                    output_folder = output_folder,
+                    output_name = output_name,
+                    play_alarm=False,
+                    overwrite_file=overwrite_file)
             print(f"extracted {output_name} successfully!!!")
         
         # sys.stdout = original_stdout
@@ -1236,7 +1493,7 @@ def extract_1_audio(video_path:     Union[str,Path],
         if play_alarm:
             playsound(alarm_done_path)
 
-def extract_audio(video_folder:     Union[Path,str],
+def extract_audio1(video_folder:     Union[Path,str],
                   output_folder:    Union[Path,str],
                   video_extension:  Union[list,str] = [".mp4",".mkv"],
                   output_extension: Union[list,str] = ".mp3",
