@@ -25,7 +25,10 @@ def extract_audio3(
         output_prefix:    str = "",
         output_suffix:    str = "",
         play_alarm:       bool = True,
-        alarm_done_path:str = r"H:\D_Music\Sound Effect positive-logo-opener.mp3"
+        alarm_done_path:str = r"H:\D_Music\Sound Effect positive-logo-opener.mp3",
+
+        one_output_per_lang: bool = True,
+        languages: Union[List[str],None] = None,
 ):
     """
     the diff between 
@@ -36,22 +39,23 @@ def extract_audio3(
     # after testing I would then rename extract_audio3 to just extract_audio
     
     """
-    input_param = {
-        'video_path': 6
-    }
+
 
     _extract_media_setup(
         input_folder = video_folder,
         output_folder = output_folder,
         input_extension = video_extension,
         output_extension = output_extension,
-        extract_1_file_func = extract_1_audio,
+        extract_1_file_func = extract_audio_1file,
         overwrite_file = overwrite_file,
         n_limit = n_limit,
         output_prefix = output_prefix,
         output_suffix = output_suffix,
         play_alarm = play_alarm,
         alarm_done_path = alarm_done_path,
+
+        one_output_per_lang = one_output_per_lang,
+        languages = languages
 
     )
 
