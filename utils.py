@@ -15,6 +15,110 @@ import seaborn as sns
 # get_subtitle_index,get_audio_index,get_video_index,_get_media_index,get_subtitle_extension,
 # get_audio_extension,get_video_extension, _get_media_extension
 
+def audio_duration(video_path):
+    from pydub import AudioSegment
+    from datetime import datetime, timedelta
+
+    if isinstance(video_path,str):
+        video_audio = AudioSegment.from_file(video_path)
+    else:
+        video_audio = video_path
+
+    # Get the duration of the audio segment in milliseconds
+    duration_ms = len(video_audio)
+
+    # Convert the duration from milliseconds to a timedelta object
+    duration = timedelta(milliseconds=duration_ms)
+
+    # Create a dummy datetime object with a zero timestamp
+    dummy_datetime = datetime(1, 1, 1, 0, 0, 0)
+
+    # Add the duration to the dummy datetime to get the final datetime
+    final_datetime = dummy_datetime + duration
+
+    return final_datetime.time()
+
+# Sub
+def split_1audio_by_subtitle(video_path: Union[str,Path],
+                            subtitle_path,
+                            output_folder,
+                            prefix_name = None,
+                            out_audio_ext = "wav",
+                            alarm_done_path:Union[Literal[False],str] = False,
+                            verbose = 1,
+                            ) -> None:
+    import time
+    import os
+    from pydub import AudioSegment
+    # alarm done path still have an error
+    # took about 1 hr(including testing)
+    # Add feature: input as video_folder_path and subtitle_folder_path, then 
+    # it would automatically know which subttile to use with which video(using SxxExx)
+    
+    # split_audio_by_subtitle
+
+    import video_toolkit as vt
+    import python_wizard as pw
+    from playsound import playsound
+    
+    from pathlib import Path
+    if prefix_name is None:
+        prefix_name_in = Path(video_path).stem
+    else:
+        prefix_name_in = str(prefix_name)
+        
+    # with dot and no dots supported
+    # but only tested with no dots out_audio_ext
+    
+    out_audio_ext_dot = out_audio_ext if out_audio_ext[0] == "." else ("." + out_audio_ext)
+    out_audio_ext_no_dot = out_audio_ext[1:] if out_audio_ext[0] == "." else ( out_audio_ext)
+    
+    subs = vt.srt_to_df(subtitle_path)
+
+    
+    # TODO: write a function input is video/video path & subs/sub path
+    t01 = time.time()
+    video_audio = AudioSegment.from_file(video_path)
+    t02 = time.time()
+    t01_02 = t02-t01
+
+    if verbose in [1]:
+        print("Load video time: ", end = " ")
+        pw.print_time(t01_02)
+    
+    if alarm_done_path:
+        playsound(alarm_done_path)
+    # ---------------------------- run til 1 -------------------------------
+    ########################## start run 2 ################################
+    t03 = time.time()
+    video_length = audio_duration(video_audio)
+    # Iterate over subtitle sentences
+    n = subs.shape[0]
+    t04 = time.time()
+    for i in range(n):
+        start_time = subs.loc[i,'start']
+        end_time = subs.loc[i,'end']
+        
+        if start_time > video_length:
+            break
+
+        start_time_ms = to_ms(start_time)
+        end_time_ms = to_ms(end_time)
+
+        # Extract audio segment based on timestamps
+        sentence_audio = video_audio[start_time_ms:end_time_ms]
+        
+        num_str = St_NumFormat0(i+1,n+1)
+        # Save the audio segment to a file
+        audio_name = f'{prefix_name_in}_{num_str}{out_audio_ext_dot}'
+        audio_output = os.path.join(output_folder,audio_name)
+        sentence_audio.export(audio_output, format=out_audio_ext_no_dot)
+    t05 = time.time()
+
+    t04_05 = t05-t04
+    if alarm_done_path:
+        playsound(alarm_done_path)
+
 def extract_audio3(
         video_folder:     Union[Path,str],
         output_folder:    Union[Path,str],
@@ -70,6 +174,7 @@ def extract_audio_1file(
         one_output_per_lang: bool = True,
         languages: Union[List[str],None] = None,
         
+        progress_bar:bool = True,
                     ) -> None:
     # time spend 5 hr
     # this support multiple output_extension
@@ -159,7 +264,7 @@ def extract_audio_1file(
             # variant = "B" would return fre for french
             filter_lang_3chr.append(lang_obj.to_alpha3(variant = "B"))
     
-    play_alarm = r"H:\D_Music\Sound Effect positive-logo-opener.mp3"
+    # play_alarm = r"H:\D_Music\Sound Effect positive-logo-opener.mp3"
     audio_index = get_audio_index(video_path)
     metadata = get_metadata(video_path,"audio",language=filter_lang_3chr)
     
@@ -175,8 +280,12 @@ def extract_audio_1file(
     output_name_list = []
     output_path_list = []
 
-    
-    for i, language_3_str in tqdm(enumerate(video_lang_list),total=len(video_lang_list)):
+    if progress_bar:
+        loop_obj = tqdm(enumerate(video_lang_list),total=len(video_lang_list))
+    else:
+        loop_obj = enumerate(video_lang_list)
+
+    for i, language_3_str in loop_obj:
         
         lang_obj =  Language.get(language_3_str)
         language_2_str = str(lang_obj).upper()
@@ -1044,11 +1153,13 @@ def _extract_media_setup(
 
     """
     import inspect_py as inp
+    import python_wizard as pw
+
     import sys
     from pathlib import Path
     from playsound import playsound
     from time import time, perf_counter
-    import python_wizard as pw
+    from tqdm import tqdm
 
 
     ts01 = time()
@@ -1075,7 +1186,7 @@ def _extract_media_setup(
 
     filename_list = [filename.split('.')[0] for filename in filename_list_ext]
 
-    for i, filename in enumerate(filename_list):
+    for i, filename in tqdm(enumerate(filename_list),total = len(filename_list)):
         
             
         output_name = output_prefix + filename_list[i] + output_suffix
@@ -1096,7 +1207,8 @@ def _extract_media_setup(
             extract_1_file_params = inp.input_params(extract_1_file_func)
 
             if "languages" in extract_1_file_params:
-                if "one_output_per_lang" in extract_1_file_params:
+                
+                if pw.contain_all_items(extract_1_file_params,["one_output_per_lang","progress_bar"]):
                     extract_1_file_func(
                         video_path = path_list[i],
                         output_extension = extension,
@@ -1106,6 +1218,8 @@ def _extract_media_setup(
                         overwrite_file=overwrite_file,
                         one_output_per_lang = one_output_per_lang,
                         languages = languages,
+
+                        progress_bar = False
 
                         )
                 else:
