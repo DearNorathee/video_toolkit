@@ -2,7 +2,7 @@
 from typing import Union,List,Tuple, Literal, Callable
 from pathlib import Path
 import sys
-
+import datetime
 import python_wizard as pw
 import os_toolkit as ost
 import dataframe_short as ds
@@ -14,6 +14,17 @@ import seaborn as sns
 # get_metadata2, get_all_metadata, get_metadata
 # get_subtitle_index,get_audio_index,get_video_index,_get_media_index,get_subtitle_extension,
 # get_audio_extension,get_video_extension, _get_media_extension
+
+def clean_subtitle(string):
+    import re
+    pattern1 = "<.*?>"
+    
+    pattern2 = "<\/[a-zA-Z]>"
+    
+    string1 = re.sub(pattern1, "", string)
+    string2 = string1.replace("\n"," ")
+    new_string = re.sub(pattern2,"",string2)
+    return new_string
 
 def audio_duration(video_path):
     from pydub import AudioSegment
@@ -50,18 +61,19 @@ def split_1audio_by_subtitle(video_path: Union[str,Path],
     import time
     import os
     from pydub import AudioSegment
+    from playsound import playsound
+    from pathlib import Path
+
+    import video_toolkit as vt
+    import python_wizard as pw
+    import py_string_tool as pst
+    
     # alarm done path still have an error
     # took about 1 hr(including testing)
     # Add feature: input as video_folder_path and subtitle_folder_path, then 
     # it would automatically know which subttile to use with which video(using SxxExx)
     
     # split_audio_by_subtitle
-
-    import video_toolkit as vt
-    import python_wizard as pw
-    from playsound import playsound
-    
-    from pathlib import Path
     if prefix_name is None:
         prefix_name_in = Path(video_path).stem
     else:
@@ -108,7 +120,7 @@ def split_1audio_by_subtitle(video_path: Union[str,Path],
         # Extract audio segment based on timestamps
         sentence_audio = video_audio[start_time_ms:end_time_ms]
         
-        num_str = St_NumFormat0(i+1,n+1)
+        num_str = pst.num_format0(i+1,n+1)
         # Save the audio segment to a file
         audio_name = f'{prefix_name_in}_{num_str}{out_audio_ext_dot}'
         audio_output = os.path.join(output_folder,audio_name)
@@ -1806,7 +1818,7 @@ def srt_to_Excel(srt_path,output_path,encoding='utf-8-sig',index=True):
             for i,df in enumerate(df_sub):
                 df.to_excel(out_full_name[i], index=index)
 
-def to_ms(time_obj):
+def to_ms(time_obj: datetime.time) -> float:
     time_obj_ms = (time_obj.hour * 3600 + time_obj.minute * 60 + time_obj.second) * 1000 + time_obj.microsecond // 1000
     return time_obj_ms
 
