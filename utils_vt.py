@@ -383,16 +383,12 @@ def make_1_season_Excel_unaligned(EN_folder_path: Union[str,Path],
     import pandas as pd
     import sys
     from pathlib import Path
+
     
-    sys.path.append(r'C:\Users\Heng2020\OneDrive\Python MyLib\Python MyLib 01\02 DataFrame')
-    sys.path.append(r'C:\Users\Heng2020\OneDrive\Python MyLib\Python MyLib 01\06 General Python')
-    sys.path.append(r'C:\Users\Heng2020\OneDrive\Python MyLib\Python MyLib 01\09 NLP_lib')
-    sys.path.append(r'C:\Users\Heng2020\OneDrive\Python MyLib\Python MyLib 01\10 OS')
-    
-    import lib02_dataframe as ds
-    import video_tools as vt
-    import python_wizard01 as pw
-    import os_01 as ost
+    import dataframe_short as ds
+    import video_toolkit as vt
+    import python_wizard as pw
+    import os_toolkit as ost
     
     en_df = combine_files_1_season(str(EN_folder_path))
     en_df = en_df.add_suffix('_EN')
@@ -873,7 +869,7 @@ def combine_files_1_season(folder_path):
     import sys
     sys.path.append(r'C:\Users\Heng2020\OneDrive\Python MyLib\Python MyLib 01\02 DataFrame')
     
-    import lib02_dataframe as ds
+    import dataframe_short as ds
     
     func = partial(ds.combine_files_to_df, 
                    extract_pattern = r'S\d+E\d+',
@@ -1682,9 +1678,8 @@ def extract_audio1(video_folder:     Union[Path,str],
     
     alarm_done_path = r"H:\D_Music\Sound Effect positive-logo-opener.mp3"
     
-    sys.path.append(r"C:\Users\Heng2020\OneDrive\Python MyLib")
-    import lib08_SrtToCsv as f8
-    import lib08_Other as f9
+    import os_toolkit as ost
+    import python_wizard as pw
     
     codec_dict = {'.mp3': "libmp3lame",
                   'mp3' : "libmp3lame",
@@ -1702,8 +1697,8 @@ def extract_audio1(video_folder:     Union[Path,str],
         else:
             output_extension_in.append(extension)
     
-    video_name_list_ext = f8.get_filename(video_folder,video_extension)
-    video_path_list = f8.get_full_filename(video_folder,video_extension)
+    video_name_list_ext = ost.get_filename(video_folder,video_extension)
+    video_path_list = ost.get_full_filename(video_folder,video_extension)
     
     n_file = min(len(video_name_list_ext),n_limit)
     video_name_list_ext = video_name_list_ext[:n_file]
@@ -1733,7 +1728,7 @@ def extract_audio1(video_folder:     Union[Path,str],
         playsound(alarm_done_path)
     ts02 = time()
     duration = ts02-ts01
-    f9.print_time(duration)
+    pw.print_time(duration)
     
     return video_name_list
        
