@@ -13,6 +13,13 @@ import seaborn as sns
 
 alarm_done_path = pkg_resources.resource_filename(__name__, 'assets/Sound Effect positive-logo-opener.wav')
 sound_error_path = pkg_resources.resource_filename(__name__, 'assets/Sound Effect Error.wav')
+
+CODEC_DICT = {'.mp3': "libmp3lame",
+                  'mp3' : "libmp3lame",
+                  '.wav': "pcm_s24le",
+                  'wav' : "pcm_s24le"
+                  }
+
 # v02 => add extract_audio2, extract_subtitle, _extract_media_setup,extract_sub_1_video
 # get_metadata2, get_all_metadata, get_metadata
 # get_subtitle_index,get_audio_index,get_video_index,_get_media_index,get_subtitle_extension,
@@ -247,14 +254,9 @@ def extract_audio_1file(
     import subprocess
     from playsound import playsound
     import os
+
     
-    codec_dict = {'.mp3': "libmp3lame",
-                  'mp3' : "libmp3lame",
-                  '.wav': "pcm_s24le",
-                  'wav' : "pcm_s24le"
-                  }
-    
-    codec = codec_dict[output_extension]
+    codec = CODEC_DICT[output_extension]
     
     output_folder_in = Path(output_folder)
     
@@ -864,9 +866,6 @@ def sentence_alignment(text_from,text_to, lang_from = "pt", lang_to = "en",
 
 def combine_files_1_season(folder_path):
     from functools import partial
-    import sys
-    sys.path.append(r'C:\Users\Heng2020\OneDrive\Python MyLib\Python MyLib 01\02 DataFrame')
-    
     import dataframe_short as ds
     
     func = partial(ds.combine_files_to_df, 
@@ -1561,13 +1560,9 @@ def extract_1_audio(video_path:     Union[str,Path],
     from playsound import playsound
     import os
     
-    codec_dict = {'.mp3': "libmp3lame",
-                  'mp3' : "libmp3lame",
-                  '.wav': "pcm_s24le",
-                  'wav' : "pcm_s24le"
-                  }
     
-    codec = codec_dict[file_extension]
+    
+    codec = CODEC_DICT[file_extension]
     
     output_folder_in = Path(output_folder)
     
