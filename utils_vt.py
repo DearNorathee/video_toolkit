@@ -6,10 +6,13 @@ import datetime
 import python_wizard as pw
 import os_toolkit as ost
 import dataframe_short as ds
+import pkg_resources
 
 import pandas as pd
 import seaborn as sns
 
+alarm_done_path = pkg_resources.resource_filename(__name__, 'assets/Sound Effect positive-logo-opener.wav')
+sound_error_path = pkg_resources.resource_filename(__name__, 'assets/Sound Effect Error.wav')
 # v02 => add extract_audio2, extract_subtitle, _extract_media_setup,extract_sub_1_video
 # get_metadata2, get_all_metadata, get_metadata
 # get_subtitle_index,get_audio_index,get_video_index,_get_media_index,get_subtitle_extension,
@@ -55,7 +58,7 @@ def split_1audio_by_subtitle(video_path: Union[str,Path],
                             output_folder,
                             prefix_name = None,
                             out_audio_ext = "wav",
-                            alarm_done_path:Union[Literal[False],str] = False,
+                            alarm_done:bool = False,
                             verbose = 1,
                             ) -> None:
     import time
@@ -98,7 +101,7 @@ def split_1audio_by_subtitle(video_path: Union[str,Path],
         print("Load video time: ", end = " ")
         pw.print_time(t01_02)
     
-    if alarm_done_path:
+    if alarm_done:
         playsound(alarm_done_path)
     # ---------------------------- run til 1 -------------------------------
     ########################## start run 2 ################################
@@ -128,7 +131,7 @@ def split_1audio_by_subtitle(video_path: Union[str,Path],
     t05 = time.time()
 
     t04_05 = t05-t04
-    if alarm_done_path:
+    if alarm_done:
         playsound(alarm_done_path)
 
 def extract_audio3(
@@ -167,7 +170,7 @@ def extract_audio3(
         n_limit = n_limit,
         output_prefix = output_prefix,
         output_suffix = output_suffix,
-        play_alarm = play_alarm,
+        alarm_done = play_alarm,
         alarm_done_path = alarm_done_path,
 
         one_output_per_lang = one_output_per_lang,
@@ -181,7 +184,7 @@ def extract_audio_1file(
         output_folder:  Union[str,Path],
         output_name:    Union[str,Path, None] = None, 
         output_extension: Union[str,list] = ".mp3",
-        play_alarm: Union[str,bool] = False,
+        alarm_done: bool = False,
         overwrite_file: bool = True,
         one_output_per_lang: bool = True,
         languages: Union[List[str],None] = None,
@@ -340,8 +343,8 @@ def extract_audio_1file(
                 elif result.returncode == 0:
                     print(f"\nExtract audio successfully: {curr_output_name}!!!")
                     
-                    if play_alarm:
-                        playsound(play_alarm)
+                    if alarm_done:
+                        playsound(alarm_done_path)
 
 
 
@@ -436,7 +439,7 @@ def make_1_season_Excel_unaligned(EN_folder_path: Union[str,Path],
     en_df_music = en_df_filter[en_df_filter['sentence_EN'].str.contains('♪', na=False) ]
 
 
-    out_df = ds.indexAlignedAppend(en_df_filter,pt_df_filter,"Episode")
+    out_df = ds.index_aligned_append(en_df_filter,pt_df_filter,"Episode")
     out_df = out_df.reset_index(drop = True)
     out_df.index = out_df.index + 1
     # keep only the first occurrence of each column (Episode is duplicated)
@@ -445,7 +448,7 @@ def make_1_season_Excel_unaligned(EN_folder_path: Union[str,Path],
     # automatically add .xlsx extension to the file 
     out_excel_name_in = out_excel_name if ".xlsx" in out_excel_name else (out_excel_name + ".xlsx")
     
-    ds.pd_move_col_front(out_df, "Episode")
+    ds.move_col_front(out_df, "Episode")
     
     if output_folder is None:
         out_excel_path = str(out_excel_name_in)
@@ -599,8 +602,7 @@ def align_1_season(excel_1_season_script,
                    english_col = "D",
                    lang_from="PT",
                    lang_to="EN",
-                   alarm = True,
-                   alarm_path = r"H:\D_Music\Sound Effect positive-logo-opener.mp3",
+                   alarm_done:bool = True,
                    
                    ) -> pd.DataFrame:
     
@@ -683,7 +685,7 @@ def align_1_season(excel_1_season_script,
             episode_aligned['Season'] =  season
             episode_aligned['Episode'] =  episode
             episode_aligned = episode_aligned.drop_duplicates(subset=['sentence_' + lang_from ,'sentence_' + lang_to])
-            ds.pd_move_col_front(episode_aligned, ['Season','Episode'])
+            ds.move_col_front(episode_aligned, ['Season','Episode'])
             # drop rows that are empty
             episode_aligned = episode_aligned.dropna(subset = ['sentence_' + lang_from] )
             
@@ -720,8 +722,8 @@ def align_1_season(excel_1_season_script,
     pw.print_time(total_duration)
     
     print(f"{avg_per_ep:.2f} min per episode\n")    
-    if alarm:
-        playsound(alarm_path)
+    if alarm_done:
+        playsound(alarm_done_path)
     
     return season_aligned
 
@@ -737,14 +739,13 @@ def sen_alignment_df(df, lang_from = None, lang_to = None,
     text_list_from = df.iloc[:, 0].tolist()
     text_list_to = df.iloc[:, 1].tolist()
     # assume that text from is
-    result = sentence_alignment(text_list_from,text_list_to,lang_from,lang_to,alarm=alarm,alarm_path=alarm_path)
+    result = sentence_alignment(text_list_from,text_list_to,lang_from,lang_to,alarm=alarm,alarm_done_path=alarm_path)
     
     return result
     
 
 def sentence_alignment(text_from,text_to, lang_from = "pt", lang_to = "en",
-                       alarm = True,
-                       alarm_path = r"H:\D_Music\Sound Effect positive-logo-opener.mp3",
+                       alarm_done:bool = True,
                        
                        ):
     # v02 => add alarm parameter
@@ -858,8 +859,8 @@ def sentence_alignment(text_from,text_to, lang_from = "pt", lang_to = "en",
     total_time = ts02-ts01
     pw.print_time(total_time)
     
-    if alarm:
-        playsound(alarm_path)
+    if alarm_done:
+        playsound(alarm_done_path)
     
     return paragraph_result
 
@@ -1094,7 +1095,7 @@ def extract_audio2(
         n_limit = n_limit,
         output_prefix = output_prefix,
         output_suffix = output_suffix,
-        play_alarm = play_alarm,
+        alarm_done = play_alarm,
         alarm_done_path = alarm_done_path,
     )
 
@@ -1124,7 +1125,7 @@ def extract_subtitle(
         n_limit = n_limit,
         output_prefix = output_prefix,
         output_suffix = output_suffix,
-        play_alarm = play_alarm,
+        alarm_done = play_alarm,
         alarm_done_path = alarm_done_path,
     )
 
@@ -1140,8 +1141,7 @@ def _extract_media_setup(
         n_limit: int = 150,
         output_prefix:    str = "",
         output_suffix:    str = "",
-        play_alarm: bool = True,
-        alarm_done_path:str = r"H:\D_Music\Sound Effect positive-logo-opener.mp3",
+        alarm_done: bool = True,
 
         one_output_per_lang: bool = True,
         languages: Union[List[str],None] = None,
@@ -1253,7 +1253,7 @@ def _extract_media_setup(
             print(f"extracted {output_name} successfully!!!")
         
         # sys.stdout = original_stdout
-    if play_alarm:
+    if alarm_done:
         playsound(alarm_done_path)
     ts02 = time()
     duration = ts02-ts01
@@ -1266,10 +1266,10 @@ def extract_sub_1_video(
     output_folder:      Union[str,Path],
     output_name:        Union[str,Path] = None, 
     output_extension:   Union[str,list] = None,
-    play_alarm:         bool = True,
+    alarm_done:         bool = True,
     overwrite_file:     bool = True,
     language:           Union[str,list, None] = None,
-    alarm_done_path:    str = r"H:\D_Music\Sound Effect positive-logo-opener.mp3"
+
                     ):
     # medium tested
     # ToAdd feature 01: extract mutiple subtitles for many languages
@@ -1390,7 +1390,7 @@ def extract_sub_1_video(
     elif result.returncode == 0:
         # print("Extract audio successfully!!!")
         
-        if play_alarm:
+        if alarm_done:
             playsound(alarm_done_path)
 
 
@@ -1401,15 +1401,13 @@ def crop_video(
         t_end: str, 
         time_slice: List[Tuple[str, str]],
         output_extension: Literal["mp3", ".mp3",".mp4","mp4","mkv",".mkv","wav",".wav"] = None,
-        play_alarm = True
+        alarm_done = True
         ):
     # tested only input(mkv) => output(mkv)
     import subprocess
     import os
     from playsound import playsound
     
-    
-    alarm_done_path = r"H:\D_Music\Sound Effect positive-logo-opener.mp3"
     
     # Construct the base output filename
     base_name = os.path.splitext(video_path)[0]
@@ -1440,7 +1438,7 @@ def crop_video(
     elif result.returncode == 0:
         print("Extract audio successfully!!!")
         
-        if play_alarm:
+        if alarm_done:
             playsound(alarm_done_path)
     
     return output_path  # Return the output file path
@@ -1517,7 +1515,7 @@ def extract_1_audio(video_path:     Union[str,Path],
                     output_folder:  Union[str,Path],
                     output_name:    Union[str,Path], 
                     file_extension: Union[str,list] = ".mp3",
-                    play_alarm:     bool = True,
+                    alarm_done:     bool = True,
                     overwrite_file: bool = True
                     ):
     # Additional feature 1: output both .wav & .mp3
@@ -1589,7 +1587,7 @@ def extract_1_audio(video_path:     Union[str,Path],
     
     output_path = output_folder / output_name
     
-    alarm_done_path = r"H:\D_Music\Sound Effect positive-logo-opener.mp3"
+
     
     
     command = [
@@ -1616,7 +1614,7 @@ def extract_1_audio(video_path:     Union[str,Path],
     elif result.returncode == 0:
         print("Extract audio successfully!!!")
         
-        if play_alarm:
+        if alarm_done:
             playsound(alarm_done_path)
 
 def extract_audio1(video_folder:     Union[Path,str],
@@ -1719,7 +1717,7 @@ def extract_audio1(video_folder:     Union[Path,str],
                 output_folder = output_folder,
                 output_name = output_name,
                 file_extension = extension,
-                play_alarm=False,
+                alarm_done=False,
                 overwrite_file=overwrite_file)
         
         # sys.stdout = original_stdout
@@ -1741,6 +1739,9 @@ def srt_to_df(srt_path,
 # remove_newline will remove '\n' from the extracted text
     import pysrt
     import pandas as pd
+    import py_string_tool as pst
+    import os_toolkit as ost
+
     if ".srt" in str(srt_path):
         # 1 file case
         subs = pysrt.open(srt_path)
@@ -1758,7 +1759,7 @@ def srt_to_df(srt_path,
         # Create a DataFrame
         if remove_stopwords:
             #FIX it's still can't replace properly 
-            sentences = [St_replace(sentence,stopwords,"") for sentence in sentences]
+            sentences = [pst.replace(sentence,stopwords,"") for sentence in sentences]
         df = pd.DataFrame({
             'sentence': sentences,
             'start': start_times,
@@ -1767,7 +1768,7 @@ def srt_to_df(srt_path,
         return df
     else:
         # many srt's file using folder
-        str_file_names = get_full_filename(srt_path,".srt")
+        str_file_names = ost.get_full_filename(srt_path,".srt")
         df_list = []
         for str_file_name in str_file_names:
             each_df = srt_to_df(str_file_name)
@@ -1801,7 +1802,7 @@ def srt_to_Excel(srt_path,output_path,encoding='utf-8-sig',index=True):
             df_sub.to_excel(output_path, index=index)
             
     elif isinstance(df_sub,list):
-        short_names = get_filename(srt_path,".srt")
+        short_names = ost.get_filename(srt_path,".srt")
         out_full_name = [os.path.join(output_path,short_name).replace(".srt",".xlsx") for short_name in short_names]
         
         if pd_ver < (2,0,0):
@@ -1817,68 +1818,7 @@ def to_ms(time_obj: datetime.time) -> float:
     time_obj_ms = (time_obj.hour * 3600 + time_obj.minute * 60 + time_obj.second) * 1000 + time_obj.microsecond // 1000
     return time_obj_ms
 
-def get_filename(folder_path,extension = "all"):
-    # also include "folder"  case
-# tested small
-# new feature1: include subfolders
-    import os
-    if extension == "all":
-        out_list = [ file for file in os.listdir(folder_path) ]
 
-    elif isinstance(extension,str):
-        extension_temp = [extension]
-
-        out_list = []
-
-        for file in os.listdir(folder_path):
-            if "." in file:
-                file_extension = file.split('.')[-1]
-                for each_extention in extension_temp:
-                    # support when it's ".csv" or only "csv"
-                    if file_extension in each_extention:
-                        out_list.append(file)
-            elif extension == "folder":
-                out_list.append(file)
-
-
-    elif isinstance(extension,list):
-        out_list = []
-        for file in os.listdir(folder_path):
-
-            if "." in file:
-                file_extension = file.split('.')[-1]
-                for each_extention in extension:
-                    # support when it's ".csv" or only "csv"
-                    if file_extension in each_extention:
-                        out_list.append(file)
-
-            elif "folder" in extension:
-                out_list.append(file)
-
-        return out_list
-
-    else:
-        print("Don't support this dataype for extension: please input only string or list")
-        return False
-
-    return out_list
-
-def get_full_filename(folder_path,extension = "all"):
-    # tested small
-    import os 
-    short_names = get_filename(folder_path,extension)
-    out_list = []
-    for short_name in short_names:
-        full_name = os.path.join(folder_path,short_name)
-        out_list.append(full_name)
-    return out_list
-
-def St_replace(text,to_replace,replace_by):
-    # unit_tested
-    for word in to_replace:
-        new_text = text.replace(word, replace_by)
-        
-    return new_text
 
 # TODO: srt_to_Excel => similar to srt_to_csv but output as excel
 # srt_to_Excel(srt_path,sub_output)
