@@ -143,8 +143,7 @@ def extract_audio3(
         n_limit:          int = 150,
         output_prefix:    str = "",
         output_suffix:    str = "",
-        play_alarm:       bool = True,
-        alarm_done_path:str = r"H:\D_Music\Sound Effect positive-logo-opener.mp3",
+        alarm_done:       bool = True,
 
         one_output_per_lang: bool = True,
         languages: Union[List[str],None] = None,
@@ -170,7 +169,7 @@ def extract_audio3(
         n_limit = n_limit,
         output_prefix = output_prefix,
         output_suffix = output_suffix,
-        alarm_done = play_alarm,
+        alarm_done = alarm_done,
         alarm_done_path = alarm_done_path,
 
         one_output_per_lang = one_output_per_lang,
@@ -226,7 +225,7 @@ def extract_audio_1file(
         DESCRIPTION.
     file_extension : Union[str,list], optional
         DESCRIPTION. The default is ".mp3".
-    play_alarm : bool, optional
+    alarm_done : bool, optional
         DESCRIPTION. The default is True.
     overwrite_file : bool, optional
         DESCRIPTION. The default is True.
@@ -279,7 +278,6 @@ def extract_audio_1file(
             # variant = "B" would return fre for french
             filter_lang_3chr.append(lang_obj.to_alpha3(variant = "B"))
     
-    # play_alarm = r"H:\D_Music\Sound Effect positive-logo-opener.mp3"
     audio_index = get_audio_index(video_path)
     metadata = get_metadata(video_path,"audio",language=filter_lang_3chr)
     
@@ -729,8 +727,7 @@ def align_1_season(excel_1_season_script,
 
 
 def sen_alignment_df(df, lang_from = None, lang_to = None,
-                       alarm = True,
-                       alarm_path = r"H:\D_Music\Sound Effect positive-logo-opener.mp3",
+                       alarm_done:bool = True,
                      ):
     # medium tested
     if lang_from is None: lang_from = df.columns[0]
@@ -739,7 +736,7 @@ def sen_alignment_df(df, lang_from = None, lang_to = None,
     text_list_from = df.iloc[:, 0].tolist()
     text_list_to = df.iloc[:, 1].tolist()
     # assume that text from is
-    result = sentence_alignment(text_list_from,text_list_to,lang_from,lang_to,alarm=alarm,alarm_done_path=alarm_path)
+    result = sentence_alignment(text_list_from,text_list_to,lang_from,lang_to,alarm_done=alarm_done)
     
     return result
     
@@ -1069,8 +1066,7 @@ def extract_audio2(
         n_limit:          int = 150,
         output_prefix:    str = "",
         output_suffix:    str = "",
-        play_alarm:       bool = True,
-        alarm_done_path:str = r"H:\D_Music\Sound Effect positive-logo-opener.mp3"
+        alarm_done:       bool = True,
 ):
     """
     the diff between 
@@ -1095,8 +1091,7 @@ def extract_audio2(
         n_limit = n_limit,
         output_prefix = output_prefix,
         output_suffix = output_suffix,
-        alarm_done = play_alarm,
-        alarm_done_path = alarm_done_path,
+        alarm_done = alarm_done,
     )
 
 def extract_subtitle(
@@ -1108,8 +1103,7 @@ def extract_subtitle(
         n_limit:          int = 150,
         output_prefix:    str = "",
         output_suffix:    str = "",
-        play_alarm:       bool = True,
-        alarm_done_path:str = r"H:\D_Music\Sound Effect positive-logo-opener.mp3"
+        alarm_done:       bool = True,
 ):
     input_param = {
         'video_path': 6
@@ -1125,8 +1119,7 @@ def extract_subtitle(
         n_limit = n_limit,
         output_prefix = output_prefix,
         output_suffix = output_suffix,
-        alarm_done = play_alarm,
-        alarm_done_path = alarm_done_path,
+        alarm_done = alarm_done,
     )
 
 # Sub
@@ -1155,7 +1148,7 @@ def _extract_media_setup(
 
     extract_1_file_func that are compatible with this function will contain these parameters(no more no less)
     
-    (video_path ,output_extension ,output_folder ,output_name,play_alarm,overwrite_file)
+    (video_path ,output_extension ,output_folder ,output_name,alarm_done,overwrite_file)
 
     if extract_1_file_func doesn't have this requirement you need to modify the code in this function to support that manually
 
@@ -1222,7 +1215,7 @@ def _extract_media_setup(
                         output_extension = extension,
                         output_folder = output_folder,
                         output_name = output_name,
-                        play_alarm=False,
+                        alarm_done=False,
                         overwrite_file=overwrite_file,
                         one_output_per_lang = one_output_per_lang,
                         languages = languages,
@@ -1236,7 +1229,7 @@ def _extract_media_setup(
                         output_extension = extension,
                         output_folder = output_folder,
                         output_name = output_name,
-                        play_alarm=False,
+                        alarm_done=False,
                         overwrite_file=overwrite_file,
                         languages = languages,
 
@@ -1248,7 +1241,7 @@ def _extract_media_setup(
                     output_extension = extension,
                     output_folder = output_folder,
                     output_name = output_name,
-                    play_alarm=False,
+                    alarm_done=False,
                     overwrite_file=overwrite_file)
             print(f"extracted {output_name} successfully!!!")
         
@@ -1293,7 +1286,7 @@ def extract_sub_1_video(
     file_extension : str, optional
         The desired file extension for the output audio file (default is ".mp3").
         
-    play_alarm : bool, optional
+    alarm_done : bool, optional
         Whether to play an alarm sound upon successful extraction (default is True).
         
     overwrite_file : bool, optional
@@ -1309,7 +1302,7 @@ def extract_sub_1_video(
     - Additional feature 1: Output both .wav & .mp3 formats.
     - This function relies on FFmpeg for audio extraction, so make sure FFmpeg is installed.
     - The codec for output format is determined based on the file_extension parameter.
-    - An alarm sound is played if play_alarm is set to True upon successful extraction.
+    - An alarm sound is played if alarm_done is set to True upon successful extraction.
     - If the output file already exists and overwrite_file is set to False, the function will return False.
     
     Example:
@@ -1538,7 +1531,7 @@ def extract_1_audio(video_path:     Union[str,Path],
     file_extension : str, optional
         The desired file extension for the output audio file (default is ".mp3").
         
-    play_alarm : bool, optional
+    alarm_done : bool, optional
         Whether to play an alarm sound upon successful extraction (default is True).
         
     overwrite_file : bool, optional
@@ -1554,7 +1547,7 @@ def extract_1_audio(video_path:     Union[str,Path],
     - Additional feature 1: Output both .wav & .mp3 formats.
     - This function relies on FFmpeg for audio extraction, so make sure FFmpeg is installed.
     - The codec for output format is determined based on the file_extension parameter.
-    - An alarm sound is played if play_alarm is set to True upon successful extraction.
+    - An alarm sound is played if alarm_done is set to True upon successful extraction.
     - If the output file already exists and overwrite_file is set to False, the function will return False.
     
     Example:
@@ -1623,7 +1616,7 @@ def extract_audio1(video_folder:     Union[Path,str],
                   output_extension: Union[list,str] = ".mp3",
                   output_prefix:    str = "",
                   output_suffix:    str = "",
-                  play_alarm:       bool = True,
+                  alarm_done:       bool = True,
                   overwrite_file:   bool = True,
                   n_limit:          int = 150
                   ):
@@ -1654,7 +1647,7 @@ def extract_audio1(video_folder:     Union[Path,str],
     output_suffix : str, optional
         A suffix to be added to the output audio file names. Defaults to an empty string.
         
-    play_alarm : bool, optional
+    alarm_done : bool, optional
         Whether to play an alarm sound when the extraction is completed. Defaults to True.
         
     overwrite_file : bool, optional
@@ -1674,7 +1667,6 @@ def extract_audio1(video_folder:     Union[Path,str],
     from time import time
     ts01 = time()
     
-    alarm_done_path = r"H:\D_Music\Sound Effect positive-logo-opener.mp3"
     
     import os_toolkit as ost
     import python_wizard as pw
@@ -1722,7 +1714,7 @@ def extract_audio1(video_folder:     Union[Path,str],
         
         # sys.stdout = original_stdout
         
-    if play_alarm:
+    if alarm_done:
         playsound(alarm_done_path)
     ts02 = time()
     duration = ts02-ts01
