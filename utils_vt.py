@@ -177,7 +177,6 @@ def extract_audio3(
         output_prefix = output_prefix,
         output_suffix = output_suffix,
         alarm_done = alarm_done,
-        alarm_done_path = alarm_done_path,
 
         one_output_per_lang = one_output_per_lang,
         languages = languages
@@ -1620,6 +1619,12 @@ def extract_audio1(video_folder:     Union[Path,str],
     # support multiple output eg [.wav,.mp3,.eac3]
     
     """
+
+    the diff between 
+    extract_audio1 - use manually code to loop through folder
+    extract_audio2 - powered by _extract_media_setup while 
+    extract_audio3 - use extract_audio_1file as a base(which is more general than extract_audio1 & extract_audio2), but need more testing to see if it works
+
     Extracts audio from video files in the specified `video_folder` and saves them in the `output_folder` in the specified audio format.
     
     Parameters
