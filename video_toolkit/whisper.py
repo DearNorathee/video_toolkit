@@ -4,9 +4,15 @@ from pathlib import Path
 import faster_whisper
 from video_toolkit.utils_vt import *
 from video_toolkit.sandbox1_vt import *
-
+ # https://github.com/jianfch/stable-ts
+# pip install -U stable-ts
 alarm_done_path = pkg_resources.resource_filename(__name__, 'assets/Sound Effect positive-logo-opener.wav')
 sound_error_path = pkg_resources.resource_filename(__name__, 'assets/Sound Effect Error.wav')
+
+# based on numba 0.58.0
+# whisper 1.1.10
+# stable_whisper 2.17.3
+# faster-whisper 1.0.3
 
 def transcribe_to_subtitle_1file(
         model:Union[whisper.model.Whisper, faster_whisper.WhisperModel]

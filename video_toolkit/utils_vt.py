@@ -25,7 +25,102 @@ CODEC_DICT = {'.mp3': "libmp3lame",
 # get_subtitle_index,get_audio_index,get_video_index,_get_media_index,get_subtitle_extension,
 # get_audio_extension,get_video_extension, _get_media_extension
 
-def clean_subtitle(string):
+
+def text_to_milisecond(time_text:Union[str,int,float],delimiter:str = ".") -> Union[int,float]:
+    """
+    time_text should be seperated by dot for :
+    convert strings to miliseconds to easily convert back and forth between video view and pydub input
+    if it's already int it would return the same
+    
+    Convert time text to milliseconds.
+
+    Args:
+    time_text (Union[str, int, float]): Time in format "hr.min.sec" or "min.sec" or milliseconds.
+
+    Returns:
+    Union[int, float]: Time in milliseconds.
+
+    Examples:
+    "4.32" => (4*60 + 32) * 1000 = 272000 ms (4 min 32 sec)
+    "1.40.32" => (1*3600 + 40*60 + 32) * 1000 = 6032000 ms (1 hr 40 min 32 sec)
+    """
+    if isinstance(time_text, (int, float)):
+        return time_text
+
+    if not isinstance(time_text, str):
+        raise ValueError("Input must be a string, int, or float.")
+
+    parts = time_text.split(delimiter)
+    
+    if len(parts) == 2:
+        minutes, seconds = map(int, parts)
+        return (minutes * 60 + seconds) * 1000
+    elif len(parts) == 3:
+        hours, minutes, seconds = map(int, parts)
+        return (hours * 3600 + minutes * 60 + seconds) * 1000
+    else:
+        raise ValueError("Invalid time format. Use 'min.sec' or 'hr.min.sec'.")
+
+
+    
+
+def export_audio(audio_segment:AudioSegment,
+                 start_end_time_dict: Dict[int,Tuple[int,int]],
+                 output_names:Dict[int,str],
+                 output_folder:str = "",
+                 progress_bar:bool = True,
+                 ) -> None:
+    
+    # medium tested
+    """
+    Key feature: 
+        1) Remove the invalid path in output_names automatically
+    the timestamp should be in miliseconds units(for now)
+    export multiple audio_segments
+    make sure that index in output_names is also in start_end_time_dict
+    
+    example of start_end_time_dict
+        start_end_time_dict = {
+        6:  [14_633 , 15_933],
+        7:  [24_455 , 25_534],
+        8:  [25_700 , 27_550],
+        9:  [27_899 , 30_000],
+        10: [31_075 , 32_863],
+        11: [33_439 , 36_188],
+        12: [37_280 , 42_100],
+        14: [42_865 , 47_224],
+        
+        }
+
+    TOADD: replace => it would check if file already exists, if so depending on it's True or False, it would replace the file
+    """
+    import py_string_tool as pst
+    clean_output_names = {}
+    for inx, output_name in output_names.items():
+        clean_output_names[inx] = pst.clean_filename(output_name)
+    
+    from tqdm import tqdm
+    if progress_bar:
+        loop_obj = tqdm(start_end_time_dict.items())
+    else:
+        loop_obj = start_end_time_dict.items()
+    
+    for inx, time_stamp in loop_obj:
+        start_time, end_time = time_stamp
+        try:
+            output_name = clean_output_names[inx]
+        except KeyError:
+            raise KeyError(f"there's no index {inx} in your output_names(Dict). Please check your index again.")
+        output_path = output_folder + "/" + output_name
+        curr_audio = audio_segment[start_time:end_time]
+        
+        try:
+            curr_audio.export(output_path)
+        except PermissionError:
+            raise KeyError(f"Please close the file {output_path} first.")
+         
+
+def clean_subtitle(string:str):
     import re
     pattern1 = "<.*?>"
     
@@ -155,6 +250,7 @@ def extract_audio3(
         one_output_per_lang: bool = True,
         languages: Union[List[str],None] = None,
 ):
+    # extract_audio3 is highly tested now
     """
     the diff between 
     extract_audio1 - use manually code to loop through folder
@@ -521,7 +617,6 @@ def read_movie_script2(file_path, sheet_name = "Sheet1", portuguese_col = 0, eng
     df_dict = ds.pd_split_into_dict_df(data,r'[Ss]\d{2}[Ee]\d{2}',0)
     # df_dict = pd_split_into_dict_df(data,index_list=episode_start_indices)
     return df_dict
-
 
 def read_movie_script(file_path, sheet_name, portuguese_col, english_col):
     # the main function that I should use from now on
