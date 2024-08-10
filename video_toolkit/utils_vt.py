@@ -1245,7 +1245,10 @@ def _extract_media_setup(
         
         # sys.stdout = original_stdout
     if alarm_done:
-        playsound(alarm_done_path)
+        try:
+            playsound(alarm_done_path)
+        except:
+            pass
     ts02 = time()
     duration = ts02-ts01
     pw.print_time(duration)
