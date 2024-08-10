@@ -7,7 +7,7 @@ def test_transcribe_to_subtitle_1file():
     model = stable_whisper.load_model('base')
     BigBangFR_S02E01 = r"H:\D_Video\BigBang French\BigBang FR Season 02\BigBang FR S02E01.mkv"
     output_folder = r"H:\D_Video\BigBang French\BigBang FR Season 02\Season 02 Audio\French Subtitle"
-    transcribe_to_subtitle_1file(model,BigBangFR_S02E01,output_folder = output_folder)
+    audio_to_sub_1file(model,BigBangFR_S02E01,output_folder = output_folder)
 
 
 def test_transcribe_to_subtitle():
@@ -17,4 +17,4 @@ def test_transcribe_to_subtitle():
     bigBang_FR_season2 = r"H:\D_Video\BigBang French\BigBang FR Season 02\Season 02 Audio\French"
     output_folder = r"H:\D_Video\BigBang French\BigBang FR Season 02\Season 02 Audio\French Subtitle"
     faster_model_base = stable_whisper.load_faster_whisper('base')
-    transcribe_to_subtitle(faster_model_base,bigBang_FR_season2,output_folder = output_folder)
+    audio_to_sub(faster_model_base,bigBang_FR_season2,output_folder = output_folder)

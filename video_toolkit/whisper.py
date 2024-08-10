@@ -14,7 +14,7 @@ sound_error_path = pkg_resources.resource_filename(__name__, 'assets/Sound Effec
 # stable_whisper 2.17.3
 # faster-whisper 1.0.3
 
-def transcribe_to_subtitle_1file(
+def audio_to_sub_1file(
         model:Union[whisper.model.Whisper, faster_whisper.WhisperModel]
         ,audio_path: Union[str,Path]
         ,output_name: Union[str,Path] = ""
@@ -24,6 +24,7 @@ def transcribe_to_subtitle_1file(
     # seems to work
     
     # TOADD_01: output subtitle format
+    # TOADD_02: (more important but more difficutl) output with maximum of words before spling
     
     """
     signature function that will extract the subtitle from the audio
@@ -48,7 +49,7 @@ def transcribe_to_subtitle_1file(
     result.to_srt_vtt(str(output_path),word_level =False)
 
 # NEXT write transcribe_to_subtitle to loop through the audio files and create subtitles
-def transcribe_to_subtitle(
+def audio_to_sub(
     model:Union[whisper.model.Whisper, faster_whisper.WhisperModel]
     ,audio_path: Union[str,Path]
     ,output_name: Union[str,Path] = ""
@@ -80,7 +81,7 @@ def transcribe_to_subtitle(
             loop_obj = enumerate(audio_full_paths)
 
         for i, path in loop_obj:
-            transcribe_to_subtitle_1file(model,path,output_name = output_name,output_folder = output_folder)
+            audio_to_sub_1file(model,path,output_name = output_name,output_folder = output_folder)
             if verbose >= 1:
                 print(f"{audio_name_paths[i]} done!!")
             
@@ -92,7 +93,7 @@ def transcribe_to_subtitle(
     elif isinstance(audio_path,list):
         raise NotImplementedError(f"list of files is not supported")
     elif isinstance(audio_path,(str,Path)):
-        transcribe_to_subtitle_1file(model,audio_path,output_name = output_name,output_folder = output_folder)
+        audio_to_sub_1file(model,audio_path,output_name = output_name,output_folder = output_folder)
         if alarm_done:
             try:
                 play_audio(alarm_done_path)

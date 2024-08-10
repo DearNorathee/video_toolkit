@@ -1,5 +1,86 @@
 from video_toolkit.utils_vt import *
+from pydub import AudioSegment
 
+def test_export_audio():
+    filepath = r"G:\My Drive\G_Videos\Learn French\Learn to speak French in 5 minutes - a dialogue for beginners!.mp3"
+    audio = AudioSegment.from_file(filepath) 
+
+    OUTPUT_FOLDER:str = "G:\My Drive\G_Videos\Learn French\Pydub Export test01"
+
+    start_time = 35 * 1000  # Start at 35 seconds
+    end_time = (1*60 + 35) * 1000    # End at 1 minute and 35 seconds
+    
+    manual_edit = {
+        6:  [14_633 , 15_933],
+        7:  [24_455 , 25_534],
+        8:  [25_700 , 27_550],
+        9:  [27_899 , 30_000],
+        10: [31_075 , 32_863],
+        11: [33_439 , 36_188],
+        12: [37_280 , 42_100],
+        14: [42_865 , 47_224],
+        
+        }
+    
+    # output_names01 has no index 10
+    output_names01 = {
+        6:  "01.01_I'm....mp3",
+        7:  "01.02_Pleased to meet you.mp3",
+        8:  "01.03_That's a nice name.mp3",
+        9:  "01.05_Can I ask you a question?.mp3",
+        11: "01.06_What do you like to do on a weekend?.mp3",
+        12: "01.07_I like to learn French and read and you?.mp3",
+        14: "01.08_I like to watch television.mp3",
+        
+        }
+    
+    output_names02 = {
+        6:  "01.01_I'm....mp3",
+        7:  "01.02_Pleased to meet you.mp3",
+        8:  "01.03_That's a nice name.mp3",
+        9:  "01.05_Can I ask you a question?.mp3",
+        10: "01.07_Yes, of course.mp3",
+        11: "01.08_What do you like to do on a weekend?.mp3",
+        12: "01.09_I like to learn French and read and you?.mp3",
+        14: "01.10_I like to watch television.mp3",
+        
+        }
+    
+    output_names03 = {
+        6:  "01.01_I'm....wav",
+        7:  "01.02_Pleased to meet you.wav",
+        8:  "01.03_That's a nice name.wav",
+        9:  "01.05_Can I ask you a question?.wav",
+        10: "01.07_Yes, of course.mp3",
+        11: "01.08_What do you like to do on a weekend?.wav",
+        12: "01.09_I like to learn French and read and you?.wav",
+        14: "01.10_I like to watch television.wav",
+        
+        }
+    
+    # Extract the segment from the audio
+    segment = audio[start_time:end_time]
+    try:
+        export_audio(segment, manual_edit, output_names01,output_folder=OUTPUT_FOLDER)
+    except Exception as error:
+        assert isinstance(error, KeyError)
+        
+    export_audio(segment, manual_edit, output_names02,output_folder=OUTPUT_FOLDER)
+    export_audio(segment, manual_edit, output_names03,output_folder=OUTPUT_FOLDER)
+
+def test_text_to_milisecond():
+    import inspect_py as inp
+    actual01 = text_to_milisecond("4.32") # Output: 272000
+    actual02 = text_to_milisecond("1.40.32")  # Output: 6032000
+    actual03 = text_to_milisecond(5000)  # Output: 5000
+    
+    expect01 = 272_000
+    expect02 = 6032000
+    expect03 = 5000
+    
+    assert actual01 == expect01, inp.assert_message(actual01, expect01)
+    assert actual02 == expect02, inp.assert_message(actual02, expect02)
+    assert actual03 == expect03, inp.assert_message(actual03, expect03)
 
 def test_extract_audio_1file():
     folder_FR_bigbang = Path(r"H:\D_Download\Video 01\[ Torrent911.io ] The.Big.Bang.Theory.2007-2019.Integrale.Multi.WEB-DL.1080p.AVC-Ducks\Saison 6")
