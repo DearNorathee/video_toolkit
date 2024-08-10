@@ -1153,7 +1153,7 @@ def _extract_media_setup(
     """
     import inspect_py as inp
     import python_wizard as pw
-
+    import python_wizard.pw_list as pwl
     import sys
     from pathlib import Path
     from playsound import playsound
@@ -1207,7 +1207,7 @@ def _extract_media_setup(
 
             if "languages" in extract_1_file_params:
                 
-                if pw.contain_all_items(extract_1_file_params,["one_output_per_lang","progress_bar"]):
+                if pwl.contain_all_items(extract_1_file_params,["one_output_per_lang","progress_bar"]):
                     extract_1_file_func(
                         video_path = path_list[i],
                         output_extension = extension,
