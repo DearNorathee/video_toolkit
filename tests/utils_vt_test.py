@@ -166,7 +166,7 @@ def test_create_subtitle():
     output_directory = r"C:\Users\Heng2020\OneDrive\Python NLP\InputData\Westworld S04E01 Portuguese_01.srt"
     
     writer = get_writer("srt", str(output_directory))
-    writer(result, output_name)
+    # writer(result, output_name)
     ts02 = time()
     
     duration = ts02 - ts01 
