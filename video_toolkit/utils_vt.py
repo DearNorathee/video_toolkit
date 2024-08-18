@@ -104,7 +104,8 @@ def split_1audio_by_subtitle(
     prefix_name = None,
     out_audio_ext = "wav",
     alarm_done:bool = False,
-    verbose = 1,
+    verbose:int = 1,
+    include_sentence:bool = True
         ) -> None:
     import time
     import os
@@ -157,7 +158,8 @@ def split_1audio_by_subtitle(
     for i in range(n):
         start_time = subs.loc[i,'start']
         end_time = subs.loc[i,'end']
-        
+        sentence_text = subs.loc[i,'senntence']
+
         if start_time > video_length:
             break
 
@@ -169,8 +171,13 @@ def split_1audio_by_subtitle(
         
         num_str = pst.num_format0(i+1,n+1)
         # Save the audio segment to a file
-        audio_name = f'{prefix_name_in}_{num_str}{out_audio_ext_dot}'
-        audio_output = os.path.join(output_folder,audio_name)
+        if include_sentence:
+            audio_name = f'{prefix_name_in}_{num_str}_{sentence_text}{out_audio_ext_dot}'
+        else:
+            audio_name = f'{prefix_name_in}_{num_str}{out_audio_ext_dot}'
+        
+        audio_name_clean = pst.clean_filename(audio_name)
+        audio_output = os.path.join(output_folder,audio_name_clean)
         sentence_audio.export(audio_output, format=out_audio_ext_no_dot)
     t05 = time.time()
 
