@@ -12,6 +12,21 @@ CODEC_DICT = {'.mp3': "libmp3lame",
                   'wav' : "pcm_s24le"
                   }
 
+def is_ffmpeg_installed():
+    
+    import subprocess
+    try:
+        # Run the 'ffmpeg -version' command
+        result = subprocess.run(["ffmpeg", "-version"], capture_output=True, text=True, check=True)
+        # If the above command runs successfully, FFmpeg is installed and in PATH
+        print("FFmpeg is installed and accessible in PATH.")
+    except subprocess.CalledProcessError:
+        # An error occurred while running FFmpeg, it might not be installed or in PATH
+        print("FFmpeg is not installed.")
+    except FileNotFoundError:
+        # FFmpeg is not in PATH
+        print("FFmpeg is installed but not in PATH.")
+
 def extract_audio3(
         video_folder:     Union[Path,str],
         output_folder:    Union[Path,str],

@@ -61,8 +61,6 @@ def text_to_milisecond(time_text:Union[str,int,float],delimiter:str = ".") -> Un
     else:
         raise ValueError("Invalid time format. Use 'min.sec' or 'hr.min.sec'.")
 
-         
-
 def clean_subtitle(string:str):
     import re
     pattern1 = "<.*?>"
@@ -708,9 +706,6 @@ def combine_files_1_season(folder_path):
     return out_df
 
 
-
-
-
 def crop_video(
         video_path: str, 
         t_start: str, 
@@ -759,25 +754,6 @@ def crop_video(
     
     return output_path  # Return the output file path
 
-
-
-def is_ffmpeg_installed():
-    
-    import subprocess
-    try:
-        # Run the 'ffmpeg -version' command
-        result = subprocess.run(["ffmpeg", "-version"], capture_output=True, text=True, check=True)
-        # If the above command runs successfully, FFmpeg is installed and in PATH
-        print("FFmpeg is installed and accessible in PATH.")
-    except subprocess.CalledProcessError:
-        # An error occurred while running FFmpeg, it might not be installed or in PATH
-        print("FFmpeg is not installed.")
-    except FileNotFoundError:
-        # FFmpeg is not in PATH
-        print("FFmpeg is installed but not in PATH.")
-
-
-       
 
 def srt_to_df(srt_path,
               remove_stopwords=True,
@@ -864,7 +840,21 @@ def to_ms(time_obj: datetime.time) -> float:
     time_obj_ms = (time_obj.hour * 3600 + time_obj.minute * 60 + time_obj.second) * 1000 + time_obj.microsecond // 1000
     return time_obj_ms
 
+# from typing import Union,List,Tuple, Literal, Callable, Dict
+# from pathlib import Path
+# import sys
+# import datetime
+# import python_wizard as pw
+# import os_toolkit as ost
+# import dataframe_short as ds
+# import pkg_resources
 
+del Union
+del List
+del Tuple
+del Literal
+del Callable
+del Dict
 
 # TODO: srt_to_Excel => similar to srt_to_csv but output as excel
 # srt_to_Excel(srt_path,sub_output)
