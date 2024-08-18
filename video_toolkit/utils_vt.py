@@ -97,14 +97,15 @@ def audio_duration(video_path):
 
 # Sub
 
-def split_1audio_by_subtitle(video_path: Union[str,Path],
-                            subtitle_path,
-                            output_folder,
-                            prefix_name = None,
-                            out_audio_ext = "wav",
-                            alarm_done:bool = False,
-                            verbose = 1,
-                            ) -> None:
+def split_1audio_by_subtitle(
+    video_path: Union[str,Path],
+    subtitle_path,
+    output_folder,
+    prefix_name = None,
+    out_audio_ext = "wav",
+    alarm_done:bool = False,
+    verbose = 1,
+        ) -> None:
     import time
     import os
     from pydub import AudioSegment
@@ -147,8 +148,7 @@ def split_1audio_by_subtitle(video_path: Union[str,Path],
     
     if alarm_done:
         playsound(alarm_done_path)
-    # ---------------------------- run til 1 -------------------------------
-    ########################## start run 2 ################################
+
     t03 = time.time()
     video_length = audio_duration(video_audio)
     # Iterate over subtitle sentences

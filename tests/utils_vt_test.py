@@ -117,7 +117,7 @@ def test_extract_audio3():
     import video_toolkit as vt
     folder_FR_bigbang = Path(r"H:\D_Download\Video 01\[ Torrent911.io ] The.Big.Bang.Theory.2007-2019.Integrale.Multi.WEB-DL.1080p.AVC-Ducks\Saison 6")
     output_folder01 = r"C:\Users\Heng2020\OneDrive\D_Code\Python\Python NLP\NLP 01\OutputData\extract_audio3\test_01"
-    vt.extract_audio3(folder_FR_bigbang, output_folder01)
+    vt.extract_audio(folder_FR_bigbang, output_folder01)
     print("test_extract_audio3")
 
 def test_extract_1_audio():

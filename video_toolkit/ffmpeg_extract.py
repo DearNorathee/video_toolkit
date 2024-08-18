@@ -27,7 +27,7 @@ def is_ffmpeg_installed():
         # FFmpeg is not in PATH
         print("FFmpeg is installed but not in PATH.")
 
-def extract_audio3(
+def extract_audio(
         video_folder:     Union[Path,str],
         output_folder:    Union[Path,str],
         video_extension:  Union[list,str] = [".mp4",".mkv"],
