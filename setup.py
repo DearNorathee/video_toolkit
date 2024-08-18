@@ -4,7 +4,7 @@ setup(
     author= "Dear Norathee",
     description="package to help you with extraction of video information eg audio, subtitle",
     name="video_toolkit",
-    version="0.1.1",
+    version="0.1.2rc1",
     packages=find_packages(),
     license="MIT",
     install_requires=[
