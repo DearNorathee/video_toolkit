@@ -25,6 +25,31 @@ CODEC_DICT = {'.mp3': "libmp3lame",
 # get_subtitle_index,get_audio_index,get_video_index,_get_media_index,get_subtitle_extension,
 # get_audio_extension,get_video_extension, _get_media_extension
 
+def ms_to_time_text(milliseconds: Union[int, float]) -> str:
+    """
+    Convert milliseconds to time text format.
+
+    Args:
+    milliseconds (Union[int, float]): Time in milliseconds.
+
+    Returns:
+    str: Time in format "hr.min.sec" or "min.sec".
+
+    Examples:
+    272000 => "4.32" (4 min 32 sec)
+    6032000 => "1.40.32" (1 hr 40 min 32 sec)
+    """
+    if not isinstance(milliseconds, (int, float)):
+        raise ValueError("Input must be an integer or float representing milliseconds.")
+
+    total_seconds = int(milliseconds / 1000)
+    hours, remainder = divmod(total_seconds, 3600)
+    minutes, seconds = divmod(remainder, 60)
+
+    if hours > 0:
+        return f"{hours}.{minutes:02d}.{seconds:02d}"
+    else:
+        return f"{minutes}.{seconds:02d}"
 
 def text_to_milisecond(time_text:Union[str,int,float],delimiter:str = ".") -> Union[int,float]:
     """
@@ -158,7 +183,7 @@ def split_1audio_by_subtitle(
     for i in range(n):
         start_time = subs.loc[i,'start']
         end_time = subs.loc[i,'end']
-        sentence_text = subs.loc[i,'senntence']
+        sentence_text = subs.loc[i,'sentence']
 
         if start_time > video_length:
             break
@@ -171,8 +196,13 @@ def split_1audio_by_subtitle(
         
         num_str = pst.num_format0(i+1,n+1)
         # Save the audio segment to a file
+        if sentence_text[-1] in [".",","]:
+            sentence_no_dots = sentence_text[:-1]
+        else:
+            sentence_no_dots = sentence_text
+
         if include_sentence:
-            audio_name = f'{prefix_name_in}_{num_str}_{sentence_text}{out_audio_ext_dot}'
+            audio_name = f'{prefix_name_in}_{num_str}_{sentence_no_dots}{out_audio_ext_dot}'
         else:
             audio_name = f'{prefix_name_in}_{num_str}{out_audio_ext_dot}'
         

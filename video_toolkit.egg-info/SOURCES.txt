@@ -1,6 +1,9 @@
 setup.py
 video_toolkit/__init__.py
+video_toolkit/archive01.py
 video_toolkit/cant_use_vt.py
+video_toolkit/ffmpeg_create.py
+video_toolkit/ffmpeg_extract.py
 video_toolkit/fix_bug_vt.py
 video_toolkit/sandbox1_vt.py
 video_toolkit/utils_vt.py
