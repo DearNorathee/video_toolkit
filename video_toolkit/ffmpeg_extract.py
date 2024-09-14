@@ -635,7 +635,7 @@ def extract_sub_1_video(
     extract_1_audio("input_video.mp4", "output_folder", "output_audio", file_extension=".wav")
     
     """
-    
+    import os_toolkit as ost
     from pathlib import Path
     import subprocess
     from playsound import playsound
@@ -688,7 +688,7 @@ def extract_sub_1_video(
     
     for i, sub_index in enumerate(subtitle_stream_index_list):
 
-        curr_output_path = f"{output_path}_{str(i)}"
+        curr_output_path = ost.add_suffix_to_name(output_path,i)
 
         command = [
             'ffmpeg',
