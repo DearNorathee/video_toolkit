@@ -528,7 +528,7 @@ def get_subtitle_extension(media_path, language = None, file_extension = None):
 
 def _get_media_index(media_path, media, language = None, file_extension = None):
     
-    selected_media = get_metadata(media_path, media, language = None, file_extension = None)
+    selected_media = get_metadata(media_path, media, language = language, file_extension = file_extension)
     idx_list = selected_media.index.tolist()
     # return None if media is not found
     if len(idx_list) == 0:
@@ -688,7 +688,7 @@ def extract_sub_1_video(
     
     for i, sub_index in enumerate(subtitle_stream_index_list):
 
-        curr_output_path = ost.add_suffix_to_name(output_path,i)
+        curr_output_path = ost.add_suffix_to_name(output_path,i+1)
 
         command = [
             'ffmpeg',
