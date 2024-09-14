@@ -686,20 +686,23 @@ def extract_sub_1_video(
     else:
         output_ext_no_dot = ori_extension.replace('.','')
     
-    for sub_index in subtitle_stream_index_list:
+    for i, sub_index in enumerate(subtitle_stream_index_list):
+
+        curr_output_path = f"{output_path}_{str(i)}"
+
         command = [
             'ffmpeg',
             '-i', str(video_path),  # Input file
             '-map', f'0:{sub_index}',  # Map the identified subtitle stream
             '-c:s', output_ext_no_dot,  # Subtitle format
-            str(output_path)
+            str(curr_output_path)
         ]
         # cmd_line is for debugging
         cmd_line = ' '.join(command)
         
-        if os.path.exists(str(output_path)):
+        if os.path.exists(str(curr_output_path)):
             if overwrite_file:
-                os.remove(str(output_path))
+                os.remove(str(curr_output_path))
             else:
                 print("The output path is already existed. Please delete the file or set the overwrite parameter to TRUE")
                 return False
@@ -713,7 +716,10 @@ def extract_sub_1_video(
             # print("Extract audio successfully!!!")
             
             if alarm_done:
-                playsound(alarm_done_path)
+                try:
+                    playsound(alarm_done_path)
+                except:
+                    pass
 
 
 def language_name_list():
