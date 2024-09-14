@@ -668,7 +668,7 @@ def extract_sub_1_video(
             output_name += output_extension
     
     output_path = output_folder_in / output_name
-    
+    # if subtitle_stream_index is a list it would create a bug
     subtitle_stream_index = get_subtitle_index(video_path,language)
     # from extract_1_audio
     # command = [
@@ -679,37 +679,41 @@ def extract_sub_1_video(
     #     "-q:a", "0",
     #     str(output_path)
     # ]
+    subtitle_stream_index_list = list(subtitle_stream_index) if isinstance(subtitle_stream_index, list) else [subtitle_stream_index]
+
     if output_extension:
         output_ext_no_dot = output_extension.replace('.','')
     else:
         output_ext_no_dot = ori_extension.replace('.','')
-    command = [
-        'ffmpeg',
-        '-i', str(video_path),  # Input file
-        '-map', f'0:{subtitle_stream_index}',  # Map the identified subtitle stream
-        '-c:s', output_ext_no_dot,  # Subtitle format
-        str(output_path)
-    ]
-    # cmd_line is for debugging
-    cmd_line = ' '.join(command)
     
-    if os.path.exists(str(output_path)):
-        if overwrite_file:
-            os.remove(str(output_path))
-        else:
-            print("The output path is already existed. Please delete the file or set the overwrite parameter to TRUE")
-            return False
-    result = subprocess.run(command, text=True, stderr=subprocess.PIPE)
-    
-    if result.returncode != 0:
-        print("Error encountered:")
-        print(result.stderr)
-    
-    elif result.returncode == 0:
-        # print("Extract audio successfully!!!")
+    for sub_index in subtitle_stream_index_list:
+        command = [
+            'ffmpeg',
+            '-i', str(video_path),  # Input file
+            '-map', f'0:{sub_index}',  # Map the identified subtitle stream
+            '-c:s', output_ext_no_dot,  # Subtitle format
+            str(output_path)
+        ]
+        # cmd_line is for debugging
+        cmd_line = ' '.join(command)
         
-        if alarm_done:
-            playsound(alarm_done_path)
+        if os.path.exists(str(output_path)):
+            if overwrite_file:
+                os.remove(str(output_path))
+            else:
+                print("The output path is already existed. Please delete the file or set the overwrite parameter to TRUE")
+                return False
+        result = subprocess.run(command, text=True, stderr=subprocess.PIPE)
+    
+        if result.returncode != 0:
+            print("Error encountered:")
+            print(result.stderr)
+    
+        elif result.returncode == 0:
+            # print("Extract audio successfully!!!")
+            
+            if alarm_done:
+                playsound(alarm_done_path)
 
 
 def language_name_list():
