@@ -115,6 +115,7 @@ def ass_to_df(ass_path: str | Path,
     import pandas as pd
     from pathlib import Path
     import pysubs2
+    from datetime import timedelta, datetime
     import re
 
     # Convert ass_path to a Path object
@@ -138,8 +139,10 @@ def ass_to_df(ass_path: str | Path,
                 # Remove ASS style overrides like {\an8}
                 text = re.sub(r"{.*?}", "", text)
             sentences.append(text)
-            start_times.append(sub.start )  # Convert milliseconds to seconds
-            end_times.append(sub.end )
+            start_time = (datetime.min + timedelta(milliseconds=sub.start)).time()
+            end_time = (datetime.min + timedelta(milliseconds=sub.end)).time()
+            start_times.append(start_time)  # Convert milliseconds to seconds
+            end_times.append(end_time)
 
         # Create a DataFrame
         df = pd.DataFrame({
@@ -300,7 +303,7 @@ def split_1audio_by_subtitle(
     out_audio_ext_dot = out_audio_ext if out_audio_ext[0] == "." else ("." + out_audio_ext)
     out_audio_ext_no_dot = out_audio_ext[1:] if out_audio_ext[0] == "." else ( out_audio_ext)
     
-    subs = vt.srt_to_df(subtitle_path)
+    subs = vt.sub_to_df(subtitle_path)
 
     
     # TODO: write a function input is video/video path & subs/sub path
