@@ -264,8 +264,105 @@ def audio_duration(video_path):
 
     return final_datetime.time()
 
-# Sub
 
+def split_1audio_by_sub_df(
+    video_path: Union[str,Path],
+    subs_df: pd.DataFrame,
+    output_folder,
+    prefix_name = None,
+    out_audio_ext = "wav",
+    alarm_done:bool = False,
+    verbose:int = 1,
+    include_sentence:bool = True
+        ) -> None:
+    # the reason I need to create this function because I want to manipulate time directly in df not in subtitle file
+
+    import time
+    import os
+    from pydub import AudioSegment
+    from playsound import playsound
+    from pathlib import Path
+
+    import video_toolkit as vt
+    import python_wizard as pw
+    import py_string_tool as pst
+    
+    # alarm done path still have an error
+    # took about 1 hr(including testing)
+    # Add feature: input as video_folder_path and subtitle_folder_path, then 
+    # it would automatically know which subttile to use with which video(using SxxExx)
+    
+    # split_audio_by_subtitle
+    if prefix_name is None:
+        prefix_name_in = Path(video_path).stem
+    else:
+        prefix_name_in = str(prefix_name)
+        
+    # with dot and no dots supported
+    # but only tested with no dots out_audio_ext
+    
+    out_audio_ext_dot = out_audio_ext if out_audio_ext[0] == "." else ("." + out_audio_ext)
+    out_audio_ext_no_dot = out_audio_ext[1:] if out_audio_ext[0] == "." else ( out_audio_ext)
+    
+
+    # TODO: write a function input is video/video path & subs/sub path
+    t01 = time.time()
+    video_audio = AudioSegment.from_file(video_path)
+    t02 = time.time()
+    t01_02 = t02-t01
+
+    if verbose in [1]:
+        print("Load video time: ", end = " ")
+        pw.print_time(t01_02)
+    
+    if alarm_done:
+        playsound(alarm_done_path)
+
+    t03 = time.time()
+    video_length = audio_duration(video_audio)
+    # Iterate over subtitle sentences
+    n = subs_df.shape[0]
+    t04 = time.time()
+    for i in range(n):
+        start_time = subs_df.loc[i,'start']
+        end_time = subs_df.loc[i,'end']
+        sentence_text = subs_df.loc[i,'sentence']
+
+        if start_time > video_length:
+            break
+
+        start_time_ms = to_ms(start_time)
+        end_time_ms = to_ms(end_time)
+
+        # Extract audio segment based on timestamps
+        sentence_audio = video_audio[start_time_ms:end_time_ms]
+        
+        num_str = pst.num_format0(i+1,n+1)
+        # Save the audio segment to a file
+        if sentence_text[-1] in [".",","]:
+            sentence_no_dots = sentence_text[:-1]
+        else:
+            sentence_no_dots = sentence_text
+
+        if include_sentence:
+            audio_name = f'{prefix_name_in}_{num_str}_{sentence_no_dots}{out_audio_ext_dot}'
+        else:
+            audio_name = f'{prefix_name_in}_{num_str}{out_audio_ext_dot}'
+        
+        audio_name_clean = pst.clean_filename(audio_name)
+        audio_output = os.path.join(output_folder,audio_name_clean)
+        sentence_audio.export(audio_output, format=out_audio_ext_no_dot)
+    t05 = time.time()
+
+    t04_05 = t05-t04
+    if alarm_done:
+        try:
+            playsound(alarm_done_path)
+        except:
+            pass
+
+
+# Sub
 def split_1audio_by_subtitle(
     video_path: Union[str,Path],
     subtitle_path,
