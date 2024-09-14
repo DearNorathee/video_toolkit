@@ -25,6 +25,147 @@ CODEC_DICT = {'.mp3': "libmp3lame",
 # get_subtitle_index,get_audio_index,get_video_index,_get_media_index,get_subtitle_extension,
 # get_audio_extension,get_video_extension, _get_media_extension
 
+def sub_to_df(sub_path,
+              remove_stopwords=True,
+              stopwords=["♪", "\n", "<i>", "</i>", "<b>", "</b>"]) -> pd.DataFrame:
+    """
+    Convert a subtitle file (.ass or .srt) or multiple subtitle files in a directory to pandas DataFrame(s).
+
+    Parameters
+    ----------
+    sub_path : str or Path
+        The path to the subtitle file or a directory containing subtitle files.
+    remove_stopwords : bool, optional
+        If True, specified stopwords will be removed from the sentences. Default is True.
+    stopwords : list of str, optional
+        A list of stopwords to remove from the sentences. Default is ["♪", "\\n", "<i>", "</i>", "<b>", "</b>"].
+
+    Returns
+    -------
+    pd.DataFrame or list of pd.DataFrame
+        A DataFrame if a single file is processed, or a list of DataFrames if multiple files are processed.
+
+    Notes
+    -----
+    - Determines the file type based on the file extension.
+    - Calls `ass_to_df` if the file is `.ass`, `srt_to_df` if `.srt`.
+    - Raises an error if the file is neither `.ass` nor `.srt`.
+    """
+    from pathlib import Path
+
+    sub_path = Path(sub_path)
+
+    def process_file(file_path):
+        if file_path.suffix.lower() == '.ass':
+            return ass_to_df(file_path, remove_stopwords=remove_stopwords, stopwords=stopwords)
+        elif file_path.suffix.lower() == '.srt':
+            return srt_to_df(file_path, remove_stopwords=remove_stopwords, stopwords=stopwords)
+        else:
+            raise ValueError(f"Unsupported file extension: {file_path.suffix}")
+
+    if sub_path.is_file():
+        # Single file case
+        return process_file(sub_path)
+
+    elif sub_path.is_dir():
+        # Directory containing multiple subtitle files
+        ass_files = list(sub_path.glob('*.ass'))
+        srt_files = list(sub_path.glob('*.srt'))
+        all_files = ass_files + srt_files
+        if not all_files:
+            raise ValueError("No .ass or .srt files found in the directory.")
+        df_list = []
+        for file in all_files:
+            df = process_file(file)
+            df_list.append(df)
+        return df_list
+
+    else:
+        raise ValueError("The provided path must be a .ass or .srt file or a directory containing such files.")
+
+
+def ass_to_df(ass_path: str | Path,
+              remove_stopwords:bool =True,
+              stopwords=["♪", "\n", "<i>", "</i>", "<b>", "</b>"]) -> pd.DataFrame:
+    # almost work
+
+    """
+    Convert an ASS subtitle file or multiple ASS files in a directory to pandas DataFrame(s).
+
+    Parameters
+    ----------
+    ass_path : str or Path
+        The path to the .ass file or a directory containing .ass files.
+    remove_stopwords : bool, optional
+        If True, specified stopwords will be removed from the sentences. Default is True.
+    stopwords : list of str, optional
+        A list of stopwords to remove from the sentences. Default is ["♪", "\\n", "<i>", "</i>", "<b>", "</b>"].
+
+    Returns
+    -------
+    pd.DataFrame or list of pd.DataFrame
+        A DataFrame if a single file is processed, or a list of DataFrames if multiple files are processed.
+
+    Notes
+    -----
+    - Uses pysubs2 to parse .ass files.
+    - Times are converted from milliseconds to seconds.
+    - Handles both single file and directory input.
+    """
+    import pandas as pd
+    from pathlib import Path
+    import pysubs2
+    import re
+
+    # Convert ass_path to a Path object
+    ass_path = Path(ass_path)
+
+    def process_file(file_path):
+        # Read the .ass file using pysubs2
+        subs = pysubs2.load(file_path, encoding="utf-8")
+        sentences = []
+        start_times = []
+        end_times = []
+
+        for sub in subs:
+            text = sub.text
+            # Replace '\N' with a single space
+            text = text.replace("\\N", " ")
+            if remove_stopwords:
+                # Remove specified stopwords
+                for word in stopwords:
+                    text = text.replace(word, "")
+                # Remove ASS style overrides like {\an8}
+                text = re.sub(r"{.*?}", "", text)
+            sentences.append(text)
+            start_times.append(sub.start )  # Convert milliseconds to seconds
+            end_times.append(sub.end )
+
+        # Create a DataFrame
+        df = pd.DataFrame({
+            'sentence': sentences,
+            'start': start_times,
+            'end': end_times
+        })
+        return df
+
+    if ass_path.is_file() and ass_path.suffix == '.ass':
+        # Single file case
+        return process_file(ass_path)
+
+    elif ass_path.is_dir():
+        # Directory containing multiple .ass files
+        ass_files = list(ass_path.glob("*.ass"))
+        df_list = []
+        for file in ass_files:
+            df = process_file(file)
+            df_list.append(df)
+        return df_list
+
+    else:
+        raise ValueError("The provided path must be a .ass file or a directory containing .ass files.")
+
+
 def ms_to_time_text(milliseconds: Union[int, float]) -> str:
     """
     Convert milliseconds to time text format.
@@ -794,7 +935,13 @@ def crop_video(
 
 def srt_to_df(srt_path,
               remove_stopwords=True,
-              stopwords = ["♪","\n","<i>","</i>","<b>","</b>"]):
+              stopwords = ["♪","\n","<i>","</i>","<b>","</b>"]) -> pd.DataFrame:
+    # df = pd.DataFrame({
+        #     'sentence': sentences,
+        #     'start': start_times,
+        #     'end': end_times
+        # })
+
 # remove_newline will remove '\n' from the extracted text
     import pysrt
     import pandas as pd

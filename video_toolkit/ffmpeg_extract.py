@@ -559,6 +559,7 @@ def extract_subtitle(
         n_limit:          int = 150,
         output_prefix:    str = "",
         output_suffix:    str = "",
+        languages: List[str] | None = None,
         alarm_done:       bool = True,
 ):
     input_param = {
@@ -575,6 +576,7 @@ def extract_subtitle(
         n_limit = n_limit,
         output_prefix = output_prefix,
         output_suffix = output_suffix,
+        languages=languages,
         alarm_done = alarm_done,
     )
 
@@ -586,13 +588,18 @@ def extract_sub_1_video(
     output_extension:   Union[str,list] = None,
     alarm_done:         bool = True,
     overwrite_file:     bool = True,
-    language:           Union[str,list, None] = None,
+    languages:           Union[str,list, None] = None,
 
                     ):
+    # write now language input has to be 3-str letter(BigBang FR)
+    # I want to generalize it and work with normal text eg "French" instead of "fre"
+
     # medium tested
-    # ToAdd feature 01: extract mutiple subtitles for many languages
-    # ToAdd feature 02: select only some languages to extract
-    
+    # ToAdd feature 03: create a suffix for langauge 
+    # ToAdd feature 04: generalize it and work with normal text eg "French" instead of "fre"
+
+    # Added 01: extract mutiple subtitles for many languages
+    # Added 02: select only some languages to extract
     
     """
     Extract audio from a video file and save it in the specified format.
@@ -645,7 +652,7 @@ def extract_sub_1_video(
     output_folder_in = Path(output_folder)
 
     video_name = ost.extract_filename(video_path,with_extension=False)
-    ori_extension = get_subtitle_extension(video_path,language)
+    ori_extension = get_subtitle_extension(video_path,languages)
 
     if output_extension is None:
         if output_name is None:
@@ -669,7 +676,7 @@ def extract_sub_1_video(
     
     output_path = output_folder_in / output_name
     # if subtitle_stream_index is a list it would create a bug
-    subtitle_stream_index = get_subtitle_index(video_path,language)
+    subtitle_stream_index = get_subtitle_index(video_path,languages)
     # from extract_1_audio
     # command = [
     #     "ffmpeg",

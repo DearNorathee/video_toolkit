@@ -1,6 +1,11 @@
 from video_toolkit.utils_vt import *
 from pydub import AudioSegment
 
+def test_ass_to_df():
+    filepath = r"H:\D_Video\BigBang French\BigBang FR Season 02\Season 02 Audio\French Subtitle ori Extracted\BigBang FR S02E01_1.ass"
+    actual01 = ass_to_df(filepath)
+    print()
+
 def test_export_audio():
     filepath = r"G:\My Drive\G_Videos\Learn French\Learn to speak French in 5 minutes - a dialogue for beginners!.mp3"
     audio = AudioSegment.from_file(filepath) 
@@ -171,3 +176,5 @@ def test_create_subtitle():
     
     duration = ts02 - ts01 
     print(duration)
+
+test_ass_to_df()
