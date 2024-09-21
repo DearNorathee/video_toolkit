@@ -250,6 +250,7 @@ def _extract_media_setup(
 
         one_output_per_lang: bool = True,
         languages: Union[List[str],None] = None,
+        # errors: Literal["ignore","raise"] = "ignore",
 ) -> None :
     # 
     
@@ -318,43 +319,45 @@ def _extract_media_setup(
             #     input_param_name[1]:extension,
             # }
             extract_1_file_params = inp.input_params(extract_1_file_func)
+            try:
+                if "languages" in extract_1_file_params:
+                    
+                    if pwl.contain_all_items(extract_1_file_params,["one_output_per_lang","progress_bar"]):
+                        extract_1_file_func(
+                            video_path = path_list[i],
+                            output_extension = extension,
+                            output_folder = output_folder,
+                            output_name = output_name,
+                            alarm_done=False,
+                            overwrite_file=overwrite_file,
+                            one_output_per_lang = one_output_per_lang,
+                            languages = languages,
 
-            if "languages" in extract_1_file_params:
-                
-                if pwl.contain_all_items(extract_1_file_params,["one_output_per_lang","progress_bar"]):
-                    extract_1_file_func(
-                        video_path = path_list[i],
-                        output_extension = extension,
-                        output_folder = output_folder,
-                        output_name = output_name,
-                        alarm_done=False,
-                        overwrite_file=overwrite_file,
-                        one_output_per_lang = one_output_per_lang,
-                        languages = languages,
+                            progress_bar = False
 
-                        progress_bar = False
+                            )
+                    else:
+                        extract_1_file_func(
+                            video_path = path_list[i],
+                            output_extension = extension,
+                            output_folder = output_folder,
+                            output_name = output_name,
+                            alarm_done=False,
+                            overwrite_file=overwrite_file,
+                            languages = languages,
 
-                        )
+                            )
                 else:
+
                     extract_1_file_func(
                         video_path = path_list[i],
                         output_extension = extension,
                         output_folder = output_folder,
                         output_name = output_name,
                         alarm_done=False,
-                        overwrite_file=overwrite_file,
-                        languages = languages,
-
-                        )
-            else:
-
-                extract_1_file_func(
-                    video_path = path_list[i],
-                    output_extension = extension,
-                    output_folder = output_folder,
-                    output_name = output_name,
-                    alarm_done=False,
-                    overwrite_file=overwrite_file)
+                        overwrite_file=overwrite_file)
+            except Exception as e:
+                print(f"Error occured at file {filename_list[i]}")
             print(f"extracted {output_name} successfully!!!")
         
         # sys.stdout = original_stdout

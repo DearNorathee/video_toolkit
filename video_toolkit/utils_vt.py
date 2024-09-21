@@ -25,6 +25,25 @@ CODEC_DICT = {'.mp3': "libmp3lame",
 # get_subtitle_index,get_audio_index,get_video_index,_get_media_index,get_subtitle_extension,
 # get_audio_extension,get_video_extension, _get_media_extension
 
+def modify_sub_df_time(sub_df:pd.DataFrame) -> pd.DataFrame:
+    # the result from this is promising
+    # just simply use the next 'start' as 'end' time
+    
+    # it works well already but the next step is the have the cut_off where we will stop if next 'start' and current 'end'
+    # is too long
+    # see S01E01_009 for example
+    
+    from datetime import timedelta
+    sub_df_copy = sub_df.copy()
+    sub_df_copy['start_ori'] = sub_df_copy['start'].copy()
+    sub_df_copy['end_ori'] = sub_df_copy['end'].copy()
+    
+    sub_df_copy['end'] = sub_df_copy['start'].shift(-1)
+    
+    # replace last row with the same value
+    sub_df_copy.loc[sub_df_copy.index[-1], 'end'] = sub_df_copy.loc[sub_df_copy.index[-1], 'end_ori']
+    return sub_df_copy
+
 def sub_to_df(sub_path,
               remove_stopwords=True,
               stopwords=["♪", "\n", "<i>", "</i>", "<b>", "</b>"]) -> pd.DataFrame:
