@@ -26,7 +26,7 @@ CODEC_DICT = {'.mp3': "libmp3lame",
 # get_audio_extension,get_video_extension, _get_media_extension
 
 def modify_sub_df_time(sub_df:pd.DataFrame) -> pd.DataFrame:
-    # the result from this is promising
+    # the result from this is promising. This works well with subttile created by whisper
     # just simply use the next 'start' as 'end' time
     
     # it works well already but the next step is the have the cut_off where we will stop if next 'start' and current 'end'
