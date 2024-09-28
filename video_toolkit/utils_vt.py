@@ -383,7 +383,7 @@ def split_1audio_by_sub_df(
 
 # Sub
 def split_1audio_by_subtitle(
-    video_path: Union[str,Path],
+    video_path: str | Path,
     subtitle_path,
     output_folder,
     prefix_name = None,
@@ -397,11 +397,15 @@ def split_1audio_by_subtitle(
     from pydub import AudioSegment
     from playsound import playsound
     from pathlib import Path
+    import re
 
     import video_toolkit as vt
     import python_wizard as pw
     import py_string_tool as pst
-    
+
+    # Added01: remove the tags in sentence
+    #   eg: '<font face="sans-serif" size="71">Sei o que procurar.</font>' => Sei o que procurar.
+
     # alarm done path still have an error
     # took about 1 hr(including testing)
     # Add feature: input as video_folder_path and subtitle_folder_path, then 
@@ -443,7 +447,14 @@ def split_1audio_by_subtitle(
     for i in range(n):
         start_time = subs.loc[i,'start']
         end_time = subs.loc[i,'end']
+
+        PATTERN_TO_REMOVE = [r'</?font[^>]*>']
+
         sentence_text = subs.loc[i,'sentence']
+
+        sentence_text_cleaned = sentence_text
+        for pattern in PATTERN_TO_REMOVE:
+            sentence_text_cleaned = re.sub(pattern, '', sentence_text_cleaned)
 
         if start_time > video_length:
             break
@@ -456,10 +467,10 @@ def split_1audio_by_subtitle(
         
         num_str = pst.num_format0(i+1,n+1)
         # Save the audio segment to a file
-        if sentence_text[-1] in [".",","]:
-            sentence_no_dots = sentence_text[:-1]
+        if sentence_text_cleaned[-1] in [".",","]:
+            sentence_no_dots = sentence_text_cleaned[:-1]
         else:
-            sentence_no_dots = sentence_text
+            sentence_no_dots = sentence_text_cleaned
 
         if include_sentence:
             audio_name = f'{prefix_name_in}_{num_str}_{sentence_no_dots}{out_audio_ext_dot}'
