@@ -1,3 +1,7 @@
 video_toolkit/__pycache__/utils_vt.cpython-311.pyc
 *.pyc
 video_toolkit/__pycache__/__init__.cpython-311.pyc
+video_toolkit/__pycache__/utils_vt.cpython-39.pyc
+# Ignore __pycache__ directories (where .pyc files are stored)
+__pycache__/
+**/*.pyc
