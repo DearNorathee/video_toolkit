@@ -15,5 +15,5 @@ ffmpeg
 fuzzywuzzy
 pysubs2
 
-[torch]
+[full]
 torch>=1.0

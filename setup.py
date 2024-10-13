@@ -4,7 +4,7 @@ setup(
     author= "Dear Norathee",
     description="package to help you with extraction of video information eg audio, subtitle",
     name="video_toolkit",
-    version="0.1.2rc2",
+    version="0.1.2",
     packages=find_packages(),
     license="MIT",
     install_requires=[
@@ -30,7 +30,7 @@ setup(
                       ],
     python_requires='>=3.10.0',
     extras_require={
-        'torch': ['torch>=1.0']  # Optional torch dependency
+        'full': ['torch>=1.0']  # Optional torch dependency
     },
     
 
