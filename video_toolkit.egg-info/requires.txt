@@ -13,3 +13,7 @@ pycountry
 lingtrain_aligner
 ffmpeg
 fuzzywuzzy
+pysubs2
+
+[torch]
+torch>=1.0

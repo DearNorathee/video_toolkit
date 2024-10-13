@@ -4,7 +4,7 @@ setup(
     author= "Dear Norathee",
     description="package to help you with extraction of video information eg audio, subtitle",
     name="video_toolkit",
-    version="0.1.2rc1",
+    version="0.1.2rc2",
     packages=find_packages(),
     license="MIT",
     install_requires=[
@@ -25,8 +25,13 @@ setup(
         "lingtrain_aligner",
         "ffmpeg",
         "fuzzywuzzy",
+        "pysubs2"
                       
                       ],
+    python_requires='>=3.10.0',
+    extras_require={
+        'torch': ['torch>=1.0']  # Optional torch dependency
+    },
     
 
 )

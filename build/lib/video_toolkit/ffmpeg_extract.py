@@ -250,6 +250,7 @@ def _extract_media_setup(
 
         one_output_per_lang: bool = True,
         languages: Union[List[str],None] = None,
+        # errors: Literal["ignore","raise"] = "ignore",
 ) -> None :
     # 
     
@@ -318,43 +319,45 @@ def _extract_media_setup(
             #     input_param_name[1]:extension,
             # }
             extract_1_file_params = inp.input_params(extract_1_file_func)
+            try:
+                if "languages" in extract_1_file_params:
+                    
+                    if pwl.contain_all_items(extract_1_file_params,["one_output_per_lang","progress_bar"]):
+                        extract_1_file_func(
+                            video_path = path_list[i],
+                            output_extension = extension,
+                            output_folder = output_folder,
+                            output_name = output_name,
+                            alarm_done=False,
+                            overwrite_file=overwrite_file,
+                            one_output_per_lang = one_output_per_lang,
+                            languages = languages,
 
-            if "languages" in extract_1_file_params:
-                
-                if pwl.contain_all_items(extract_1_file_params,["one_output_per_lang","progress_bar"]):
-                    extract_1_file_func(
-                        video_path = path_list[i],
-                        output_extension = extension,
-                        output_folder = output_folder,
-                        output_name = output_name,
-                        alarm_done=False,
-                        overwrite_file=overwrite_file,
-                        one_output_per_lang = one_output_per_lang,
-                        languages = languages,
+                            progress_bar = False
 
-                        progress_bar = False
+                            )
+                    else:
+                        extract_1_file_func(
+                            video_path = path_list[i],
+                            output_extension = extension,
+                            output_folder = output_folder,
+                            output_name = output_name,
+                            alarm_done=False,
+                            overwrite_file=overwrite_file,
+                            languages = languages,
 
-                        )
+                            )
                 else:
+
                     extract_1_file_func(
                         video_path = path_list[i],
                         output_extension = extension,
                         output_folder = output_folder,
                         output_name = output_name,
                         alarm_done=False,
-                        overwrite_file=overwrite_file,
-                        languages = languages,
-
-                        )
-            else:
-
-                extract_1_file_func(
-                    video_path = path_list[i],
-                    output_extension = extension,
-                    output_folder = output_folder,
-                    output_name = output_name,
-                    alarm_done=False,
-                    overwrite_file=overwrite_file)
+                        overwrite_file=overwrite_file)
+            except Exception as e:
+                print(f"Error occured at file {filename_list[i]}")
             print(f"extracted {output_name} successfully!!!")
         
         # sys.stdout = original_stdout
@@ -528,7 +531,7 @@ def get_subtitle_extension(media_path, language = None, file_extension = None):
 
 def _get_media_index(media_path, media, language = None, file_extension = None):
     
-    selected_media = get_metadata(media_path, media, language = None, file_extension = None)
+    selected_media = get_metadata(media_path, media, language = language, file_extension = file_extension)
     idx_list = selected_media.index.tolist()
     # return None if media is not found
     if len(idx_list) == 0:
@@ -559,6 +562,7 @@ def extract_subtitle(
         n_limit:          int = 150,
         output_prefix:    str = "",
         output_suffix:    str = "",
+        languages: List[str] | None = None,
         alarm_done:       bool = True,
 ):
     input_param = {
@@ -575,6 +579,7 @@ def extract_subtitle(
         n_limit = n_limit,
         output_prefix = output_prefix,
         output_suffix = output_suffix,
+        languages=languages,
         alarm_done = alarm_done,
     )
 
@@ -586,13 +591,18 @@ def extract_sub_1_video(
     output_extension:   Union[str,list] = None,
     alarm_done:         bool = True,
     overwrite_file:     bool = True,
-    language:           Union[str,list, None] = None,
+    languages:           Union[str,list, None] = None,
 
                     ):
+    # write now language input has to be 3-str letter(BigBang FR)
+    # I want to generalize it and work with normal text eg "French" instead of "fre"
+
     # medium tested
-    # ToAdd feature 01: extract mutiple subtitles for many languages
-    # ToAdd feature 02: select only some languages to extract
-    
+    # ToAdd feature 03: create a suffix for langauge 
+    # ToAdd feature 04: generalize it and work with normal text eg "French" instead of "fre"
+
+    # Added 01: extract mutiple subtitles for many languages
+    # Added 02: select only some languages to extract
     
     """
     Extract audio from a video file and save it in the specified format.
@@ -635,7 +645,7 @@ def extract_sub_1_video(
     extract_1_audio("input_video.mp4", "output_folder", "output_audio", file_extension=".wav")
     
     """
-    
+    import os_toolkit as ost
     from pathlib import Path
     import subprocess
     from playsound import playsound
@@ -645,7 +655,7 @@ def extract_sub_1_video(
     output_folder_in = Path(output_folder)
 
     video_name = ost.extract_filename(video_path,with_extension=False)
-    ori_extension = get_subtitle_extension(video_path,language)
+    ori_extension = get_subtitle_extension(video_path,languages)
 
     if output_extension is None:
         if output_name is None:
@@ -668,8 +678,8 @@ def extract_sub_1_video(
             output_name += output_extension
     
     output_path = output_folder_in / output_name
-    
-    subtitle_stream_index = get_subtitle_index(video_path,language)
+    # if subtitle_stream_index is a list it would create a bug
+    subtitle_stream_index = get_subtitle_index(video_path,languages)
     # from extract_1_audio
     # command = [
     #     "ffmpeg",
@@ -679,37 +689,47 @@ def extract_sub_1_video(
     #     "-q:a", "0",
     #     str(output_path)
     # ]
+    subtitle_stream_index_list = list(subtitle_stream_index) if isinstance(subtitle_stream_index, list) else [subtitle_stream_index]
+
     if output_extension:
         output_ext_no_dot = output_extension.replace('.','')
     else:
         output_ext_no_dot = ori_extension.replace('.','')
-    command = [
-        'ffmpeg',
-        '-i', str(video_path),  # Input file
-        '-map', f'0:{subtitle_stream_index}',  # Map the identified subtitle stream
-        '-c:s', output_ext_no_dot,  # Subtitle format
-        str(output_path)
-    ]
-    # cmd_line is for debugging
-    cmd_line = ' '.join(command)
     
-    if os.path.exists(str(output_path)):
-        if overwrite_file:
-            os.remove(str(output_path))
-        else:
-            print("The output path is already existed. Please delete the file or set the overwrite parameter to TRUE")
-            return False
-    result = subprocess.run(command, text=True, stderr=subprocess.PIPE)
-    
-    if result.returncode != 0:
-        print("Error encountered:")
-        print(result.stderr)
-    
-    elif result.returncode == 0:
-        # print("Extract audio successfully!!!")
+    for i, sub_index in enumerate(subtitle_stream_index_list):
+
+        curr_output_path = ost.add_suffix_to_name(output_path,i+1)
+
+        command = [
+            'ffmpeg',
+            '-i', str(video_path),  # Input file
+            '-map', f'0:{sub_index}',  # Map the identified subtitle stream
+            '-c:s', output_ext_no_dot,  # Subtitle format
+            str(curr_output_path)
+        ]
+        # cmd_line is for debugging
+        cmd_line = ' '.join(command)
         
-        if alarm_done:
-            playsound(alarm_done_path)
+        if os.path.exists(str(curr_output_path)):
+            if overwrite_file:
+                os.remove(str(curr_output_path))
+            else:
+                print("The output path is already existed. Please delete the file or set the overwrite parameter to TRUE")
+                return False
+        result = subprocess.run(command, text=True, stderr=subprocess.PIPE)
+    
+        if result.returncode != 0:
+            print("Error encountered:")
+            print(result.stderr)
+    
+        elif result.returncode == 0:
+            # print("Extract audio successfully!!!")
+            
+            if alarm_done:
+                try:
+                    playsound(alarm_done_path)
+                except:
+                    pass
 
 
 def language_name_list():

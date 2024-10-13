@@ -25,6 +25,194 @@ CODEC_DICT = {'.mp3': "libmp3lame",
 # get_subtitle_index,get_audio_index,get_video_index,_get_media_index,get_subtitle_extension,
 # get_audio_extension,get_video_extension, _get_media_extension
 
+def modify_sub_df_time(sub_df:pd.DataFrame) -> pd.DataFrame:
+    # the result from this is promising. This works well with subttile created by whisper
+    # just simply use the next 'start' as 'end' time
+    
+    # it works well already but the next step is the have the cut_off where we will stop if next 'start' and current 'end'
+    # is too long
+    # see S01E01_009 for example
+    
+    from datetime import timedelta
+    sub_df_copy = sub_df.copy()
+    sub_df_copy['start_ori'] = sub_df_copy['start'].copy()
+    sub_df_copy['end_ori'] = sub_df_copy['end'].copy()
+    
+    sub_df_copy['end'] = sub_df_copy['start'].shift(-1)
+    
+    # replace last row with the same value
+    sub_df_copy.loc[sub_df_copy.index[-1], 'end'] = sub_df_copy.loc[sub_df_copy.index[-1], 'end_ori']
+    return sub_df_copy
+
+def sub_to_df(sub_path,
+              remove_stopwords=True,
+              stopwords=["♪", "\n", "<i>", "</i>", "<b>", "</b>"]) -> pd.DataFrame:
+    """
+    Convert a subtitle file (.ass or .srt) or multiple subtitle files in a directory to pandas DataFrame(s).
+
+    Parameters
+    ----------
+    sub_path : str or Path
+        The path to the subtitle file or a directory containing subtitle files.
+    remove_stopwords : bool, optional
+        If True, specified stopwords will be removed from the sentences. Default is True.
+    stopwords : list of str, optional
+        A list of stopwords to remove from the sentences. Default is ["♪", "\\n", "<i>", "</i>", "<b>", "</b>"].
+
+    Returns
+    -------
+    pd.DataFrame or list of pd.DataFrame
+        A DataFrame if a single file is processed, or a list of DataFrames if multiple files are processed.
+
+    Notes
+    -----
+    - Determines the file type based on the file extension.
+    - Calls `ass_to_df` if the file is `.ass`, `srt_to_df` if `.srt`.
+    - Raises an error if the file is neither `.ass` nor `.srt`.
+    """
+    from pathlib import Path
+
+    sub_path = Path(sub_path)
+
+    def process_file(file_path):
+        if file_path.suffix.lower() == '.ass':
+            return ass_to_df(file_path, remove_stopwords=remove_stopwords, stopwords=stopwords)
+        elif file_path.suffix.lower() == '.srt':
+            return srt_to_df(file_path, remove_stopwords=remove_stopwords, stopwords=stopwords)
+        else:
+            raise ValueError(f"Unsupported file extension: {file_path.suffix}")
+
+    if sub_path.is_file():
+        # Single file case
+        return process_file(sub_path)
+
+    elif sub_path.is_dir():
+        # Directory containing multiple subtitle files
+        ass_files = list(sub_path.glob('*.ass'))
+        srt_files = list(sub_path.glob('*.srt'))
+        all_files = ass_files + srt_files
+        if not all_files:
+            raise ValueError("No .ass or .srt files found in the directory.")
+        df_list = []
+        for file in all_files:
+            df = process_file(file)
+            df_list.append(df)
+        return df_list
+
+    else:
+        raise ValueError("The provided path must be a .ass or .srt file or a directory containing such files.")
+
+
+def ass_to_df(ass_path: str | Path,
+              remove_stopwords:bool =True,
+              stopwords=["♪", "\n", "<i>", "</i>", "<b>", "</b>"]) -> pd.DataFrame:
+    # almost work
+
+    """
+    Convert an ASS subtitle file or multiple ASS files in a directory to pandas DataFrame(s).
+
+    Parameters
+    ----------
+    ass_path : str or Path
+        The path to the .ass file or a directory containing .ass files.
+    remove_stopwords : bool, optional
+        If True, specified stopwords will be removed from the sentences. Default is True.
+    stopwords : list of str, optional
+        A list of stopwords to remove from the sentences. Default is ["♪", "\\n", "<i>", "</i>", "<b>", "</b>"].
+
+    Returns
+    -------
+    pd.DataFrame or list of pd.DataFrame
+        A DataFrame if a single file is processed, or a list of DataFrames if multiple files are processed.
+
+    Notes
+    -----
+    - Uses pysubs2 to parse .ass files.
+    - Times are converted from milliseconds to seconds.
+    - Handles both single file and directory input.
+    """
+    import pandas as pd
+    from pathlib import Path
+    import pysubs2
+    from datetime import timedelta, datetime
+    import re
+
+    # Convert ass_path to a Path object
+    ass_path = Path(ass_path)
+
+    def process_file(file_path):
+        # Read the .ass file using pysubs2
+        subs = pysubs2.load(file_path, encoding="utf-8")
+        sentences = []
+        start_times = []
+        end_times = []
+
+        for sub in subs:
+            text = sub.text
+            # Replace '\N' with a single space
+            text = text.replace("\\N", " ")
+            if remove_stopwords:
+                # Remove specified stopwords
+                for word in stopwords:
+                    text = text.replace(word, "")
+                # Remove ASS style overrides like {\an8}
+                text = re.sub(r"{.*?}", "", text)
+            sentences.append(text)
+            start_time = (datetime.min + timedelta(milliseconds=sub.start)).time()
+            end_time = (datetime.min + timedelta(milliseconds=sub.end)).time()
+            start_times.append(start_time)  # Convert milliseconds to seconds
+            end_times.append(end_time)
+
+        # Create a DataFrame
+        df = pd.DataFrame({
+            'sentence': sentences,
+            'start': start_times,
+            'end': end_times
+        })
+        return df
+
+    if ass_path.is_file() and ass_path.suffix == '.ass':
+        # Single file case
+        return process_file(ass_path)
+
+    elif ass_path.is_dir():
+        # Directory containing multiple .ass files
+        ass_files = list(ass_path.glob("*.ass"))
+        df_list = []
+        for file in ass_files:
+            df = process_file(file)
+            df_list.append(df)
+        return df_list
+
+    else:
+        raise ValueError("The provided path must be a .ass file or a directory containing .ass files.")
+
+
+def ms_to_time_text(milliseconds: Union[int, float]) -> str:
+    """
+    Convert milliseconds to time text format.
+
+    Args:
+    milliseconds (Union[int, float]): Time in milliseconds.
+
+    Returns:
+    str: Time in format "hr.min.sec" or "min.sec".
+
+    Examples:
+    272000 => "4.32" (4 min 32 sec)
+    6032000 => "1.40.32" (1 hr 40 min 32 sec)
+    """
+    if not isinstance(milliseconds, (int, float)):
+        raise ValueError("Input must be an integer or float representing milliseconds.")
+
+    total_seconds = int(milliseconds / 1000)
+    hours, remainder = divmod(total_seconds, 3600)
+    minutes, seconds = divmod(remainder, 60)
+
+    if hours > 0:
+        return f"{hours}.{minutes:02d}.{seconds:02d}"
+    else:
+        return f"{minutes}.{seconds:02d}"
 
 def text_to_milisecond(time_text:Union[str,int,float],delimiter:str = ".") -> Union[int,float]:
     """
@@ -95,11 +283,10 @@ def audio_duration(video_path):
 
     return final_datetime.time()
 
-# Sub
 
-def split_1audio_by_subtitle(
+def split_1audio_by_sub_df(
     video_path: Union[str,Path],
-    subtitle_path,
+    subs_df: pd.DataFrame,
     output_folder,
     prefix_name = None,
     out_audio_ext = "wav",
@@ -107,6 +294,8 @@ def split_1audio_by_subtitle(
     verbose:int = 1,
     include_sentence:bool = True
         ) -> None:
+    # the reason I need to create this function because I want to manipulate time directly in df not in subtitle file
+
     import time
     import os
     from pydub import AudioSegment
@@ -134,7 +323,107 @@ def split_1audio_by_subtitle(
     out_audio_ext_dot = out_audio_ext if out_audio_ext[0] == "." else ("." + out_audio_ext)
     out_audio_ext_no_dot = out_audio_ext[1:] if out_audio_ext[0] == "." else ( out_audio_ext)
     
-    subs = vt.srt_to_df(subtitle_path)
+
+    # TODO: write a function input is video/video path & subs/sub path
+    t01 = time.time()
+    video_audio = AudioSegment.from_file(video_path)
+    t02 = time.time()
+    t01_02 = t02-t01
+
+    if verbose in [1]:
+        print("Load video time: ", end = " ")
+        pw.print_time(t01_02)
+    
+    if alarm_done:
+        playsound(alarm_done_path)
+
+    t03 = time.time()
+    video_length = audio_duration(video_audio)
+    # Iterate over subtitle sentences
+    n = subs_df.shape[0]
+    t04 = time.time()
+    for i in range(n):
+        start_time = subs_df.loc[i,'start']
+        end_time = subs_df.loc[i,'end']
+        sentence_text = subs_df.loc[i,'sentence']
+
+        if start_time > video_length:
+            break
+
+        start_time_ms = to_ms(start_time)
+        end_time_ms = to_ms(end_time)
+
+        # Extract audio segment based on timestamps
+        sentence_audio = video_audio[start_time_ms:end_time_ms]
+        
+        num_str = pst.num_format0(i+1,n+1)
+        # Save the audio segment to a file
+        if sentence_text[-1] in [".",","]:
+            sentence_no_dots = sentence_text[:-1]
+        else:
+            sentence_no_dots = sentence_text
+
+        if include_sentence:
+            audio_name = f'{prefix_name_in}_{num_str}_{sentence_no_dots}{out_audio_ext_dot}'
+        else:
+            audio_name = f'{prefix_name_in}_{num_str}{out_audio_ext_dot}'
+        
+        audio_name_clean = pst.clean_filename(audio_name)
+        audio_output = os.path.join(output_folder,audio_name_clean)
+        sentence_audio.export(audio_output, format=out_audio_ext_no_dot)
+    t05 = time.time()
+
+    t04_05 = t05-t04
+    if alarm_done:
+        try:
+            playsound(alarm_done_path)
+        except:
+            pass
+
+
+# Sub
+def split_1audio_by_subtitle(
+    video_path: str | Path,
+    subtitle_path,
+    output_folder,
+    prefix_name = None,
+    out_audio_ext = "wav",
+    alarm_done:bool = False,
+    verbose:int = 1,
+    include_sentence:bool = True
+        ) -> None:
+    import time
+    import os
+    from pydub import AudioSegment
+    from playsound import playsound
+    from pathlib import Path
+    import re
+
+    import video_toolkit as vt
+    import python_wizard as pw
+    import py_string_tool as pst
+
+    # Added01: remove the tags in sentence
+    #   eg: '<font face="sans-serif" size="71">Sei o que procurar.</font>' => Sei o que procurar.
+
+    # alarm done path still have an error
+    # took about 1 hr(including testing)
+    # Add feature: input as video_folder_path and subtitle_folder_path, then 
+    # it would automatically know which subttile to use with which video(using SxxExx)
+    
+    # split_audio_by_subtitle
+    if prefix_name is None:
+        prefix_name_in = Path(video_path).stem
+    else:
+        prefix_name_in = str(prefix_name)
+        
+    # with dot and no dots supported
+    # but only tested with no dots out_audio_ext
+    
+    out_audio_ext_dot = out_audio_ext if out_audio_ext[0] == "." else ("." + out_audio_ext)
+    out_audio_ext_no_dot = out_audio_ext[1:] if out_audio_ext[0] == "." else ( out_audio_ext)
+    
+    subs = vt.sub_to_df(subtitle_path)
 
     
     # TODO: write a function input is video/video path & subs/sub path
@@ -158,7 +447,14 @@ def split_1audio_by_subtitle(
     for i in range(n):
         start_time = subs.loc[i,'start']
         end_time = subs.loc[i,'end']
+
+        PATTERN_TO_REMOVE = [r'</?font[^>]*>']
+
         sentence_text = subs.loc[i,'sentence']
+
+        sentence_text_cleaned = sentence_text
+        for pattern in PATTERN_TO_REMOVE:
+            sentence_text_cleaned = re.sub(pattern, '', sentence_text_cleaned)
 
         if start_time > video_length:
             break
@@ -171,10 +467,10 @@ def split_1audio_by_subtitle(
         
         num_str = pst.num_format0(i+1,n+1)
         # Save the audio segment to a file
-        if sentence_text[-1] in [".",","]:
-            sentence_no_dots = sentence_text[:-1]
+        if sentence_text_cleaned[-1] in [".",","]:
+            sentence_no_dots = sentence_text_cleaned[:-1]
         else:
-            sentence_no_dots = sentence_text
+            sentence_no_dots = sentence_text_cleaned
 
         if include_sentence:
             audio_name = f'{prefix_name_in}_{num_str}_{sentence_no_dots}{out_audio_ext_dot}'
@@ -769,7 +1065,13 @@ def crop_video(
 
 def srt_to_df(srt_path,
               remove_stopwords=True,
-              stopwords = ["♪","\n","<i>","</i>","<b>","</b>"]):
+              stopwords = ["♪","\n","<i>","</i>","<b>","</b>"]) -> pd.DataFrame:
+    # df = pd.DataFrame({
+        #     'sentence': sentences,
+        #     'start': start_times,
+        #     'end': end_times
+        # })
+
 # remove_newline will remove '\n' from the extracted text
     import pysrt
     import pandas as pd
