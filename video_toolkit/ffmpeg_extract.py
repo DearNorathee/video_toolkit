@@ -83,6 +83,7 @@ def extract_audio_1file(
         languages: Union[List[str],None] = None,
         
         progress_bar:bool = True,
+        encoding = "utf-8-sig",
                     ) -> None:
     # time spend 5 hr
     # this support multiple output_extension
@@ -221,7 +222,7 @@ def extract_audio_1file(
                     else:
                         print("\nThe output path is already existed. Please delete the file or set the overwrite parameter to TRUE")
                         return False
-                result = subprocess.run(command, text=True, stderr=subprocess.PIPE)
+                result = subprocess.run(command, text=True, stderr=subprocess.PIPE,encoding=encoding)
                 
                 if result.returncode != 0:
                     print(f"\nError encountered: {curr_output_name}")
@@ -401,7 +402,7 @@ def get_metadata2(media_path):
     
     return streams_info
 
-def get_all_metadata(media_path):
+def get_all_metadata(media_path,encoding = "utf-8-sig"):
     import subprocess
     import json    
     import pandas as pd
@@ -429,7 +430,7 @@ def get_all_metadata(media_path):
         media_path
     ]
     
-    result = subprocess.run(command, check=True, stdout=subprocess.PIPE, text=True)
+    result = subprocess.run(command, check=True, stdout=subprocess.PIPE, text=True,encoding=encoding)
     metadata = json.loads(result.stdout)
     
     # Initialize lists to hold data for each column
@@ -788,7 +789,8 @@ def extract_1_audio(video_path:     Union[str,Path],
                     output_name:    Union[str,Path], 
                     file_extension: Union[str,list] = ".mp3",
                     alarm_done:     bool = True,
-                    overwrite_file: bool = True
+                    overwrite_file: bool = True,
+                    encoding='utf-8-sig'
                     ):
     # Additional feature 1: output both .wav & .mp3
     
@@ -853,7 +855,7 @@ def extract_1_audio(video_path:     Union[str,Path],
                 file_extension = "." + file_extension
             output_name += file_extension
     
-    output_path = output_folder / output_name
+    output_path = output_folder_in / output_name
     
 
     
@@ -873,7 +875,7 @@ def extract_1_audio(video_path:     Union[str,Path],
         else:
             print("The output path is already existed. Please delete the file or set the overwrite parameter to TRUE")
             return False
-    result = subprocess.run(command, text=True, stderr=subprocess.PIPE)
+    result = subprocess.run(command, text=True, stderr=subprocess.PIPE,encoding=encoding)
     
     if result.returncode != 0:
         print("Error encountered:")
