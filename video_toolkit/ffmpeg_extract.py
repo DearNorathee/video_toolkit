@@ -222,7 +222,11 @@ def extract_audio_1file(
                     else:
                         print("\nThe output path is already existed. Please delete the file or set the overwrite parameter to TRUE")
                         return False
-                result = subprocess.run(command, text=True, stderr=subprocess.PIPE,encoding=encoding)
+                try:
+                    result = subprocess.run(command, text=True, stderr=subprocess.PIPE,encoding=encoding)
+                except UnicodeDecodeError:
+                    raise UnicodeDecodeError(f"\nError encountered: {curr_output_name}. Please change the encoding parameter to ensure that the function works properly.")
+
                 
                 if result.returncode != 0:
                     print(f"\nError encountered: {curr_output_name}")
@@ -374,10 +378,11 @@ def _extract_media_setup(
     return filename_list
 
 
-def get_metadata2(media_path):
-    import subprocess
-    import json
-    # 80% from GPT4
+def get_metadata2(
+        media_path: Path | str,
+        encoding = "utf-8-sig",
+        ):
+
     """
     Get the index of the first subtitle stream in the video file.
     
@@ -387,14 +392,20 @@ def get_metadata2(media_path):
     Returns:
     - Index of the first subtitle stream, or None if no subtitle stream is found.
     """
+
+    import subprocess
+    import json
+    # 80% from GPT4
     command = [
         'ffprobe',
         '-v', 'quiet',
         '-show_streams',
         media_path
     ]
-    
-    result = subprocess.run(command, check=True, stdout=subprocess.PIPE, text=True)
+    try:
+        result = subprocess.run(command, check=True, stdout=subprocess.PIPE, text=True,encoding=encoding)
+    except UnicodeDecodeError:
+        raise UnicodeDecodeError(f"\nError encountered. Please change the encoding parameter to ensure that the function works properly.")
     streams_info_raw = json.loads(result.stdout)
     
     streams_info = [stream for stream  in streams_info_raw['streams']]
@@ -402,7 +413,9 @@ def get_metadata2(media_path):
     
     return streams_info
 
-def get_all_metadata(media_path,encoding = "utf-8-sig"):
+def get_all_metadata(
+        media_path: Path | str,
+        encoding:str = "utf-8-sig"):
     import subprocess
     import json    
     import pandas as pd
@@ -427,10 +440,13 @@ def get_all_metadata(media_path,encoding = "utf-8-sig"):
         '-print_format', 'json',
         '-show_streams',
         '-show_format',
-        media_path
+        str(media_path)
     ]
-    
-    result = subprocess.run(command, check=True, stdout=subprocess.PIPE, text=True,encoding=encoding)
+    try:
+        result = subprocess.run(command, check=True, stdout=subprocess.PIPE, text=True,encoding=encoding)
+    except UnicodeDecodeError:
+        raise UnicodeDecodeError(f"\nError encountered. Please change the encoding parameter to ensure that the function works properly.")
+
     metadata = json.loads(result.stdout)
     
     # Initialize lists to hold data for each column
@@ -593,7 +609,7 @@ def extract_sub_1_video(
     alarm_done:         bool = True,
     overwrite_file:     bool = True,
     languages:           Union[str,list, None] = None,
-
+    encoding:str = "utf-8-sig"
                     ):
     # write now language input has to be 3-str letter(BigBang FR)
     # I want to generalize it and work with normal text eg "French" instead of "fre"
@@ -717,7 +733,10 @@ def extract_sub_1_video(
             else:
                 print("The output path is already existed. Please delete the file or set the overwrite parameter to TRUE")
                 return False
-        result = subprocess.run(command, text=True, stderr=subprocess.PIPE)
+        try:
+            result = subprocess.run(command, text=True, stderr=subprocess.PIPE, encoding=encoding)
+        except UnicodeDecodeError:
+            raise UnicodeDecodeError(f"\nError encountered. Please change the encoding parameter to ensure that the function works properly.")
     
         if result.returncode != 0:
             print("Error encountered:")
@@ -875,8 +894,11 @@ def extract_1_audio(video_path:     Union[str,Path],
         else:
             print("The output path is already existed. Please delete the file or set the overwrite parameter to TRUE")
             return False
-    result = subprocess.run(command, text=True, stderr=subprocess.PIPE,encoding=encoding)
-    
+    try:
+        result = subprocess.run(command, text=True, stderr=subprocess.PIPE,encoding=encoding)
+    except UnicodeDecodeError:
+        raise UnicodeDecodeError(f"\nError encountered. Please change the encoding parameter to ensure that the function works properly.")
+
     if result.returncode != 0:
         print("Error encountered:")
         print(result.stderr)
