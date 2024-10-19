@@ -25,7 +25,7 @@ def test_split_audio_by_sub():
         r"H:\D_Video_Python\Portuguese\The Ark_PT\Whisper base Subtitle PT\The Ark S01E11 PT_PT.srt",
     ]
     main_output_folder = r"H:\D_Video_Python\Portuguese\The Ark_PT\Splited Audio PT"
-    split_audio_by_sub(media_paths=media_paths,sub_paths=sub_paths,output_folder=main_output_folder)
+    split_audio_by_sub(media_paths=media_paths,sub_paths=sub_paths,output_folder=main_output_folder,modify_sub=True)
 
 def test_ass_to_df():
     filepath = r"H:\D_Video\BigBang French\BigBang FR Season 02\Season 02 Audio\French Subtitle ori Extracted\BigBang FR S02E01_1.ass"

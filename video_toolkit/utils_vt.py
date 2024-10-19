@@ -32,38 +32,90 @@ def split_audio_by_sub(
     output_folder: Union[str,Path],
     prefix_name: None|str = None,
     out_audio_ext:str = "wav",
+    include_sentence:bool = True,
     alarm_done:bool = False,
     verbose:int = 1,
     include_sentence:bool = True,
     modify_sub:bool = False,
+    progress_bar:bool = True
         ) -> None:
     import os
+    import os_toolkit as ost
+    from tqdm import tqdm
     """
     signature function
     media_paths can be either audio or video(only audio is tested currently)
-    """
-    # write now support modify_sub as single input
-    if isinstance(media_paths,list):
-        len_media_paths = len(media_paths)
-        len_sub_paths = len(sub_paths)
-        if len_media_paths != len_sub_paths:
-            raise ValueError(f"Please check length of video_paths and sub_paths. They should be the same.\n Currently video_paths has {len_media_paths} and sub_paths has {len_sub_paths}")
 
-        for i in range(len_media_paths):
-            curr_media_path = str(media_paths[i])
-            curr_sub_path = str(sub_paths[i])
-            media_name = curr_media_path.split("\\")[-1]
-            curr_output_folder = output_folder + "/" + media_name
-            os.makedirs(curr_output_folder,exist_ok=True)
-            split_1audio_by_subtitle(curr_media_path,curr_sub_path,curr_output_folder,
-                                prefix_name = prefix_name,
-                                out_audio_ext = out_audio_ext,
-                                alarm_done = alarm_done,
-                                verbose = verbose,
-                                include_sentence = include_sentence,
-                                modify_sub = modify_sub)
+    should work with 1 single file, 1 single folder, and a list of files now
+    currently only tested just a list of files
+
+    but what if media_paths & sub_paths are sort differently do we have a way to make sure that it picks the right subtitle for the right audio?
+
+    """
+    
+    # convert every input: using_folder_path will print out the audio and sub it uses for splitting
+    media_use_folder_path:bool = False
+    sub_use_folder_path:bool = False
+
+    if isinstance(media_paths,list):
+        media_path_list = list(media_paths)
     elif isinstance(media_paths,(str,Path)):
-        raise NotImplementedError(f"when currently media_paths only work as list as an input.")
+        if ost.is_folder_path(media_paths):
+            media_path_list = ost.get_full_filename(media_paths,extension=[".mp3",".mp4",".wave",".mkv"])
+            media_name_list = ost.get_filename(media_paths,extension=[".mp3",".mp4",".wave",".mkv"])
+            media_use_folder_path = True
+        else:
+            media_path_list = [media_paths]
+
+
+    if isinstance(sub_paths,list):
+        sub_path_list = list(sub_paths)
+    elif isinstance(sub_paths,(str,Path)):
+        if ost.is_folder_path(sub_paths):
+            sub_path_list = ost.get_full_filename(sub_paths,extension=[".ass",".srt"])
+            sub_name_list = ost.get_filename(sub_paths,extension=[".mp3",".mp4",".wave",".mkv"])
+            sub_use_folder_path = True
+        else:
+            sub_path_list = [sub_paths]
+
+    len_media_paths = len(media_path_list)
+    len_sub_paths = len(sub_path_list)
+    if len_media_paths != len_sub_paths:
+        raise ValueError(f"Please check length of video_paths and sub_paths. They should be the same.\n Currently video_paths has {len_media_paths} and sub_paths has {len_sub_paths}")
+    
+    
+    if verbose >= 1:
+        if (media_use_folder_path is True) and (sub_use_folder_path is True):
+            media_sub_names = list(zip(media_name_list,sub_name_list))
+        elif (media_use_folder_path is True) and (sub_use_folder_path is False):
+            media_sub_names = list(zip(media_name_list,sub_path_list))
+        elif (media_use_folder_path is False) and (sub_use_folder_path is False):
+            media_sub_names = list(zip(media_path_list,sub_name_list))
+        else:
+            # this is the case where they will specify manually so you don't have to worry about anything
+            pass
+        for name in media_sub_names:
+            print(name)
+
+    if progress_bar:
+        loop_object = tqdm(range(len_media_paths), desc="Splitting the audio")
+    else:
+        loop_object = range(len_media_paths)
+    
+    for i in loop_object:
+        curr_media_path = Path(str(media_paths[i]))
+        curr_sub_path = Path(str(sub_paths[i]))
+        media_name = curr_media_path.stem
+        curr_output_folder = output_folder + "/" + media_name
+        os.makedirs(curr_output_folder,exist_ok=True)
+        split_1audio_by_subtitle(curr_media_path,curr_sub_path,curr_output_folder,
+                            prefix_name = prefix_name,
+                            out_audio_ext = out_audio_ext,
+                            alarm_done = alarm_done,
+                            verbose = 0,
+                            include_sentence = include_sentence,
+                            modify_sub = modify_sub)
+
         
     
 
