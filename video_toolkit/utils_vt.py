@@ -25,6 +25,49 @@ CODEC_DICT = {'.mp3': "libmp3lame",
 # get_subtitle_index,get_audio_index,get_video_index,_get_media_index,get_subtitle_extension,
 # get_audio_extension,get_video_extension, _get_media_extension
 
+
+def split_audio_by_sub(
+    media_paths: Union[str,Path, list[str|Path]] ,
+    sub_paths: Union[str,Path, list[str|Path]],
+    output_folder: Union[str,Path],
+    prefix_name: None|str = None,
+    out_audio_ext:str = "wav",
+    alarm_done:bool = False,
+    verbose:int = 1,
+    include_sentence:bool = True,
+    modify_sub:bool = False,
+        ) -> None:
+    import os
+    """
+    signature function
+    media_paths can be either audio or video(only audio is tested currently)
+    """
+    # write now support modify_sub as single input
+    if isinstance(media_paths,list):
+        len_media_paths = len(media_paths)
+        len_sub_paths = len(sub_paths)
+        if len_media_paths != len_sub_paths:
+            raise ValueError(f"Please check length of video_paths and sub_paths. They should be the same.\n Currently video_paths has {len_media_paths} and sub_paths has {len_sub_paths}")
+
+        for i in range(len_media_paths):
+            curr_media_path = str(media_paths[i])
+            curr_sub_path = str(sub_paths[i])
+            media_name = curr_media_path.split("\\")[-1]
+            curr_output_folder = output_folder + "/" + media_name
+            os.makedirs(curr_output_folder,exist_ok=True)
+            split_1audio_by_subtitle(curr_media_path,curr_sub_path,curr_output_folder,
+                                prefix_name = prefix_name,
+                                out_audio_ext = out_audio_ext,
+                                alarm_done = alarm_done,
+                                verbose = verbose,
+                                include_sentence = include_sentence,
+                                modify_sub = modify_sub)
+    elif isinstance(media_paths,(str,Path)):
+        raise NotImplementedError(f"when currently media_paths only work as list as an input.")
+        
+    
+
+
 def modify_sub_df_time(sub_df:pd.DataFrame) -> pd.DataFrame:
     # the result from this is promising. This works well with subttile created by whisper
     # just simply use the next 'start' as 'end' time
@@ -251,9 +294,9 @@ def text_to_milisecond(time_text:Union[str,int,float],delimiter:str = ".") -> Un
 
 def clean_subtitle(string:str):
     import re
-    pattern1 = "<.*?>"
+    pattern1 = r"<.*?>"
     
-    pattern2 = "<\/[a-zA-Z]>"
+    pattern2 = r"<\/[a-zA-Z]>"
     
     string1 = re.sub(pattern1, "", string)
     string2 = string1.replace("\n"," ")
