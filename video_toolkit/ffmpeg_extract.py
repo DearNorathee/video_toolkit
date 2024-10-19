@@ -877,8 +877,6 @@ def extract_1_audio(video_path:     Union[str,Path],
     output_path = output_folder_in / output_name
     
 
-    
-    
     command = [
         "ffmpeg",
         "-i", str(video_path),

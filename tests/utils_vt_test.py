@@ -10,7 +10,7 @@ def test_export_audio():
     filepath = r"G:\My Drive\G_Videos\Learn French\Learn to speak French in 5 minutes - a dialogue for beginners!.mp3"
     audio = AudioSegment.from_file(filepath) 
 
-    OUTPUT_FOLDER:str = "G:\My Drive\G_Videos\Learn French\Pydub Export test01"
+    OUTPUT_FOLDER:str = r"G:\My Drive\G_Videos\Learn French\Pydub Export test01"
 
     start_time = 35 * 1000  # Start at 35 seconds
     end_time = (1*60 + 35) * 1000    # End at 1 minute and 35 seconds

@@ -292,7 +292,8 @@ def split_1audio_by_sub_df(
     out_audio_ext = "wav",
     alarm_done:bool = False,
     verbose:int = 1,
-    include_sentence:bool = True
+    include_sentence:bool = True,
+    modify_sub:bool = False,
         ) -> None:
     # the reason I need to create this function because I want to manipulate time directly in df not in subtitle file
 
@@ -340,12 +341,18 @@ def split_1audio_by_sub_df(
     t03 = time.time()
     video_length = audio_duration(video_audio)
     # Iterate over subtitle sentences
-    n = subs_df.shape[0]
+    
+    if modify_sub:
+        subs_df_in = modify_sub_df_time(subs_df_in)
+    else:
+        subs_df_in = subs_df.copy()
+
+    n = subs_df_in.shape[0]
     t04 = time.time()
     for i in range(n):
-        start_time = subs_df.loc[i,'start']
-        end_time = subs_df.loc[i,'end']
-        sentence_text = subs_df.loc[i,'sentence']
+        start_time = subs_df_in.loc[i,'start']
+        end_time = subs_df_in.loc[i,'end']
+        sentence_text = subs_df_in.loc[i,'sentence']
 
         if start_time > video_length:
             break
@@ -390,8 +397,44 @@ def split_1audio_by_subtitle(
     out_audio_ext = "wav",
     alarm_done:bool = False,
     verbose:int = 1,
-    include_sentence:bool = True
+    include_sentence:bool = True,
+    modify_sub:bool = False,
         ) -> None:
+    
+    """
+    Split an audio file into multiple audio files based on a subtitle file.
+
+    Parameters
+    ----------
+    video_path : str or Path
+        Path to the video file.
+    subtitle_path : str or Path
+        Path to the subtitle file.
+    output_folder : str or Path
+        Path to the output folder where the audio files will be saved.
+    prefix_name : str, optional
+        Prefix of the audio file names. If None, the prefix will be the stem of the video file name.
+    out_audio_ext : str, optional
+        File extension of the output audio files. Default is 'wav'.
+    alarm_done : bool, optional
+        If True, play a sound when the function is done. Default is False.
+    verbose : int, optional
+        Verbosity level. If 1, the time taken to load the video and split the audio will be printed.
+    include_sentence : bool, optional
+        If True, include the sentence in the audio file name. Default is True.
+    modify_sub : bool, optional
+        If True, modify the time of subtitle(from whisper)
+
+    Notes
+    -----
+    The subtitle file should be in the format of a pandas DataFrame with columns 'start', 'end', and 'sentence'.
+    The 'start' and 'end' columns should be in the format of a datetime object.
+    The 'sentence' column should be a string.
+
+    The audio files will be saved in the format of {prefix_name}_{num_str}_{sentence_no_dots}{out_audio_ext_dot}
+    where num_str is the number of the audio file and sentence_no_dots is the sentence without any dots.
+    """
+
     import time
     import os
     from pydub import AudioSegment
@@ -423,7 +466,12 @@ def split_1audio_by_subtitle(
     out_audio_ext_dot = out_audio_ext if out_audio_ext[0] == "." else ("." + out_audio_ext)
     out_audio_ext_no_dot = out_audio_ext[1:] if out_audio_ext[0] == "." else ( out_audio_ext)
     
-    subs = vt.sub_to_df(subtitle_path)
+    subs_ori = vt.sub_to_df(subtitle_path)
+
+    if modify_sub:
+        subs = modify_sub_df_time(subs_ori)
+    else:
+        subs = subs_ori.copy()
 
     
     # TODO: write a function input is video/video path & subs/sub path
