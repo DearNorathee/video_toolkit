@@ -35,7 +35,6 @@ def split_audio_by_sub(
     include_sentence:bool = True,
     alarm_done:bool = False,
     verbose:int = 1,
-    include_sentence:bool = True,
     modify_sub:bool = False,
     progress_bar:bool = True
         ) -> None:
@@ -85,17 +84,21 @@ def split_audio_by_sub(
     
     
     if verbose >= 1:
+        should_exit_if = False
         if (media_use_folder_path is True) and (sub_use_folder_path is True):
             media_sub_names = list(zip(media_name_list,sub_name_list))
         elif (media_use_folder_path is True) and (sub_use_folder_path is False):
             media_sub_names = list(zip(media_name_list,sub_path_list))
-        elif (media_use_folder_path is False) and (sub_use_folder_path is False):
+
+        elif (media_use_folder_path is False) and (sub_use_folder_path is True):
             media_sub_names = list(zip(media_path_list,sub_name_list))
         else:
             # this is the case where they will specify manually so you don't have to worry about anything
-            pass
-        for name in media_sub_names:
-            print(name)
+            should_exit_if = True
+
+        if should_exit_if is False:
+            for name in media_sub_names:
+                print(name)
 
     if progress_bar:
         loop_object = tqdm(range(len_media_paths), desc="Splitting the audio")
