@@ -106,10 +106,10 @@ def split_audio_by_sub(
         loop_object = range(len_media_paths)
     
     for i in loop_object:
-        curr_media_path = Path(str(media_paths[i]))
-        curr_sub_path = Path(str(sub_paths[i]))
+        curr_media_path = Path(str(media_path_list[i]))
+        curr_sub_path = Path(str(sub_path_list[i]))
         media_name = curr_media_path.stem
-        curr_output_folder = output_folder + "/" + media_name
+        curr_output_folder = str(output_folder) + "/" + media_name
         os.makedirs(curr_output_folder,exist_ok=True)
         split_1audio_by_subtitle(curr_media_path,curr_sub_path,curr_output_folder,
                             prefix_name = prefix_name,
@@ -120,9 +120,6 @@ def split_audio_by_sub(
                             modify_sub = modify_sub)
 
         
-    
-
-
 def modify_sub_df_time(sub_df:pd.DataFrame) -> pd.DataFrame:
     # the result from this is promising. This works well with subttile created by whisper
     # just simply use the next 'start' as 'end' time
@@ -144,7 +141,7 @@ def modify_sub_df_time(sub_df:pd.DataFrame) -> pd.DataFrame:
 
 def sub_to_df(sub_path,
               remove_stopwords=True,
-              stopwords=["♪", "\n", "<i>", "</i>", "<b>", "</b>"]) -> pd.DataFrame:
+              stopwords=["♪", "\n", "<i>", "</i>", "<b>", "</b>"]) -> pd.DataFrame | List[pd.DataFrame]:
     """
     Convert a subtitle file (.ass or .srt) or multiple subtitle files in a directory to pandas DataFrame(s).
 
@@ -203,7 +200,7 @@ def sub_to_df(sub_path,
 
 def ass_to_df(ass_path: str | Path,
               remove_stopwords:bool =True,
-              stopwords=["♪", "\n", "<i>", "</i>", "<b>", "</b>"]) -> pd.DataFrame:
+              stopwords=["♪", "\n", "<i>", "</i>", "<b>", "</b>"]) -> pd.DataFrame | List[pd.DataFrame]:
     # almost work
 
     """
@@ -441,7 +438,7 @@ def split_1audio_by_sub_df(
     # Iterate over subtitle sentences
     
     if modify_sub:
-        subs_df_in = modify_sub_df_time(subs_df_in)
+        subs_df_in = modify_sub_df_time(subs_df)
     else:
         subs_df_in = subs_df.copy()
 
@@ -450,7 +447,7 @@ def split_1audio_by_sub_df(
     for i in range(n):
         start_time = subs_df_in.loc[i,'start']
         end_time = subs_df_in.loc[i,'end']
-        sentence_text = subs_df_in.loc[i,'sentence']
+        sentence_text:str = str(subs_df_in.loc[i,'sentence'])
 
         if start_time > video_length:
             break
@@ -564,12 +561,12 @@ def split_1audio_by_subtitle(
     out_audio_ext_dot = out_audio_ext if out_audio_ext[0] == "." else ("." + out_audio_ext)
     out_audio_ext_no_dot = out_audio_ext[1:] if out_audio_ext[0] == "." else ( out_audio_ext)
     
-    subs_ori = vt.sub_to_df(subtitle_path)
+    subs_ori: pd.DataFrame = vt.sub_to_df(subtitle_path)
 
     if modify_sub:
-        subs = modify_sub_df_time(subs_ori)
+        subs: pd.DataFrame = modify_sub_df_time(subs_ori)
     else:
-        subs = subs_ori.copy()
+        subs: pd.DataFrame = subs_ori.copy()
 
     
     # TODO: write a function input is video/video path & subs/sub path
@@ -588,8 +585,8 @@ def split_1audio_by_subtitle(
     t03 = time.time()
     video_length = audio_duration(video_audio)
     # Iterate over subtitle sentences
-    n = subs.shape[0]
-    t04 = time.time()
+    n: int = subs.shape[0]
+    t04: float = time.time()
     for i in range(n):
         start_time = subs.loc[i,'start']
         end_time = subs.loc[i,'end']
@@ -677,7 +674,7 @@ def make_1_season_Excel_unaligned(EN_folder_path: Union[str,Path],
     import python_wizard as pw
     import os_toolkit as ost
     
-    en_df = combine_files_1_season(str(EN_folder_path))
+    en_df: pd.DataFrame  = combine_files_1_season(str(EN_folder_path))
     en_df = en_df.add_suffix('_EN')
     # en_df.rename(columns = {'sentence':'sentence_EN',
     #                                 'start':'start_EN',
@@ -771,7 +768,11 @@ def read_sentences_from_excel(file_path, sheet_name, portuguese_col, english_col
     return portuguese_sentences, english_sentences
 
     
-def read_movie_script2(file_path, sheet_name = "Sheet1", portuguese_col = 0, english_col = 1):
+def read_movie_script2(
+        file_path
+        ,sheet_name:str = "Sheet1"
+        ,portuguese_col:int|str = 0
+        ,english_col:int|str = 1):
     # imported from NLP 09_SenMem Pipeline
     # middle tested 
     # dependency: pd_by_column, pd_split_into_dict_df, pd_regex_index
@@ -795,15 +796,15 @@ def read_movie_script2(file_path, sheet_name = "Sheet1", portuguese_col = 0, eng
     
     # If it's the column name eg A, G,H
     
-    data_ori = ds.pd_read_excel(file_path, sheet_name=sheet_name)
+    data_ori = ds.read_excel(file_path, sheet_name=sheet_name)
     # playsound(alarm_path)
     
-    data = ds.pd_by_column(data_ori,[portuguese_col_no, english_col_no])
+    data = ds.by_col(data_ori,[portuguese_col_no, english_col_no])
     
 
     # Function to check if a cell value matches the episode identifier pattern (e.g., S01E01)
     # r'[Ss]\d{2}[Ee]\d{2}' => S01E01
-    df_dict = ds.pd_split_into_dict_df(data,r'[Ss]\d{2}[Ee]\d{2}',0)
+    df_dict = ds.split_into_dict_df(data,r'[Ss]\d{2}[Ee]\d{2}',0)
     # df_dict = pd_split_into_dict_df(data,index_list=episode_start_indices)
     return df_dict
 
@@ -1250,6 +1251,7 @@ def srt_to_df(srt_path,
         return df
     else:
         # many srt's file using folder
+        
         str_file_names = ost.get_full_filename(srt_path,".srt")
         df_list = []
         for str_file_name in str_file_names:
