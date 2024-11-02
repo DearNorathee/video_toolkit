@@ -5,7 +5,7 @@ import sys
 import datetime
 import python_wizard as pw
 import os_toolkit as ost
-import dataframe_short as ds
+# import dataframe_short as ds
 import pkg_resources
 
 import pandas as pd
@@ -593,11 +593,11 @@ def split_1audio_by_subtitle(
 
         PATTERN_TO_REMOVE = [r'</?font[^>]*>']
 
-        sentence_text = subs.loc[i,'sentence']
+        sentence_text = str(subs.loc[i,'sentence'])
 
         sentence_text_cleaned = sentence_text
         for pattern in PATTERN_TO_REMOVE:
-            sentence_text_cleaned = re.sub(pattern, '', sentence_text_cleaned)
+            sentence_text_cleaned: str = re.sub(pattern, '', sentence_text_cleaned)
 
         if start_time > video_length:
             break
@@ -670,6 +670,7 @@ def make_1_season_Excel_unaligned(EN_folder_path: Union[str,Path],
 
     
     import dataframe_short as ds
+    import dataframe_short.move_column as mc
     import video_toolkit as vt
     import python_wizard as pw
     import os_toolkit as ost
@@ -727,9 +728,10 @@ def make_1_season_Excel_unaligned(EN_folder_path: Union[str,Path],
     out_df = out_df.loc[:, ~out_df.columns.duplicated()]
     
     # automatically add .xlsx extension to the file 
-    out_excel_name_in = out_excel_name if ".xlsx" in out_excel_name else (out_excel_name + ".xlsx")
+    out_excel_name_in:str = str(out_excel_name) if ".xlsx" in str(out_excel_name) else (str(out_excel_name) + ".xlsx")
     
-    ds.move_col_front(out_df, "Episode")
+    mc.to_first_col(out_df, "Episode")
+
     
     if output_folder is None:
         out_excel_path = str(out_excel_name_in)
@@ -758,8 +760,9 @@ def read_sentences_from_excel(file_path, sheet_name, portuguese_col, english_col
     :param english_col: Column letter for English sentences.
     :return: Tuple of two lists containing Portuguese and English sentences.
     """
+    import dataframe_short as ds
 
-    df = ds.pd_read_excel(file_path,sheet_name=sheet_name,nrows=nrows,usecols=[portuguese_col,english_col])
+    df: pd.DataFrame = pd.read_excel(file_path,sheet_name=sheet_name,nrows=nrows,usecols=[portuguese_col,english_col])
 
     portuguese_sentences = df.iloc[:,0].tolist()
     english_sentences = df.iloc[:,1].tolist()
@@ -780,6 +783,7 @@ def read_movie_script2(
     import pandas as pd
     import re
     from openpyxl.utils import column_index_from_string
+    import dataframe_short as ds
     
     # Load the dataset from the Excel file
     
@@ -812,9 +816,10 @@ def read_movie_script(file_path, sheet_name, portuguese_col, english_col):
     # the main function that I should use from now on
     # imported from NLP 09_SenMem Pipeline
     from openpyxl.utils import column_index_from_string
-    df = ds.pd_read_excel(file_path, sheet_name=sheet_name)
+    import dataframe_short as ds
+    df: pd.DataFrame = ds.read_excel(file_path, sheet_name=sheet_name)
     # df = pd_by_column(df_ori, [portuguese_col,english_col])
-    import pandas as pd
+    
     """
     Extracts content from a DataFrame based on 'Episode' information.
 
@@ -862,7 +867,7 @@ def read_movie_script(file_path, sheet_name, portuguese_col, english_col):
     # Group by 'season' and 'episode', then iterate over each group
     for (season, episode), group in df.groupby(['season', 'episode']):
         # Create a DataFrame for this group's content
-        content_df = ds.pd_by_column(group, [portuguese_col_no, english_col_no]).reset_index(drop=True)
+        content_df = ds.by_col(group, [portuguese_col_no, english_col_no]).reset_index(drop=True)
         
         # Append season, episode, and content DataFrame to the list
         data.append({'season': season, 'episode': episode, 'content': content_df})
@@ -931,7 +936,9 @@ def align_1_season(excel_1_season_script,
     import time
     from playsound import playsound
     from tqdm import tqdm
-    
+    import dataframe_short as ds
+    import dataframe_short.move_column as mc
+
     episode_aligned: pd.DataFrame
     
     ts_start = time.perf_counter()
@@ -958,7 +965,7 @@ def align_1_season(excel_1_season_script,
         try:
             
             # slow from here
-            episode_aligned = sen_alignment_df(single_episode,lang_from=lang_from,lang_to=lang_to,alarm = False)
+            episode_aligned = sen_alignment_df(single_episode,lang_from=lang_from,lang_to=lang_to,alarm_done = False)
     
             episode_aligned.index = episode_aligned.index + 1
             episode_aligned['sentence_' + lang_from  ] = episode_aligned[lang_from]
@@ -969,7 +976,7 @@ def align_1_season(excel_1_season_script,
             episode_aligned['Season'] =  season
             episode_aligned['Episode'] =  episode
             episode_aligned = episode_aligned.drop_duplicates(subset=['sentence_' + lang_from ,'sentence_' + lang_to])
-            ds.move_col_front(episode_aligned, ['Season','Episode'])
+            mc.to_first_col(episode_aligned, ['Season','Episode'])
             # drop rows that are empty
             episode_aligned = episode_aligned.dropna(subset = ['sentence_' + lang_from] )
             
@@ -981,7 +988,7 @@ def align_1_season(excel_1_season_script,
         
         i += 1
             
-    out_excel_name_in = out_excel_name if ".xlsx" in out_excel_name else (out_excel_name + ".xlsx")
+    out_excel_name_in:str = str(out_excel_name) if ".xlsx" in str(out_excel_name) else (str(out_excel_name) + ".xlsx")
     
     
     if output_folder is None:
@@ -1156,7 +1163,7 @@ def combine_files_1_season(folder_path):
                    extract_pattern = r'S\d+E\d+',
                    filename_col_name = "Episode",
                    )
-    out_df = func(folder_path)
+    out_df: pd.DataFrame = func(folder_path)
     out_df.columns.values[1] = 'NoSentence'
     return out_df
 
@@ -1166,7 +1173,7 @@ def crop_video(
         t_start: str, 
         t_end: str, 
         time_slice: List[Tuple[str, str]],
-        output_extension: Literal["mp3", ".mp3",".mp4","mp4","mkv",".mkv","wav",".wav"] = None,
+        output_extension: Literal["mp3", ".mp3",".mp4","mp4","mkv",".mkv","wav",".wav"] | None = None,
         alarm_done = True
         ):
     # tested only input(mkv) => output(mkv)
@@ -1212,7 +1219,7 @@ def crop_video(
 
 def srt_to_df(srt_path,
               remove_stopwords=True,
-              stopwords = ["♪","\n","<i>","</i>","<b>","</b>"]) -> pd.DataFrame:
+              stopwords = ["♪","\n","<i>","</i>","<b>","</b>"]) -> pd.DataFrame | List[pd.DataFrame]:
     # df = pd.DataFrame({
         #     'sentence': sentences,
         #     'start': start_times,
@@ -1262,7 +1269,7 @@ def srt_to_df(srt_path,
 
 def srt_to_csv(srt_path,output_path,encoding='utf-8-sig',index=False):
     # output should be total_path
-    df_sub = srt_to_df(srt_path)
+    df_sub: pd.DataFrame  = srt_to_df(srt_path)
     # encoding='utf-8-sig' for Portuguese
     df_sub.to_csv(output_path, encoding=encoding,index=index)
 
@@ -1275,7 +1282,7 @@ def srt_to_Excel(srt_path,output_path,encoding='utf-8-sig',index=True):
     make it work with multiple files in folder
     """
     # output should be total_path
-    df_sub = srt_to_df(srt_path)
+    df_sub: pd.DataFrame | List[pd.DataFrame] = srt_to_df(srt_path)
     pd_ver = pw.package_version("pandas")
     
     if isinstance(df_sub,pd.DataFrame):
@@ -1290,7 +1297,6 @@ def srt_to_Excel(srt_path,output_path,encoding='utf-8-sig',index=True):
         out_full_name = [os.path.join(output_path,short_name).replace(".srt",".xlsx") for short_name in short_names]
         
         if pd_ver < (2,0,0):
-            df_sub.to_excel(output_path, encoding=encoding,index=index)
             for i,df in enumerate(df_sub):
                 df.to_excel(out_full_name[i], encoding=encoding,index=index)
                 
