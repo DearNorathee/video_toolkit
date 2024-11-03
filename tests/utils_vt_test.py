@@ -1,5 +1,7 @@
 from video_toolkit.utils_vt import *
 from pydub import AudioSegment
+import os_toolkit as ost
+
 def test_split_audio_by_sub():
     media_paths: list[str] = [
         r"H:\D_Video_Python\Portuguese\The Ark_PT\Audio Extracted\Portuguese\The Ark S01E03 PT_PT.mp3",
@@ -25,6 +27,7 @@ def test_split_audio_by_sub():
         r"H:\D_Video_Python\Portuguese\The Ark_PT\Whisper base Subtitle PT\The Ark S01E11 PT_PT.srt",
     ]
     main_output_folder = r"H:\D_Video_Python\Portuguese\The Ark_PT\Splited Audio PT_test"
+    ost.delete_files_in_folder(main_output_folder)
     split_audio_by_sub(media_paths=media_paths,sub_paths=sub_paths,output_folder=main_output_folder,modify_sub=True)
 
 def test_ass_to_df():

@@ -30,7 +30,7 @@ def split_audio_by_sub(
     media_paths: Union[str,Path,  list[str|Path]] ,
     sub_paths: Union[str,Path, list[str|Path]],
     output_folder: Union[str,Path],
-    prefix_name: None|str = None,
+    prefix_names: None|str | list[str] = None,
     out_audio_ext:str = "wav",
     include_sentence:bool = True,
     alarm_done:bool = False,
@@ -55,6 +55,7 @@ def split_audio_by_sub(
     # convert every input: using_folder_path will print out the audio and sub it uses for splitting
     media_use_folder_path:bool = False
     sub_use_folder_path:bool = False
+    prefix_names_in = list(prefix_names) if isinstance(prefix_names, list) else [prefix_names]
 
     if isinstance(media_paths,list):
         media_path_list = list(media_paths)
@@ -79,8 +80,12 @@ def split_audio_by_sub(
 
     len_media_paths = len(media_path_list)
     len_sub_paths = len(sub_path_list)
+    len_prefix_names = len(prefix_names_in)
+
     if len_media_paths != len_sub_paths:
         raise ValueError(f"Please check length of video_paths and sub_paths. They should be the same.\n Currently video_paths has {len_media_paths} and sub_paths has {len_sub_paths}")
+    if len_media_paths != len_prefix_names:
+        raise ValueError(f"Please check length of video_paths and prefix_names. They should be the same.\n Currently video_paths has {len_media_paths} and prefix_names has {len_prefix_names}")
     
     
     if verbose >= 1:
@@ -113,7 +118,7 @@ def split_audio_by_sub(
         # curr_output_folder = str(output_folder) + "/" + media_name
         # os.makedirs(curr_output_folder,exist_ok=True)
         split_1audio_by_subtitle(curr_media_path,curr_sub_path,output_folder,
-                            prefix_name = prefix_name,
+                            prefix_name = prefix_names_in[i],
                             out_audio_ext = out_audio_ext,
                             alarm_done = alarm_done,
                             verbose = 0,
@@ -356,14 +361,14 @@ def clean_subtitle(string:str):
     new_string = re.sub(pattern2,"",string2)
     return new_string
 
-def audio_duration(video_path):
+def audio_duration(media_path):
     from pydub import AudioSegment
     from datetime import datetime, timedelta
 
-    if isinstance(video_path,str):
-        video_audio = AudioSegment.from_file(video_path)
+    if isinstance(media_path,str):
+        video_audio = AudioSegment.from_file(media_path)
     else:
-        video_audio = video_path
+        video_audio = media_path
 
     # Get the duration of the audio segment in milliseconds
     duration_ms = len(video_audio)
@@ -381,7 +386,7 @@ def audio_duration(video_path):
 
 
 def split_1audio_by_sub_df(
-    video_path: Union[str,Path],
+    media_path: Union[str,Path],
     subs_df: pd.DataFrame,
     output_folder,
     prefix_name = None,
@@ -410,9 +415,9 @@ def split_1audio_by_sub_df(
     # it would automatically know which subttile to use with which video(using SxxExx)
     
     # split_audio_by_subtitle
-    media_name = Path(video_path).stem
+    media_name = Path(media_path).stem
     if prefix_name is None:
-        prefix_name_in = Path(video_path).stem
+        prefix_name_in = Path(media_path).stem
     else:
         prefix_name_in = str(prefix_name)
         
@@ -425,7 +430,7 @@ def split_1audio_by_sub_df(
 
     # TODO: write a function input is video/video path & subs/sub path
     t01 = time.time()
-    video_audio = AudioSegment.from_file(video_path)
+    video_audio = AudioSegment.from_file(media_path)
     t02 = time.time()
     t01_02 = t02-t01
 
@@ -488,7 +493,7 @@ def split_1audio_by_sub_df(
 
 # Sub
 def split_1audio_by_subtitle(
-    video_path: str | Path,
+    media_path: str | Path,
     subtitle_path,
     output_folder,
     prefix_name = None,
@@ -553,9 +558,9 @@ def split_1audio_by_subtitle(
     # it would automatically know which subttile to use with which video(using SxxExx)
     
     # split_audio_by_subtitle
-    media_name = Path(video_path).stem
+    media_name = Path(media_path).stem
     if prefix_name is None:
-        prefix_name_in = Path(video_path).stem
+        prefix_name_in = Path(media_path).stem
     else:
         prefix_name_in = str(prefix_name)
         
@@ -575,7 +580,7 @@ def split_1audio_by_subtitle(
     
     # TODO: write a function input is video/video path & subs/sub path
     t01 = time.time()
-    video_audio = AudioSegment.from_file(video_path)
+    video_audio = AudioSegment.from_file(media_path)
     t02 = time.time()
     t01_02 = t02-t01
 
