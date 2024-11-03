@@ -27,7 +27,7 @@ CODEC_DICT = {'.mp3': "libmp3lame",
 
 
 def split_audio_by_sub(
-    media_paths: Union[str,Path, list[str|Path]] ,
+    media_paths: Union[str,Path,  list[str|Path]] ,
     sub_paths: Union[str,Path, list[str|Path]],
     output_folder: Union[str,Path],
     prefix_name: None|str = None,
@@ -109,9 +109,10 @@ def split_audio_by_sub(
         curr_media_path = Path(str(media_path_list[i]))
         curr_sub_path = Path(str(sub_path_list[i]))
         media_name = curr_media_path.stem
-        curr_output_folder = str(output_folder) + "/" + media_name
-        os.makedirs(curr_output_folder,exist_ok=True)
-        split_1audio_by_subtitle(curr_media_path,curr_sub_path,curr_output_folder,
+        # this has been handled by  split_1audio_by_subtitle
+        # curr_output_folder = str(output_folder) + "/" + media_name
+        # os.makedirs(curr_output_folder,exist_ok=True)
+        split_1audio_by_subtitle(curr_media_path,curr_sub_path,output_folder,
                             prefix_name = prefix_name,
                             out_audio_ext = out_audio_ext,
                             alarm_done = alarm_done,
@@ -401,13 +402,15 @@ def split_1audio_by_sub_df(
     import video_toolkit as vt
     import python_wizard as pw
     import py_string_tool as pst
-    
+    import datetime
+
     # alarm done path still have an error
     # took about 1 hr(including testing)
     # Add feature: input as video_folder_path and subtitle_folder_path, then 
     # it would automatically know which subttile to use with which video(using SxxExx)
     
     # split_audio_by_subtitle
+    media_name = Path(video_path).stem
     if prefix_name is None:
         prefix_name_in = Path(video_path).stem
     else:
@@ -540,7 +543,7 @@ def split_1audio_by_subtitle(
     import video_toolkit as vt
     import python_wizard as pw
     import py_string_tool as pst
-
+    import datetime
     # Added01: remove the tags in sentence
     #   eg: '<font face="sans-serif" size="71">Sei o que procurar.</font>' => Sei o que procurar.
 
@@ -550,6 +553,7 @@ def split_1audio_by_subtitle(
     # it would automatically know which subttile to use with which video(using SxxExx)
     
     # split_audio_by_subtitle
+    media_name = Path(video_path).stem
     if prefix_name is None:
         prefix_name_in = Path(video_path).stem
     else:
@@ -587,9 +591,12 @@ def split_1audio_by_subtitle(
     # Iterate over subtitle sentences
     n: int = subs.shape[0]
     t04: float = time.time()
+    new_folder = output_folder + "/" + media_name
+    os.makedirs(new_folder,exist_ok=True)
+    
     for i in range(n):
-        start_time = subs.loc[i,'start']
-        end_time = subs.loc[i,'end']
+        start_time: datetime.time = subs.loc[i,'start']
+        end_time: datetime.time = subs.loc[i,'end']
 
         PATTERN_TO_REMOVE = [r'</?font[^>]*>']
 
@@ -621,7 +628,7 @@ def split_1audio_by_subtitle(
             audio_name = f'{prefix_name_in}_{num_str}{out_audio_ext_dot}'
         
         audio_name_clean = pst.clean_filename(audio_name)
-        audio_output = os.path.join(output_folder,audio_name_clean)
+        audio_output = os.path.join(new_folder,audio_name_clean)
         sentence_audio.export(audio_output, format=out_audio_ext_no_dot)
     t05 = time.time()
 
