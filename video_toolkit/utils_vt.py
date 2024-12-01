@@ -38,19 +38,59 @@ def split_audio_by_sub(
     modify_sub:bool = False,
     progress_bar:bool = True
         ) -> None:
+    """
+    Split audio files based on associated subtitle files.
+
+    This function takes audio (or video with only audio tested) files and their corresponding subtitle files, 
+    splitting the audio based on subtitle timestamps. Outputs segmented audio files to a specified folder.
+
+    Parameters
+    ----------
+    media_paths : str or Path or list of str or Path
+        Paths to audio or video files. Can be a single file, a single folder, or a list of files.
+
+    sub_paths : str or Path or list of str or Path
+        Paths to subtitle files (either `.ass` or `.srt`). Should align with `media_paths`.
+
+    output_folder : str or Path
+        Destination folder where the split audio files will be saved.
+
+    prefix_names : None, str or list of str, default None
+        Optional prefix for output file names. If a list, should match the number of media files.
+
+    out_audio_ext : str, default "wav"
+        File extension for the output audio files.
+
+    include_sentence : bool, default True
+        Whether to include the sentence from the subtitle in the output file metadata.
+
+    alarm_done : bool, default False
+        If True, play an alarm sound upon completion.
+
+    verbose : int, default 1
+        Verbosity level. Higher values provide more detailed output.
+
+    modify_sub : bool, default False
+        If True, allows modification of subtitle timing during processing.
+
+    progress_bar : bool, default True
+        Whether to display a progress bar for the splitting process.
+
+    Raises
+    ------
+    ValueError
+        If `media_paths` and `sub_paths` lists have mismatched lengths.
+
+    Notes
+    -----
+    - This function handles both single file paths and folders. When given folders, all audio or video files 
+    within are processed if they match specified extensions.
+    - To ensure correct matching of audio and subtitle files, ensure files are sorted consistently or explicitly matched.
+    """
     import os
     import os_toolkit as ost
-    from tqdm import tqdm
-    """
-    signature function
-    media_paths can be either audio or video(only audio is tested currently)
-
-    should work with 1 single file, 1 single folder, and a list of files now
-    currently only tested just a list of files
-
-    but what if media_paths & sub_paths are sort differently do we have a way to make sure that it picks the right subtitle for the right audio?
-
-    """
+    from tqdm.auto import tqdm
+    # high tested
     
     # convert every input: using_folder_path will print out the audio and sub it uses for splitting
     media_use_folder_path:bool = False
