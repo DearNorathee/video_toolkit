@@ -58,6 +58,92 @@ def export_audio(audio_segment:AudioSegment,
             raise KeyError(f"Please close the file {output_path} first.")
 
 
+def merge_sub_to_video(
+    input_video_path: Union[str, Path],
+    input_subtitle_path: Union[List[Union[str, Path]], Union[str, Path]],
+    sub_lang_code_3alpha: Union[List[str], str],
+    sub_title: Union[List[str], str],
+    output_name: str,
+    output_folder: Union[str, Path] = "",
+    replace:bool = False,
+) -> None:
+    """
+    Merges a video file with additional subtitle tracks, assigning metadata such as language and title to each subtitle track.
+
+    Parameters
+    ----------
+    input_video_path : str or Path
+        The path to the input video file.
+    input_subtitle_path : list of str/Path or str/Path
+        The path(s) to the input subtitle file(s). Can be a single path or a list of paths.
+    subtitle_lang_code_3alpha : list of str or str
+        The language code(s) for the subtitle track(s) (e.g., 'fre' for French). Can be a single code or a list.
+    subtitle_title : list of str or str
+        The title(s) for the subtitle track(s) (e.g., 'French'). Can be a single title or a list.
+    output_folder : str or Path
+        The folder where the output video file will be saved.
+    output_name : str
+        The name of the output video file.
+
+    Returns
+    -------
+    None
+    """
+    
+    # Ensure inputs are lists for consistent processing
+    # tested input_subtitle_path as list and single string, 
+    # tested replace = True
+    if isinstance(input_subtitle_path, (str, Path)):
+        input_subtitle_path = [input_subtitle_path]
+    if isinstance(sub_lang_code_3alpha, str):
+        sub_lang_code_3alpha = [sub_lang_code_3alpha]
+    if isinstance(sub_title, str):
+        sub_title = [sub_title]
+
+    # Check for consistent lengths of inputs
+    if not (len(input_subtitle_path) == len(sub_lang_code_3alpha) == len(sub_title)):
+        raise ValueError("The lengths of input_subtitle_path, subtitle_lang_code_3alpha, and subtitle_title must match.")
+
+    video_path = Path(input_video_path)
+    output_path = Path(output_folder) / output_name
+
+    # Construct the ffmpeg command
+    if replace:
+        command = ['ffmpeg', '-y', '-i', str(video_path)]
+    else:
+        command = ['ffmpeg', '-i', str(video_path)]
+
+    # Add all subtitle inputs
+    for subtitle in input_subtitle_path:
+        command.extend(['-i', str(subtitle)])
+
+    # Add mapping for video and subtitles
+    command.append('-map')
+    command.append('0')  # Map all streams from video
+    for idx in range(len(input_subtitle_path)):
+        command.append('-map')
+        command.append(f'{idx + 1}:s')  # Map each subtitle file
+
+    # Add metadata for each subtitle track
+    start_index = get_sub_index_latest(input_video_path) + 1
+    
+    for idx, (lang, title) in enumerate(zip(sub_lang_code_3alpha, sub_title), start=start_index):
+        command.extend(['-metadata:s:s:' + str(idx), f'language={lang}'])
+        command.extend(['-metadata:s:s:' + str(idx), f'title={title}'])
+
+    # Add codec settings and output file
+    command.extend(['-c', 'copy', str(output_path)])
+
+    # cmd_line is just for debugging
+    cmd_line = ' '.join(command)
+
+    # Execute the command
+    result = subprocess.run(command, text=True, stderr=subprocess.PIPE)
+    if result.returncode != 0:
+        print("Error encountered:")
+        print(result.stderr)
+
+
 def merge_audio_to_video(
     input_video_path: Union[str, Path],
     input_audio_path: Union[List[Union[str, Path]], Union[str, Path]],

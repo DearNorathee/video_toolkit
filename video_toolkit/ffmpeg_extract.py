@@ -12,6 +12,16 @@ CODEC_DICT = {'.mp3': "libmp3lame",
                   'wav' : "pcm_s24le"
                   }
 
+def get_sub_index_latest(media_path):
+    # medium tested
+    sub_index = vt.get_subtitle_index(media_path)
+    # normalize the index(index start with 0)
+    if isinstance(sub_index, list):
+        latest_sub_index = max(sub_index) - min(sub_index)
+    else:
+        latest_sub_index = 0
+    return latest_sub_index
+
 def is_ffmpeg_installed():
     
     import subprocess
