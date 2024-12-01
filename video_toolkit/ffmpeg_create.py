@@ -61,7 +61,7 @@ def export_audio(audio_segment:AudioSegment,
 def merge_audio_to_video(
     input_video_path: Union[str, Path],
     input_audio_path: Union[List[Union[str, Path]], Union[str, Path]],
-    audio_language_code_3alpha: Union[List[str], str],
+    audio_lang_code_3alpha: Union[List[str], str],
     audio_title: Union[List[str], str],
     output_folder: Union[str, Path],
     output_name: str
@@ -96,13 +96,13 @@ def merge_audio_to_video(
     # Ensure inputs are lists for consistent processing
     if isinstance(input_audio_path, (str, Path)):
         input_audio_path = [input_audio_path]
-    if isinstance(audio_language_code_3alpha, str):
-        audio_language_code_3alpha = [audio_language_code_3alpha]
+    if isinstance(audio_lang_code_3alpha, str):
+        audio_lang_code_3alpha = [audio_lang_code_3alpha]
     if isinstance(audio_title, str):
         audio_title = [audio_title]
 
     # Check for consistent lengths of inputs
-    if not (len(input_audio_path) == len(audio_language_code_3alpha) == len(audio_title)):
+    if not (len(input_audio_path) == len(audio_lang_code_3alpha) == len(audio_title)):
         raise ValueError("The lengths of input_audio_path, audio_language_code_3alpha, and audio_title must match.")
 
     video_path = Path(input_video_path)
@@ -123,7 +123,7 @@ def merge_audio_to_video(
         command.append(f'{idx + 1}:a')  # Map each audio file
 
     # Add metadata for each audio track
-    for idx, (lang, title) in enumerate(zip(audio_language_code_3alpha, audio_title), start=2):
+    for idx, (lang, title) in enumerate(zip(audio_lang_code_3alpha, audio_title), start=2):
         command.extend(['-metadata:s:a:' + str(idx), f'language={lang}'])
         command.extend(['-metadata:s:a:' + str(idx), f'title={title}'])
 
