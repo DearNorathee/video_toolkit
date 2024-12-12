@@ -2,6 +2,121 @@ from pydub import AudioSegment
 from typing import Union,List,Tuple, Literal, Callable, Dict
 from pathlib import Path
 from video_toolkit.ffmpeg_extract import *
+import pandas as pd
+
+def merge_media_to1video(
+    input_video_path: Union[str, Path],
+    input_info_df:pd.DataFrame,
+    output_folder: str,
+    output_name: Union[str, Path] = ""
+) -> None:
+    
+    """
+    Merge additional media streams into a video file.
+    
+    This function merges audio and subtitle tracks into a video file, preserving the existing video streams. 
+    The metadata (language code and title) for the added media streams can also be specified.
+    
+    Parameters
+    ----------
+    input_video_path : str or Path
+        Path to the input video file to which the media streams will be added.
+    
+    input_info_df : pd.DataFrame
+        A DataFrame containing information about the media streams to be added. 
+        The DataFrame must have the following columns:
+        - `media_type` (str): The type of media stream, either 'audio' or 'subtitle'. Any other value will raise an error.
+        - `input_media_path` (str): The file path of the media stream to be added.
+        - `title` (str): The title of the media stream (e.g., language or description).
+        - `lang_code_3alpha` (str): The 3-letter language code for the media stream (e.g., "eng", "spa").
+        Misspelling of column names or invalid values in `media_type` will result in an error.
+    
+    output_folder : str
+        Path to the folder where the output video file will be saved.
+    
+    output_name : str or Path, optional, default ""
+        The name of the output video file. If not specified, the original video's name is retained.
+    
+    Returns
+    -------
+    None
+        The merged video file is saved to the specified output folder.
+    
+    Raises
+    ------
+    ValueError
+        If the DataFrame `input_info_df` is missing required columns or contains invalid values for `media_type`.
+    
+    Notes
+    -----
+    - The input video file is retained as-is, and the additional media streams are appended.
+    - Metadata such as language and title for each media stream is applied during the merging process.
+    - The function uses `ffmpeg` for processing; ensure it is installed and available in the system's PATH.
+    
+    Examples
+    --------
+    >>> input_video_path = "example.mp4"
+    >>> input_info_df = pd.DataFrame({
+    ...     "media_type": ["audio", "subtitle"],
+    ...     "input_media_path": ["example_audio.mp3", "example_subtitle.srt"],
+    ...     "title": ["English Audio", "English Subtitles"],
+    ...     "lang_code_3alpha": ["eng", "eng"]
+    ... })
+    >>> output_folder = "./output"
+    >>> output_name = "merged_video.mp4"
+    >>> merge_media_to1video(input_video_path, input_info_df, output_folder, output_name)
+    """
+
+    
+    # tested with 1 video
+    
+    
+    import subprocess
+    from pathlib import Path
+
+    video_path = Path(input_video_path)
+    output_path = Path(output_folder) / output_name
+
+    command = ['ffmpeg', '-i', str(video_path)]
+
+    for _, row in input_info_df.iterrows():
+        command.extend(['-i', str(row['input_media_path'])])
+
+    command.append('-map')
+    command.append('0')
+
+    audio_count = count_audio(input_video_path) 
+    sub_count = count_subtitle(input_video_path) 
+    total_media = len(input_info_df)
+
+    # Mapping
+    for idx, row in enumerate(input_info_df.itertuples(), start=1):
+        if row.media_type == 'audio':
+            command.append('-map')
+            command.append(f'{idx}:a')
+        elif row.media_type == 'subtitle':
+            command.append('-map')
+            command.append(f'{idx}:s')
+
+    # Metadata
+    for row in input_info_df.itertuples():
+        lang = row.lang_code_3alpha
+        title = row.title
+        if row.media_type == 'audio':
+            command.extend([f'-metadata:s:a:{audio_count}', f'language={lang}'])
+            command.extend([f'-metadata:s:a:{audio_count}', f'title={title}'])
+            audio_count += 1
+        elif row.media_type == 'subtitle':
+            command.extend([f'-metadata:s:s:{sub_count}', f'language={lang}'])
+            command.extend([f'-metadata:s:s:{sub_count}', f'title={title}'])
+            sub_count += 1
+
+    command.extend(['-c', 'copy', str(output_path)])
+    result = subprocess.run(command, text=True, stderr=subprocess.PIPE)
+    if result.returncode != 0:
+        print("Error encountered:")
+        print(result.stderr)
+
 
 def export_audio(audio_segment:AudioSegment,
                  start_end_time_dict: Dict[int,Tuple[int,int]],
