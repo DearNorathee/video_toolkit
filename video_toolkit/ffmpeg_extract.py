@@ -12,9 +12,27 @@ CODEC_DICT = {'.mp3': "libmp3lame",
                   'wav' : "pcm_s24le"
                   }
 
+def count_audio(media_path,language = None,file_extension = None):
+    # right now language has to be 3-chr code only
+    # low tested
+    
+    # TOADD1, support when language is not 3-chr code
+    selected_media = get_metadata(media_path, media = "audio", language = language, file_extension = file_extension)
+    n_audio = len(selected_media)
+    return n_audio
+
+def count_subtitle(media_path,language = None,file_extension = None):
+    # right now language has to be 3-chr code only
+    # low tested
+    
+    # TOADD1, support when language is not 3-chr code
+    selected_media = get_metadata(media_path, media = "subtitle", language = language, file_extension = file_extension)
+    n_sub = len(selected_media)
+    return n_sub
+
 def get_sub_index_latest(media_path):
     # medium tested
-    sub_index = vt.get_subtitle_index(media_path)
+    sub_index = get_subtitle_index(media_path)
     # normalize the index(index start with 0)
     if isinstance(sub_index, list):
         latest_sub_index = max(sub_index) - min(sub_index)
