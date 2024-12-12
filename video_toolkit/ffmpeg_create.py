@@ -1,6 +1,7 @@
 from pydub import AudioSegment
 from typing import Union,List,Tuple, Literal, Callable, Dict
 from pathlib import Path
+from video_toolkit.ffmpeg_extract import *
 
 def export_audio(audio_segment:AudioSegment,
                  start_end_time_dict: Dict[int,Tuple[int,int]],
@@ -89,7 +90,7 @@ def merge_sub_to_video(
     -------
     None
     """
-    
+    import subprocess
     # Ensure inputs are lists for consistent processing
     # tested input_subtitle_path as list and single string, 
     # tested replace = True
