@@ -78,7 +78,7 @@ def merge_media_to_video(info_dict:pd.DataFrame) -> None:
     info_dict_list = _create_media_dict_info(info_dict)
     
     for i, curr_info_dict in tqdm(enumerate(info_dict_list), total=len(info_dict_list), desc="Creating Videos"):
-        vt.merge_media_to1video(
+        merge_media_to1video(
             input_video_path = curr_info_dict["input_video_path"]
             , input_info_df = curr_info_dict["media"]
             , output_folder = curr_info_dict["output_folder"]
