@@ -1,8 +1,88 @@
 from pydub import AudioSegment
-from typing import Union,List,Tuple, Literal, Callable, Dict
+from typing import Union,List,Tuple, Literal, Callable, Dict, Any
 from pathlib import Path
 from video_toolkit.ffmpeg_extract import *
 import pandas as pd
+
+def _create_media_dict_info(df: pd.DataFrame) -> List[Dict[str, Any]]:
+    info_dict_list: List[Dict[str, Any]] = []
+    group_cols = ["input_video_name", "input_video_path", "output_folder", "output_name"]
+
+    for keys, grp in df.groupby(group_cols):
+        input_video_name, input_video_path, output_folder, output_name = keys
+        media_df = grp[["media_type", "input_media_path", "title", "lang_code_3alpha"]]
+
+        info_dict: Dict[str, Any] = {
+            "input_video_name": input_video_name,
+            "input_video_path": input_video_path,
+            "output_folder": output_folder,
+            "output_name": output_name,
+            "media": media_df
+        }
+
+        info_dict_list.append(info_dict)
+
+    return info_dict_list
+
+def merge_media_to_video(info_dict:pd.DataFrame) -> None:
+    
+    """
+    SIGNATURE FUNCTION
+    
+    Merge additional media streams into multiple video files.
+    
+    This function merges audio and subtitle tracks into a video file, preserving the existing video streams. 
+    The metadata (language code and title) for the added media streams can also be specified.
+    
+    Parameters
+    ----------
+
+    
+    input_info_df : pd.DataFrame
+        A DataFrame containing information about the media streams to be added.\n
+        The DataFrame must have the following columns:\n
+        - `input_video_name` (str): Input video file name.(Not used in the function, just for debugging purposes) \n
+        - `input_video_path` (str): Path to the input video file to which the media streams will be added. \n
+        - `media_type` (str): The type of media stream, either 'audio' or 'subtitle'. Any other value will raise an error.\n
+        - `input_media_path` (str): The file path of the media stream to be added.\n
+        - `title` (str): The title of the media stream (e.g., language or description).\n
+        - `lang_code_3alpha` (str): The 3-letter language code for the media stream (e.g., "eng", "spa").\n
+        - `output_folder` (str): Path to the folder where the output video file will be saved..\n
+        - `output_name` (str): The name of the output video file. If not specified, the original video's name is retained.\n
+        
+        Misspelling of column names or invalid values in `media_type` will result in an error.\n
+    
+    Returns
+    -------
+    None
+        The merged video file is saved to the specified output folder.
+    
+    Raises
+    ------
+    ValueError
+        If the DataFrame `input_info_df` is missing required columns or contains invalid values for `media_type`.
+    
+    Notes
+    -----
+    - The input video file is retained as-is, and the additional media streams are appended.
+    - Metadata such as language and title for each media stream is applied during the merging process.
+    - The function uses `ffmpeg` for processing; ensure it is installed and available in the system's PATH.
+    
+    """
+    # medium tested
+    # took about 30 min to write and tested
+    
+    
+    
+    from tqdm import tqdm
+    info_dict_list = _create_media_dict_info(info_dict)
+    
+    for i, curr_info_dict in tqdm(enumerate(info_dict_list), total=len(info_dict_list), desc="Creating Videos"):
+        vt.merge_media_to1video(
+            input_video_path = curr_info_dict["input_video_path"]
+            , input_info_df = curr_info_dict["media"]
+            , output_folder = curr_info_dict["output_folder"]
+            ,output_name = curr_info_dict["output_name"])
 
 def merge_media_to1video(
     input_video_path: Union[str, Path],
@@ -23,13 +103,13 @@ def merge_media_to1video(
         Path to the input video file to which the media streams will be added.
     
     input_info_df : pd.DataFrame
-        A DataFrame containing information about the media streams to be added. 
-        The DataFrame must have the following columns:
-        - `media_type` (str): The type of media stream, either 'audio' or 'subtitle'. Any other value will raise an error.
-        - `input_media_path` (str): The file path of the media stream to be added.
-        - `title` (str): The title of the media stream (e.g., language or description).
-        - `lang_code_3alpha` (str): The 3-letter language code for the media stream (e.g., "eng", "spa").
-        Misspelling of column names or invalid values in `media_type` will result in an error.
+        A DataFrame containing information about the media streams to be added.\n
+        The DataFrame must have the following columns:\n
+        - `media_type` (str): The type of media stream, either 'audio' or 'subtitle'. Any other value will raise an error.\n
+        - `input_media_path` (str): The file path of the media stream to be added.\n
+        - `title` (str): The title of the media stream (e.g., language or description).\n
+        - `lang_code_3alpha` (str): The 3-letter language code for the media stream (e.g., "eng", "spa").\n
+        Misspelling of column names or invalid values in `media_type` will result in an error.\n
     
     output_folder : str
         Path to the folder where the output video file will be saved.
