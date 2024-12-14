@@ -3,7 +3,9 @@ from typing import Union,List,Tuple, Literal, Callable, Dict, Any
 from pathlib import Path
 from video_toolkit.ffmpeg_extract import *
 import pandas as pd
+from beartype import beartype
 
+@beartype
 def _create_media_dict_info(df: pd.DataFrame) -> List[Dict[str, Any]]:
     info_dict_list: List[Dict[str, Any]] = []
     group_cols = ["input_video_name", "input_video_path", "output_folder", "output_name"]
@@ -24,6 +26,7 @@ def _create_media_dict_info(df: pd.DataFrame) -> List[Dict[str, Any]]:
 
     return info_dict_list
 
+@beartype
 def merge_media_to_video(info_dict:pd.DataFrame) -> None:
     
     """
@@ -84,6 +87,7 @@ def merge_media_to_video(info_dict:pd.DataFrame) -> None:
             , output_folder = curr_info_dict["output_folder"]
             ,output_name = curr_info_dict["output_name"])
 
+@beartype
 def merge_media_to1video(
     input_video_path: Union[str, Path],
     input_info_df:pd.DataFrame,
@@ -197,7 +201,7 @@ def merge_media_to1video(
         print("Error encountered:")
         print(result.stderr)
 
-
+@beartype
 def export_audio(audio_segment:AudioSegment,
                  start_end_time_dict: Dict[int,Tuple[int,int]],
                  output_names:Dict[int,str],
@@ -253,7 +257,7 @@ def export_audio(audio_segment:AudioSegment,
         except PermissionError:
             raise KeyError(f"Please close the file {output_path} first.")
 
-
+@beartype
 def merge_sub_to_video(
     input_video_path: Union[str, Path],
     input_subtitle_path: Union[List[Union[str, Path]], Union[str, Path]],
@@ -339,7 +343,7 @@ def merge_sub_to_video(
         print("Error encountered:")
         print(result.stderr)
 
-
+@beartype
 def merge_audio_to_video(
     input_video_path: Union[str, Path],
     input_audio_path: Union[List[Union[str, Path]], Union[str, Path]],

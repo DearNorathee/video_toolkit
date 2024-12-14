@@ -2,6 +2,7 @@ from typing import Union,List,Tuple, Literal, Callable, Dict
 from pathlib import Path
 import pkg_resources
 import os_toolkit as ost
+from beartype import beartype
 
 alarm_done_path = pkg_resources.resource_filename(__name__, 'assets/Sound Effect positive-logo-opener.wav')
 sound_error_path = pkg_resources.resource_filename(__name__, 'assets/Sound Effect Error.wav')
@@ -41,7 +42,7 @@ def get_sub_index_latest(media_path):
     return latest_sub_index
 
 def is_ffmpeg_installed():
-    
+
     import subprocess
     try:
         # Run the 'ffmpeg -version' command
@@ -505,7 +506,11 @@ def get_all_metadata(
     
     return info_df
 
-def get_metadata(media_path, media:Literal["video","audio","subtitle"], language = None, file_extension = None):
+def get_metadata(
+        media_path: Path |str
+        ,media:Literal["video","audio","subtitle"]
+        ,language: None|str = None
+        ,file_extension: None|str = None):
     #  not tested
     if language is None:
         language_in = None
