@@ -28,7 +28,7 @@ CODEC_DICT = {'.mp3': "libmp3lame",
 # get_audio_extension,get_video_extension, _get_media_extension
 
 
-
+@beartype
 def df_to_srt(df: pd.DataFrame, output_name: str, output_folder: Union[str, Path] = "") -> None:
     """
     Converts a DataFrame with subtitle data into an SRT file.
@@ -69,6 +69,7 @@ def df_to_srt(df: pd.DataFrame, output_name: str, output_folder: Union[str, Path
             # Write the subtitle sentence
             f.write(f"{row['sentence']}\n\n")
 
+@beartype
 def split_audio_by_sub(
     media_paths: Union[str,Path,  list[str|Path]] ,
     sub_paths: Union[str,Path, list[str|Path]],
@@ -208,7 +209,7 @@ def split_audio_by_sub(
                             include_sentence = include_sentence,
                             modify_sub = modify_sub)
 
-        
+@beartype
 def modify_sub_df_time(sub_df:pd.DataFrame) -> pd.DataFrame:
     # the result from this is promising. This works well with subttile created by whisper
     # just simply use the next 'start' as 'end' time
@@ -228,6 +229,7 @@ def modify_sub_df_time(sub_df:pd.DataFrame) -> pd.DataFrame:
     sub_df_copy.loc[sub_df_copy.index[-1], 'end'] = sub_df_copy.loc[sub_df_copy.index[-1], 'end_ori']
     return sub_df_copy
 
+@beartype
 def sub_to_df(sub_path,
               remove_stopwords=True,
               stopwords=["♪", "\n", "<i>", "</i>", "<b>", "</b>"]) -> pd.DataFrame | List[pd.DataFrame]:
@@ -286,7 +288,7 @@ def sub_to_df(sub_path,
     else:
         raise ValueError("The provided path must be a .ass or .srt file or a directory containing such files.")
 
-
+@beartype
 def ass_to_df(ass_path: str | Path,
               remove_stopwords:bool =True,
               stopwords=["♪", "\n", "<i>", "</i>", "<b>", "</b>"]) -> pd.DataFrame | List[pd.DataFrame]:
@@ -374,7 +376,7 @@ def ass_to_df(ass_path: str | Path,
     else:
         raise ValueError("The provided path must be a .ass file or a directory containing .ass files.")
 
-
+@beartype
 def ms_to_time_text(milliseconds: Union[int, float]) -> str:
     """
     Convert milliseconds to time text format.
@@ -401,6 +403,7 @@ def ms_to_time_text(milliseconds: Union[int, float]) -> str:
     else:
         return f"{minutes}.{seconds:02d}"
 
+@beartype
 def text_to_milisecond(time_text:Union[str,int,float],delimiter:str = ".") -> Union[int,float]:
     """
     time_text should be seperated by dot for :
@@ -436,6 +439,7 @@ def text_to_milisecond(time_text:Union[str,int,float],delimiter:str = ".") -> Un
     else:
         raise ValueError("Invalid time format. Use 'min.sec' or 'hr.min.sec'.")
 
+@beartype
 def clean_subtitle(string:str):
     import re
     pattern1 = r"<.*?>"
@@ -447,6 +451,7 @@ def clean_subtitle(string:str):
     new_string = re.sub(pattern2,"",string2)
     return new_string
 
+@beartype
 def audio_duration(media_path: str | Path | AudioSegment):
     from pydub import AudioSegment
     from datetime import datetime, timedelta
@@ -470,7 +475,7 @@ def audio_duration(media_path: str | Path | AudioSegment):
 
     return final_datetime.time()
 
-
+@beartype
 def split_1audio_by_sub_df(
     media_path: Union[str,Path],
     subs_df: pd.DataFrame,
@@ -576,8 +581,7 @@ def split_1audio_by_sub_df(
         except:
             pass
 
-
-# Sub
+@beartype
 def split_1audio_by_subtitle(
     media_path: str | Path,
     subtitle_path,
@@ -727,7 +731,7 @@ def split_1audio_by_subtitle(
     if alarm_done:
         playsound(alarm_done_path)
 
-
+@beartype
 def make_1_season_Excel_unaligned(EN_folder_path: Union[str,Path],
                                   PT_folder_path: Union[str,Path], 
                                   out_excel_name: Union[str,Path],
@@ -847,6 +851,7 @@ def make_1_season_Excel_unaligned(EN_folder_path: Union[str,Path],
 # read the link here of how to use Lingtrain
 # https://habr.com/ru/articles/586574/
 
+@beartype
 def read_sentences_from_excel(
         file_path: str | Path
         ,sheet_name: str
@@ -873,7 +878,7 @@ def read_sentences_from_excel(
 
     return portuguese_sentences, english_sentences
 
-    
+@beartype
 def read_movie_script2(
         file_path :str | Path
         ,sheet_name:str = "Sheet1"
@@ -915,6 +920,7 @@ def read_movie_script2(
     # df_dict = pd_split_into_dict_df(data,index_list=episode_start_indices)
     return df_dict
 
+@beartype
 def read_movie_script(
         file_path: str | Path
         ,sheet_name: str | int
@@ -987,7 +993,7 @@ def read_movie_script(
     
     return new_df
 
-
+@beartype
 def align_1_season(
         excel_1_season_script: str | Path,
         out_excel_name: Union[str,Path],
@@ -1126,7 +1132,7 @@ def align_1_season(
     
     return season_aligned
 
-
+@beartype
 def sen_alignment_df(
         df: pd.DataFrame
         ,lang_from: None |str = None
@@ -1144,7 +1150,7 @@ def sen_alignment_df(
     
     return result
     
-
+@beartype
 def sentence_alignment(
         text_from: list[str] | str
         ,text_to: list[str] | str
@@ -1269,7 +1275,7 @@ def sentence_alignment(
     
     return paragraph_result
 
-
+@beartype
 def combine_files_1_season(folder_path: str | Path) -> pd.DataFrame:
     from functools import partial
     import dataframe_short as ds
@@ -1282,7 +1288,7 @@ def combine_files_1_season(folder_path: str | Path) -> pd.DataFrame:
     out_df.columns.values[1] = 'NoSentence'
     return out_df
 
-
+@beartype
 def crop_video(
         video_path: str, 
         t_start: str, 
@@ -1331,7 +1337,7 @@ def crop_video(
     
     return output_path  # Return the output file path
 
-
+@beartype
 def srt_to_df(
     srt_path: str | Path,
     remove_stopwords:bool = True,
@@ -1382,7 +1388,7 @@ def srt_to_df(
             df_list.append(each_df)
         return df_list
 
-
+@beartype
 def srt_to_csv(
         srt_path: str| Path
         ,output_path: str |Path
@@ -1393,6 +1399,7 @@ def srt_to_csv(
     # encoding='utf-8-sig' for Portuguese
     df_sub.to_csv(output_path, encoding=encoding,index=index)
 
+@beartype
 def srt_to_Excel(
         srt_path: str| Path
         ,output_path: str| Path
@@ -1428,6 +1435,7 @@ def srt_to_Excel(
             for i,df in enumerate(df_sub):
                 df.to_excel(out_full_name[i], index=index)
 
+@beartype
 def to_ms(time_obj: datetime.time) -> float:
     time_obj_ms = (time_obj.hour * 3600 + time_obj.minute * 60 + time_obj.second) * 1000 + time_obj.microsecond // 1000
     return time_obj_ms
