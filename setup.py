@@ -25,7 +25,8 @@ setup(
         "lingtrain_aligner",
         "ffmpeg",
         "fuzzywuzzy",
-        "pysubs2"
+        "pysubs2",
+        "beartype"
                       
                       ],
     python_requires='>=3.10.0',

@@ -13,6 +13,7 @@ CODEC_DICT = {'.mp3': "libmp3lame",
                   'wav' : "pcm_s24le"
                   }
 
+@beartype
 def count_audio(media_path,language = None,file_extension = None):
     # right now language has to be 3-chr code only
     # low tested
@@ -22,6 +23,7 @@ def count_audio(media_path,language = None,file_extension = None):
     n_audio = len(selected_media)
     return n_audio
 
+@beartype
 def count_subtitle(media_path,language = None,file_extension = None):
     # right now language has to be 3-chr code only
     # low tested
@@ -31,6 +33,7 @@ def count_subtitle(media_path,language = None,file_extension = None):
     n_sub = len(selected_media)
     return n_sub
 
+@beartype
 def get_sub_index_latest(media_path):
     # medium tested
     sub_index = get_subtitle_index(media_path)
@@ -41,6 +44,7 @@ def get_sub_index_latest(media_path):
         latest_sub_index = 0
     return latest_sub_index
 
+@beartype
 def is_ffmpeg_installed():
 
     import subprocess
@@ -56,6 +60,7 @@ def is_ffmpeg_installed():
         # FFmpeg is not in PATH
         print("FFmpeg is installed but not in PATH.")
 
+@beartype
 def extract_audio(
         video_folder:     Union[Path,str],
         output_folder:    Union[Path,str],
@@ -100,7 +105,7 @@ def extract_audio(
 
     )
 
-
+@beartype
 def extract_audio_1file(
         video_path:     Union[str,Path],
         output_folder:  Union[str,Path],
@@ -269,6 +274,7 @@ def extract_audio_1file(
 
 
 # Sub
+@beartype
 def _extract_media_setup(
         input_folder: Union[str,Path],
         output_folder: Union[str,Path],
@@ -406,7 +412,7 @@ def _extract_media_setup(
     print()
     return filename_list
 
-
+@beartype
 def get_metadata2(
         media_path: Path | str,
         encoding = "utf-8-sig",
@@ -442,6 +448,7 @@ def get_metadata2(
     
     return streams_info
 
+@beartype
 def get_all_metadata(
         media_path: Path | str,
         encoding:str = "utf-8-sig"):
@@ -506,6 +513,7 @@ def get_all_metadata(
     
     return info_df
 
+@beartype
 def get_metadata(
         media_path: Path |str
         ,media:Literal["video","audio","subtitle"]
@@ -551,6 +559,7 @@ def get_metadata(
             
     return selected_media
 
+@beartype
 def _get_media_extension(media_path, media, language = None, file_extension = None
                          ) -> Union[list[int],int, None] :
     # not tested
@@ -569,16 +578,19 @@ def _get_media_extension(media_path, media, language = None, file_extension = No
     else:
         return unqiue_ext
 
+@beartype
 def get_video_extension(media_path, file_extension = None):
     return _get_media_extension(media_path,'video')
 
+@beartype
 def get_audio_extension(media_path, language = None, file_extension = None):
     return _get_media_extension(media_path,'audio',language)
 
+@beartype
 def get_subtitle_extension(media_path, language = None, file_extension = None):
     return _get_media_extension(media_path,'subtitle',language)
 
-
+@beartype
 def _get_media_index(media_path, media, language = None, file_extension = None):
     
     selected_media = get_metadata(media_path, media, language = language, file_extension = file_extension)
@@ -591,18 +603,19 @@ def _get_media_index(media_path, media, language = None, file_extension = None):
     else:
         return idx_list
 
+@beartype
 def get_video_index(media_path, file_extension = None):
     return _get_media_index(media_path,'video')
 
+@beartype
 def get_audio_index(media_path, language = None, file_extension = None):
     return _get_media_index(media_path,'audio',language)
 
+@beartype
 def get_subtitle_index(media_path, language = None, file_extension = None):
     return _get_media_index(media_path,'subtitle',language)
 
-
-
-
+@beartype
 def extract_subtitle(
         video_folder:     Union[Path,str],
         output_folder:    Union[Path,str],
@@ -633,7 +646,7 @@ def extract_subtitle(
         alarm_done = alarm_done,
     )
 
-
+@beartype
 def extract_sub_1_video(
     video_path:         Union[str,Path],
     output_folder:      Union[str,Path],
@@ -784,12 +797,13 @@ def extract_sub_1_video(
                 except:
                     pass
 
-
+@beartype
 def language_name_list():
     import pycountry
     language_names = [lang.name for lang in pycountry.languages if hasattr(lang, 'name')]
     return language_names
 
+@beartype
 def closest_language(misspelled_language):
     
     from fuzzywuzzy import process
@@ -801,6 +815,7 @@ def closest_language(misspelled_language):
     closest_match = process.extractOne(misspelled_language, language_names)
     return closest_match[0] if closest_match else None
 
+@beartype
 def closest_language_obj(misspelled_language):
     
     """
@@ -835,7 +850,8 @@ def closest_language_obj(misspelled_language):
     from langcodes import Language
     correct_language = closest_language(misspelled_language)
     return Language.find(correct_language)
-    
+
+@beartype
 def extract_1_audio(video_path:     Union[str,Path],
                     output_folder:  Union[str,Path],
                     output_name:    Union[str,Path], 
