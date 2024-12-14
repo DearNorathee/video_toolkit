@@ -26,6 +26,47 @@ CODEC_DICT = {'.mp3': "libmp3lame",
 # get_audio_extension,get_video_extension, _get_media_extension
 
 
+
+def df_to_srt(df: pd.DataFrame, output_name: str, output_folder: Union[str, Path] = "") -> None:
+    """
+    Converts a DataFrame with subtitle data into an SRT file.
+
+    Parameters
+    ----------
+    df : pd.DataFrame
+        DataFrame containing the subtitles with columns: "sentence", "start", "end".
+    output_name : str
+        The name of the output SRT file (e.g., "subtitles.srt").
+    output_folder : str or Path, optional
+        The folder where the SRT file will be saved. Defaults to the current directory.
+
+    Returns
+    -------
+    None
+    """
+    # medium tested
+    
+    # Ensure output folder is a Path object
+    output_folder = Path(output_folder)
+    output_path = output_folder / output_name
+    
+    df_in = df.copy()
+    # Write the SRT file
+    with open(output_path, 'w', encoding='utf-8') as f:
+        df_in['start'] = df_in['start'].astype(str)
+        df_in['end'] = df_in['end'].astype(str)
+        for index, row in df_in.iterrows():
+            # Write subtitle index
+            f.write(f"{index + 1}\n")
+
+            # Format and write time stamps
+            start_time = row['start'].replace('.', ',')[:-3]
+            end_time = row['end'].replace('.', ',')[:-3]
+            f.write(f"{start_time} --> {end_time}\n")
+
+            # Write the subtitle sentence
+            f.write(f"{row['sentence']}\n\n")
+
 def split_audio_by_sub(
     media_paths: Union[str,Path,  list[str|Path]] ,
     sub_paths: Union[str,Path, list[str|Path]],
@@ -247,7 +288,7 @@ def sub_to_df(sub_path,
 def ass_to_df(ass_path: str | Path,
               remove_stopwords:bool =True,
               stopwords=["♪", "\n", "<i>", "</i>", "<b>", "</b>"]) -> pd.DataFrame | List[pd.DataFrame]:
-    # almost work
+    
 
     """
     Convert an ASS subtitle file or multiple ASS files in a directory to pandas DataFrame(s).
@@ -272,6 +313,9 @@ def ass_to_df(ass_path: str | Path,
     - Times are converted from milliseconds to seconds.
     - Handles both single file and directory input.
     """
+
+    # seems to work now
+
     import pandas as pd
     from pathlib import Path
     import pysubs2
