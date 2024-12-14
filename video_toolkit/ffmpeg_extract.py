@@ -955,3 +955,9 @@ def extract_1_audio(video_path:     Union[str,Path],
         
         if alarm_done:
             playsound(alarm_done_path)
+
+
+
+# delete when importing this package
+del Union,List,Tuple, Literal, Callable, Dict, Path
+del beartype, ost, pkg_resources

@@ -424,3 +424,7 @@ def merge_audio_to_video(
     if result.returncode != 0:
         print("Error encountered:")
         print(result.stderr)
+
+del Union,List,Tuple, Literal, Callable, Dict, Any, Path
+del AudioSegment
+del beartype, ost, pkg_resources

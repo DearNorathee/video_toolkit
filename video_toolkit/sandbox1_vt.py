@@ -54,3 +54,5 @@ def play_audio(audio_path:Union[Path,str],
         play(audio)
     elif engine in ["playsound"]:
         playsound(str(audio_path))
+
+del Literal,Union,List, Tuple

@@ -11,6 +11,8 @@ import pkg_resources
 import pandas as pd
 import seaborn as sns
 from pydub import AudioSegment
+from beartype import beartype
+
 alarm_done_path = pkg_resources.resource_filename(__name__, 'assets/Sound Effect positive-logo-opener.wav')
 sound_error_path = pkg_resources.resource_filename(__name__, 'assets/Sound Effect Error.wav')
 
@@ -445,13 +447,13 @@ def clean_subtitle(string:str):
     new_string = re.sub(pattern2,"",string2)
     return new_string
 
-def audio_duration(media_path):
+def audio_duration(media_path: str | Path | AudioSegment):
     from pydub import AudioSegment
     from datetime import datetime, timedelta
 
-    if isinstance(media_path,str):
-        video_audio = AudioSegment.from_file(media_path)
-    else:
+    if isinstance(media_path,str, Path):
+        video_audio = AudioSegment.from_file(str(media_path))
+    elif isinstance(AudioSegment):
         video_audio = media_path
 
     # Get the duration of the audio segment in milliseconds
@@ -729,8 +731,8 @@ def split_1audio_by_subtitle(
 def make_1_season_Excel_unaligned(EN_folder_path: Union[str,Path],
                                   PT_folder_path: Union[str,Path], 
                                   out_excel_name: Union[str,Path],
-                                  output_folder = None,
-                                  drop_timestamp = True,
+                                  output_folder: None | str = None,
+                                  drop_timestamp: bool = True,
                                   ):
     # medium tested
     # based on pd. 2.1.3
@@ -845,7 +847,12 @@ def make_1_season_Excel_unaligned(EN_folder_path: Union[str,Path],
 # read the link here of how to use Lingtrain
 # https://habr.com/ru/articles/586574/
 
-def read_sentences_from_excel(file_path, sheet_name, portuguese_col, english_col, nrows=None):
+def read_sentences_from_excel(
+        file_path: str | Path
+        ,sheet_name: str
+        ,portuguese_col: str
+        ,english_col: str
+        ,nrows: None |int = None):
     # imported from NLP 09_SenMem Pipeline
     """
     Reads Portuguese and English sentences from an Excel file.
@@ -868,7 +875,7 @@ def read_sentences_from_excel(file_path, sheet_name, portuguese_col, english_col
 
     
 def read_movie_script2(
-        file_path
+        file_path :str | Path
         ,sheet_name:str = "Sheet1"
         ,portuguese_col:int|str = 0
         ,english_col:int|str = 1):
@@ -908,7 +915,11 @@ def read_movie_script2(
     # df_dict = pd_split_into_dict_df(data,index_list=episode_start_indices)
     return df_dict
 
-def read_movie_script(file_path, sheet_name, portuguese_col, english_col):
+def read_movie_script(
+        file_path: str | Path
+        ,sheet_name: str | int
+        ,portuguese_col: str
+        ,english_col: str):
     # the main function that I should use from now on
     # imported from NLP 09_SenMem Pipeline
     from openpyxl.utils import column_index_from_string
@@ -977,17 +988,18 @@ def read_movie_script(file_path, sheet_name, portuguese_col, english_col):
     return new_df
 
 
-def align_1_season(excel_1_season_script,
-                   out_excel_name: Union[str,Path],
-                   output_folder = None,
-                   sheet_name = 'Sheet1',
-                   
-                   n_episodes: Union[str,int] = "all",
-                   portuguese_col = "F",
-                   english_col = "D",
-                   lang_from="PT",
-                   lang_to="EN",
-                   alarm_done:bool = True,
+def align_1_season(
+        excel_1_season_script: str | Path,
+        out_excel_name: Union[str,Path],
+        output_folder: None | str = None,
+        sheet_name:str = 'Sheet1',
+        
+        n_episodes: Union[str,int] = "all",
+        portuguese_col:str = "F",
+        english_col:str = "D",
+        lang_from:str ="PT",
+        lang_to:str ="EN",
+        alarm_done:bool = True,
                    
                    ) -> pd.DataFrame:
     
@@ -1115,9 +1127,12 @@ def align_1_season(excel_1_season_script,
     return season_aligned
 
 
-def sen_alignment_df(df, lang_from = None, lang_to = None,
-                       alarm_done:bool = True,
-                     ):
+def sen_alignment_df(
+        df: pd.DataFrame
+        ,lang_from: None |str = None
+        ,lang_to: None |str = None,
+        alarm_done:bool = True,
+                ) -> pd.DataFrame:
     # medium tested
     if lang_from is None: lang_from = df.columns[0]
     if lang_to is None: lang_to = df.columns[1]
@@ -1130,10 +1145,14 @@ def sen_alignment_df(df, lang_from = None, lang_to = None,
     return result
     
 
-def sentence_alignment(text_from,text_to, lang_from = "pt", lang_to = "en",
-                       alarm_done:bool = True,
+def sentence_alignment(
+        text_from: list[str] | str
+        ,text_to: list[str] | str
+        ,lang_from:str = "pt"
+        , lang_to:str = "en",
+        alarm_done:bool = True,
                        
-                       ):
+        ) -> pd.DataFrame:
     # v02 => add alarm parameter
     # text_from, text_to are expected to be text or list
     # medium tested, seem to work pretty well now
@@ -1251,7 +1270,7 @@ def sentence_alignment(text_from,text_to, lang_from = "pt", lang_to = "en",
     return paragraph_result
 
 
-def combine_files_1_season(folder_path):
+def combine_files_1_season(folder_path: str | Path) -> pd.DataFrame:
     from functools import partial
     import dataframe_short as ds
     
@@ -1270,8 +1289,8 @@ def crop_video(
         t_end: str, 
         time_slice: List[Tuple[str, str]],
         output_extension: Literal["mp3", ".mp3",".mp4","mp4","mkv",".mkv","wav",".wav"] | None = None,
-        alarm_done = True
-        ):
+        alarm_done:bool = True
+        ) -> None:
     # tested only input(mkv) => output(mkv)
     import subprocess
     import os
@@ -1313,9 +1332,10 @@ def crop_video(
     return output_path  # Return the output file path
 
 
-def srt_to_df(srt_path,
-              remove_stopwords=True,
-              stopwords = ["♪","\n","<i>","</i>","<b>","</b>"]) -> pd.DataFrame | List[pd.DataFrame]:
+def srt_to_df(
+    srt_path: str | Path,
+    remove_stopwords:bool = True,
+    stopwords: list[str] = ["♪","\n","<i>","</i>","<b>","</b>"]) -> pd.DataFrame | List[pd.DataFrame]:
     # df = pd.DataFrame({
         #     'sentence': sentences,
         #     'start': start_times,
@@ -1363,13 +1383,21 @@ def srt_to_df(srt_path,
         return df_list
 
 
-def srt_to_csv(srt_path,output_path,encoding='utf-8-sig',index=False):
+def srt_to_csv(
+        srt_path: str| Path
+        ,output_path: str |Path
+        ,encoding:str ='utf-8-sig'
+        ,index:bool = False) -> None:
     # output should be total_path
     df_sub: pd.DataFrame  = srt_to_df(srt_path)
     # encoding='utf-8-sig' for Portuguese
     df_sub.to_csv(output_path, encoding=encoding,index=index)
 
-def srt_to_Excel(srt_path,output_path,encoding='utf-8-sig',index=True):
+def srt_to_Excel(
+        srt_path: str| Path
+        ,output_path: str| Path
+        ,encoding:str ='utf-8-sig'
+        ,index:bool = True) -> None:
     import pandas as pd
     import os
     """ 
@@ -1419,6 +1447,10 @@ del Tuple
 del Literal
 del Callable
 del Dict
+
+del AudioSegment
+del sys, datetime, pw, pd, sns
+del beartype, ost, pkg_resources
 
 # TODO: srt_to_Excel => similar to srt_to_csv but output as excel
 # srt_to_Excel(srt_path,sub_output)
