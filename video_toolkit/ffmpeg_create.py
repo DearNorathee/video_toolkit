@@ -4,6 +4,10 @@ from pathlib import Path
 from video_toolkit.ffmpeg_extract import *
 import pandas as pd
 from beartype import beartype
+import pkg_resources
+
+alarm_done_path = pkg_resources.resource_filename(__name__, 'assets/Sound Effect positive-logo-opener.wav')
+sound_error_path = pkg_resources.resource_filename(__name__, 'assets/Sound Effect Error.wav')
 
 @beartype
 def _create_media_dict_info(df: pd.DataFrame) -> List[Dict[str, Any]]:
@@ -427,4 +431,4 @@ def merge_audio_to_video(
 
 del Union,List,Tuple, Literal, Callable, Dict, Any, Path
 del AudioSegment
-del beartype, ost, pkg_resources
+del beartype, pkg_resources

@@ -3,6 +3,7 @@ from pathlib import Path
 from video_toolkit.utils_vt import *
 from video_toolkit.sandbox1_vt import *
 from whisper.model import Whisper as whisper_model_Whisper
+import pkg_resources
 
 # extra import
 try:
@@ -117,3 +118,4 @@ if whisper is not None:
                     play_audio(alarm_done_path)
                 except:
                     pass
+del pkg_resources

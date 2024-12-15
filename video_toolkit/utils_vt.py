@@ -29,6 +29,82 @@ CODEC_DICT = {'.mp3': "libmp3lame",
 
 
 @beartype
+def ass_to_srt_1file(srt_path:str| Path, output_folder:Path|str = "") -> None:
+    # medium tested(1 file, with Path tested both srt_path & output_folder as Path)
+    file_name = Path(str(srt_path)).stem + ".srt"
+    sub_df = ass_to_df(srt_path)
+    df_to_srt(df = sub_df, output_name = file_name,output_folder=output_folder)
+
+@beartype
+def ass_to_srt(
+        srt_paths: Union[str,Path,list[str|Path]],
+        output_folder: str|Path,
+        ) -> None:
+    import os
+    import os_toolkit as ost
+    from tqdm import tqdm
+    import warnings
+    """
+    SIGNATURE FUNCTION
+    
+    Convert ASS subtitle files to SRT format.
+    
+    This function converts one or more ASS (Advanced SubStation Alpha) subtitle files to SRT (SubRip Subtitle) format. 
+    It supports individual files, directories containing multiple ASS files, or a list of file paths.
+    
+    Parameters
+    ----------
+    srt_paths : str, Path, or list of str or Path
+        The input ASS file(s) to convert. It can be:
+        - A single file path.
+        - A list of file paths.
+        - A folder path containing multiple `.ass` files.
+    
+    output_folder : str or Path
+        The folder where the converted SRT files will be saved.
+    
+    Returns
+    -------
+    None
+        The converted SRT files are saved in the specified output folder.
+    
+    Notes
+    -----
+    - If `srt_paths` is a folder, all `.ass` files within the folder are converted.
+    - Existing warnings during the conversion process are temporarily suppressed for cleaner output.
+    
+    Examples
+    --------
+    Convert a single ASS file:
+    >>> ass_to_srt("example.ass", "./output")
+    
+    Convert multiple ASS files:
+    >>> ass_to_srt(["file1.ass", "file2.ass"], "./output")
+    
+    Convert all ASS files in a folder:
+    >>> ass_to_srt("./subtitles", "./output")
+    """
+
+    # medium tested(with List and folder)
+    if isinstance(srt_paths, list):
+        for i, srt_path in tqdm(enumerate(srt_paths), total = len(srt_paths), desc = "Converting ass to srt..."):
+            warnings.filterwarnings('ignore')
+            ass_to_srt_1file(srt_path,output_folder)
+            warnings.filterwarnings('default')
+    elif os.path.isdir(str(srt_paths)):
+        # if it's folder path
+        full_ass_paths = ost.get_full_filename(srt_paths,".ass")
+        ass_name = ost.get_filename(srt_paths,".ass")
+        for i, srt_path in tqdm(enumerate(full_ass_paths), total = len(full_ass_paths), desc = "Converting ass to srt..."):
+            warnings.filterwarnings('ignore')
+            ass_to_srt_1file(srt_path,output_folder)
+            warnings.filterwarnings('default')
+    elif isinstance(srt_paths,(Path,str)):
+        warnings.filterwarnings('ignore')
+        ass_to_srt_1file(srt_paths,output_folder)
+        warnings.filterwarnings('default')
+
+@beartype
 def df_to_srt(df: pd.DataFrame, output_name: str, output_folder: Union[str, Path] = "") -> None:
     """
     Converts a DataFrame with subtitle data into an SRT file.
@@ -1293,7 +1369,7 @@ def crop_video(
         video_path: str, 
         t_start: str, 
         t_end: str, 
-        time_slice: List[Tuple[str, str]],
+        # time_slice: List[Tuple[str, str]],
         output_extension: Literal["mp3", ".mp3",".mp4","mp4","mkv",".mkv","wav",".wav"] | None = None,
         alarm_done:bool = True
         ) -> None:
@@ -1439,6 +1515,7 @@ def srt_to_Excel(
 def to_ms(time_obj: datetime.time) -> float:
     time_obj_ms = (time_obj.hour * 3600 + time_obj.minute * 60 + time_obj.second) * 1000 + time_obj.microsecond // 1000
     return time_obj_ms
+
 
 # from typing import Union,List,Tuple, Literal, Callable, Dict
 # from pathlib import Path
