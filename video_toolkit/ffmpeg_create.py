@@ -90,18 +90,26 @@ def merge_media_to_video(info_df:pd.DataFrame,errors:Literal["raise","warn","ign
                 input_video_path = curr_info_dict["input_video_path"]
                 , input_info_df = curr_info_dict["media"]
                 , output_folder = curr_info_dict["output_folder"]
-                ,output_name = curr_info_dict["output_name"])
-        except TypeError as e:
-            print(f"There's an error in while processing: {curr_info_dict["input_video_path"]}\n")
+                ,output_name = curr_info_dict["output_name"]
+                ,errors = "raise"
+                )
+        except (TypeError,UnboundLocalError) as e:
+            print(f"There's an error in while processing: {curr_info_dict['input_video_path']}\n")
             print(e)
             print()
+        except Exception as e:
+            print("This is new Error Type")
+            print(e)
+            print(type(e))
+            print(f"There's an error in while processing: {curr_info_dict['input_video_path']}\n")
 
 @beartype
 def merge_media_to1video(
     input_video_path: Union[str, Path],
     input_info_df:pd.DataFrame,
     output_folder: str,
-    output_name: Union[str, Path] = ""
+    output_name: Union[str, Path] = "",
+    errors:Literal["raise","warn","ignore"] = "warn"
 ) -> None:
     
     """
@@ -206,9 +214,13 @@ def merge_media_to1video(
 
     command.extend(['-c', 'copy', str(output_path)])
     result = subprocess.run(command, text=True, stderr=subprocess.PIPE)
-    if result.returncode != 0:
-        print("Error encountered:")
-        print(result.stderr)
+    if errors in ["warn"]:
+        if result.returncode != 0:
+            print("Error encountered:")
+            print(result.stderr)
+    elif errors in ["raise"]:
+        if result.returncode != 0:
+            raise Exception(result.stderr)
 
 @beartype
 def export_audio(audio_segment:AudioSegment,

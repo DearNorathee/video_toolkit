@@ -27,6 +27,65 @@ CODEC_DICT = {'.mp3': "libmp3lame",
 # get_subtitle_index,get_audio_index,get_video_index,_get_media_index,get_subtitle_extension,
 # get_audio_extension,get_video_extension, _get_media_extension
 
+@beartype
+def create_media_info_df(
+    input_video_folder:str|Path  
+    ,input_video_pattern: str
+    ,ep_seasons: list[str]| str
+    ,media_types: list[str]
+    ,input_media_folders: list[str]
+    ,input_filname_patterns: list[str]
+    ,titles: list[str]
+    ,lang_code_3chrs: list[str]
+    ,output_folder:str
+    ) -> pd.DataFrame:
+    """
+    helper function to create media_info combinations(pd.df) to feed in to merge_media_to_video
+    there's no output_name because it uses the default name
+    use <> to replace the episode_season pattern
+    
+    """
+    # took about 2.5 hr to write & test all of this
+    # medium tested(generated the whole season6)
+    import pandas as pd
+    def _replace_with_filename(patterns:list[str],new:str, old:str = "<>") -> list[str]:
+        result: list[str] = patterns.copy()
+        for i, x in enumerate(patterns):
+            x_new = x.replace(old,new)
+            result[i] = x_new
+        return result
+
+    lengths: list[int] = [len(media_types), len(input_media_folders), len(input_filname_patterns), len(titles), len(lang_code_3chrs)]
+    if len(set(lengths)) > 1:
+        raise ValueError(f"All input lists must have the same length, but got lengths: {lengths}")
+
+    media_per_ep = len(media_types)
+    out_df = pd.DataFrame()
+
+    for i, ep_season_text in enumerate(ep_seasons):
+        input_filenames = _replace_with_filename(input_filname_patterns,ep_season_text)
+        input_video_name = input_video_pattern.replace("<>",ep_season_text)
+        
+        input_media_paths = []
+        for i, filename in enumerate(input_filenames):
+            input_media_paths.append(input_media_folders[i] + "/" + filename)
+        
+        input_video_path = [input_video_folder + "/" + input_video_name]* media_per_ep
+        
+        output_folder_rep = [output_folder] * media_per_ep
+        df_curr_ep = pd.DataFrame({
+            'input_video_name': [input_video_name]*media_per_ep,
+            'input_video_path': input_video_path,
+            'media_type': media_types,
+            'input_media_path':input_media_paths,
+            'title': titles,
+            'lang_code_3alpha': lang_code_3chrs,
+            'output_folder': output_folder_rep,
+            'output_name': [input_video_name]*media_per_ep,
+            
+        })
+        out_df = pd.concat([out_df,df_curr_ep])
+    return out_df
 
 @beartype
 def ass_to_srt_1file(ass_path:str| Path, output_folder:Path|str = "") -> None:
