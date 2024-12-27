@@ -31,7 +31,7 @@ def _create_media_dict_info(df: pd.DataFrame) -> List[Dict[str, Any]]:
     return info_dict_list
 
 @beartype
-def merge_media_to_video(info_dict:pd.DataFrame) -> None:
+def merge_media_to_video(info_df:pd.DataFrame) -> None:
     
     """
     SIGNATURE FUNCTION
@@ -82,7 +82,7 @@ def merge_media_to_video(info_dict:pd.DataFrame) -> None:
     
     
     from tqdm import tqdm
-    info_dict_list = _create_media_dict_info(info_dict)
+    info_dict_list = _create_media_dict_info(info_df)
     
     for i, curr_info_dict in tqdm(enumerate(info_dict_list), total=len(info_dict_list), desc="Creating Videos"):
         merge_media_to1video(

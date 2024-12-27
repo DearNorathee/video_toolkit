@@ -29,15 +29,15 @@ CODEC_DICT = {'.mp3': "libmp3lame",
 
 
 @beartype
-def ass_to_srt_1file(srt_path:str| Path, output_folder:Path|str = "") -> None:
+def ass_to_srt_1file(ass_path:str| Path, output_folder:Path|str = "") -> None:
     # medium tested(1 file, with Path tested both srt_path & output_folder as Path)
-    file_name = Path(str(srt_path)).stem + ".srt"
-    sub_df = ass_to_df(srt_path)
+    file_name = Path(str(ass_path)).stem + ".srt"
+    sub_df = ass_to_df(ass_path)
     df_to_srt(df = sub_df, output_name = file_name,output_folder=output_folder)
 
 @beartype
 def ass_to_srt(
-        srt_paths: Union[str,Path,list[str|Path]],
+        ass_paths: Union[str,Path,list[str|Path]],
         output_folder: str|Path,
         ) -> None:
     import os
@@ -86,22 +86,22 @@ def ass_to_srt(
     """
 
     # medium tested(with List and folder)
-    if isinstance(srt_paths, list):
-        for i, srt_path in tqdm(enumerate(srt_paths), total = len(srt_paths), desc = "Converting ass to srt..."):
+    if isinstance(ass_paths, list):
+        for i, srt_path in tqdm(enumerate(ass_paths), total = len(ass_paths), desc = "Converting ass to srt..."):
             warnings.filterwarnings('ignore')
             ass_to_srt_1file(srt_path,output_folder)
             warnings.filterwarnings('default')
-    elif os.path.isdir(str(srt_paths)):
+    elif os.path.isdir(str(ass_paths)):
         # if it's folder path
-        full_ass_paths = ost.get_full_filename(srt_paths,".ass")
-        ass_name = ost.get_filename(srt_paths,".ass")
+        full_ass_paths = ost.get_full_filename(ass_paths,".ass")
+        ass_name = ost.get_filename(ass_paths,".ass")
         for i, srt_path in tqdm(enumerate(full_ass_paths), total = len(full_ass_paths), desc = "Converting ass to srt..."):
             warnings.filterwarnings('ignore')
             ass_to_srt_1file(srt_path,output_folder)
             warnings.filterwarnings('default')
-    elif isinstance(srt_paths,(Path,str)):
+    elif isinstance(ass_paths,(Path,str)):
         warnings.filterwarnings('ignore')
-        ass_to_srt_1file(srt_paths,output_folder)
+        ass_to_srt_1file(ass_paths,output_folder)
         warnings.filterwarnings('default')
 
 @beartype
