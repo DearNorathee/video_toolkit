@@ -31,7 +31,7 @@ def _create_media_dict_info(df: pd.DataFrame) -> List[Dict[str, Any]]:
     return info_dict_list
 
 @beartype
-def merge_media_to_video(info_df:pd.DataFrame) -> None:
+def merge_media_to_video(info_df:pd.DataFrame,errors:Literal["raise","warn","ignore"] = "warn") -> None:
     
     """
     SIGNATURE FUNCTION
@@ -85,11 +85,16 @@ def merge_media_to_video(info_df:pd.DataFrame) -> None:
     info_dict_list = _create_media_dict_info(info_df)
     
     for i, curr_info_dict in tqdm(enumerate(info_dict_list), total=len(info_dict_list), desc="Creating Videos"):
-        merge_media_to1video(
-            input_video_path = curr_info_dict["input_video_path"]
-            , input_info_df = curr_info_dict["media"]
-            , output_folder = curr_info_dict["output_folder"]
-            ,output_name = curr_info_dict["output_name"])
+        try:
+            merge_media_to1video(
+                input_video_path = curr_info_dict["input_video_path"]
+                , input_info_df = curr_info_dict["media"]
+                , output_folder = curr_info_dict["output_folder"]
+                ,output_name = curr_info_dict["output_name"])
+        except TypeError as e:
+            print(f"There's an error in while processing: {curr_info_dict["input_video_path"]}\n")
+            print(e)
+            print()
 
 @beartype
 def merge_media_to1video(
