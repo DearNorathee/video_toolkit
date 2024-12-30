@@ -156,3 +156,5 @@ def extract_audio1(video_folder:     Union[Path,str],
     pw.print_time(duration)
     
     return video_name_list
+
+del Union,List,Tuple, Literal, Callable, Dict, Path

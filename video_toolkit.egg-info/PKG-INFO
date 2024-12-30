@@ -1,6 +1,6 @@
 Metadata-Version: 2.1
 Name: video_toolkit
-Version: 0.1.2
+Version: 0.1.3rc1
 Summary: package to help you with extraction of video information eg audio, subtitle
 Author: Dear Norathee
 License: MIT
@@ -21,5 +21,6 @@ Requires-Dist: lingtrain_aligner
 Requires-Dist: ffmpeg
 Requires-Dist: fuzzywuzzy
 Requires-Dist: pysubs2
+Requires-Dist: beartype
 Provides-Extra: full
 Requires-Dist: torch>=1.0; extra == "full"

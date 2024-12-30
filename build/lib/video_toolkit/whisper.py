@@ -2,6 +2,8 @@ from typing import List, Literal, Dict, Union
 from pathlib import Path
 from video_toolkit.utils_vt import *
 from video_toolkit.sandbox1_vt import *
+from whisper.model import Whisper as whisper_model_Whisper
+import pkg_resources
 
 # extra import
 try:
@@ -25,7 +27,7 @@ sound_error_path = pkg_resources.resource_filename(__name__, 'assets/Sound Effec
 # faster-whisper 1.0.3
 if whisper is not None:
     def audio_to_sub_1file(
-            model:Union[whisper.model.Whisper, faster_whisper.WhisperModel]
+            model:Union[whisper_model_Whisper, faster_whisper.WhisperModel]
             ,audio_path: Union[str,Path]
             ,output_name: Union[str,Path] = ""
             ,output_folder: Union[str,Path] = ""
@@ -52,7 +54,7 @@ if whisper is not None:
 
         output_path = Path(str(output_folder_in)) / output_name_in
         
-        if isinstance(model, (whisper.model.Whisper)):
+        if isinstance(model, (whisper_model_Whisper)):
             result = model.transcribe(audio_path)
         elif isinstance(model, (faster_whisper.WhisperModel)): 
             result = model.transcribe_stable(audio_path)
@@ -60,8 +62,8 @@ if whisper is not None:
 
     # NEXT write transcribe_to_subtitle to loop through the audio files and create subtitles
     def audio_to_sub(
-        model:Union[whisper.model.Whisper, faster_whisper.WhisperModel]
-        ,audio_path: Union[str,Path]
+        model:Union[whisper_model_Whisper, faster_whisper.WhisperModel]
+        ,audio_paths: Union[str,Path]
         ,output_name: Union[str,Path] = ""
         ,output_folder: Union[str,Path] = ""
         ,progress_bar:bool = True
@@ -82,9 +84,9 @@ if whisper is not None:
         # alarm_done_path = r"H:\D_Music\Sound Effect positive-logo-opener.mp3"
 
 
-        if ost.is_folder_path(audio_path):
-            audio_full_paths = ost.get_full_filename(audio_path,extension = input_extension)
-            audio_name_paths = ost.get_filename(audio_path,extension = input_extension)
+        if ost.is_folder_path(audio_paths):
+            audio_full_paths = ost.get_full_filename(audio_paths,extension = input_extension)
+            audio_name_paths = ost.get_filename(audio_paths,extension = input_extension)
             if progress_bar:
                 loop_obj = tqdm( enumerate(audio_full_paths), total = len(audio_full_paths))
             else:
@@ -100,12 +102,20 @@ if whisper is not None:
                     play_audio(alarm_done_path)
                 except:
                     pass
-        elif isinstance(audio_path,list):
-            raise NotImplementedError(f"list of files is not supported")
-        elif isinstance(audio_path,(str,Path)):
-            audio_to_sub_1file(model,audio_path,output_name = output_name,output_folder = output_folder)
+        elif isinstance(audio_paths,list):
+            for i in range(len(audio_paths)):
+                audio_to_sub_1file(model,audio_paths[i],output_name = output_name,output_folder = output_folder)
+                if alarm_done:
+                    try:
+                        play_audio(alarm_done_path)
+                    except:
+                        pass
+            # raise NotImplementedError(f"list of files is not supported")
+        elif isinstance(audio_paths,(str,Path)):
+            audio_to_sub_1file(model,audio_paths,output_name = output_name,output_folder = output_folder)
             if alarm_done:
                 try:
                     play_audio(alarm_done_path)
                 except:
                     pass
+del pkg_resources

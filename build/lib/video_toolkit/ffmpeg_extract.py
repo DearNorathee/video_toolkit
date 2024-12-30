@@ -2,6 +2,7 @@ from typing import Union,List,Tuple, Literal, Callable, Dict
 from pathlib import Path
 import pkg_resources
 import os_toolkit as ost
+from beartype import beartype
 
 alarm_done_path = pkg_resources.resource_filename(__name__, 'assets/Sound Effect positive-logo-opener.wav')
 sound_error_path = pkg_resources.resource_filename(__name__, 'assets/Sound Effect Error.wav')
@@ -12,8 +13,40 @@ CODEC_DICT = {'.mp3': "libmp3lame",
                   'wav' : "pcm_s24le"
                   }
 
-def is_ffmpeg_installed():
+@beartype
+def count_audio(media_path,language = None,file_extension = None):
+    # right now language has to be 3-chr code only
+    # low tested
     
+    # TOADD1, support when language is not 3-chr code
+    selected_media = get_metadata(media_path, media = "audio", language = language, file_extension = file_extension)
+    n_audio = len(selected_media)
+    return n_audio
+
+@beartype
+def count_subtitle(media_path,language = None,file_extension = None):
+    # right now language has to be 3-chr code only
+    # low tested
+    
+    # TOADD1, support when language is not 3-chr code
+    selected_media = get_metadata(media_path, media = "subtitle", language = language, file_extension = file_extension)
+    n_sub = len(selected_media)
+    return n_sub
+
+@beartype
+def get_sub_index_latest(media_path):
+    # medium tested
+    sub_index = get_subtitle_index(media_path)
+    # normalize the index(index start with 0)
+    if isinstance(sub_index, list):
+        latest_sub_index = max(sub_index) - min(sub_index)
+    else:
+        latest_sub_index = 0
+    return latest_sub_index
+
+@beartype
+def is_ffmpeg_installed():
+
     import subprocess
     try:
         # Run the 'ffmpeg -version' command
@@ -27,6 +60,7 @@ def is_ffmpeg_installed():
         # FFmpeg is not in PATH
         print("FFmpeg is installed but not in PATH.")
 
+@beartype
 def extract_audio(
         video_folder:     Union[Path,str],
         output_folder:    Union[Path,str],
@@ -71,7 +105,7 @@ def extract_audio(
 
     )
 
-
+@beartype
 def extract_audio_1file(
         video_path:     Union[str,Path],
         output_folder:  Union[str,Path],
@@ -83,6 +117,7 @@ def extract_audio_1file(
         languages: Union[List[str],None] = None,
         
         progress_bar:bool = True,
+        encoding = "utf-8-sig",
                     ) -> None:
     # time spend 5 hr
     # this support multiple output_extension
@@ -221,7 +256,11 @@ def extract_audio_1file(
                     else:
                         print("\nThe output path is already existed. Please delete the file or set the overwrite parameter to TRUE")
                         return False
-                result = subprocess.run(command, text=True, stderr=subprocess.PIPE)
+                try:
+                    result = subprocess.run(command, text=True, stderr=subprocess.PIPE,encoding=encoding)
+                except UnicodeDecodeError:
+                    raise UnicodeDecodeError(f"\nError encountered: {curr_output_name}. Please change the encoding parameter to ensure that the function works properly.")
+
                 
                 if result.returncode != 0:
                     print(f"\nError encountered: {curr_output_name}")
@@ -235,6 +274,7 @@ def extract_audio_1file(
 
 
 # Sub
+@beartype
 def _extract_media_setup(
         input_folder: Union[str,Path],
         output_folder: Union[str,Path],
@@ -372,11 +412,12 @@ def _extract_media_setup(
     print()
     return filename_list
 
+@beartype
+def get_metadata2(
+        media_path: Path | str,
+        encoding = "utf-8-sig",
+        ):
 
-def get_metadata2(media_path):
-    import subprocess
-    import json
-    # 80% from GPT4
     """
     Get the index of the first subtitle stream in the video file.
     
@@ -386,14 +427,20 @@ def get_metadata2(media_path):
     Returns:
     - Index of the first subtitle stream, or None if no subtitle stream is found.
     """
+
+    import subprocess
+    import json
+    # 80% from GPT4
     command = [
         'ffprobe',
         '-v', 'quiet',
         '-show_streams',
         media_path
     ]
-    
-    result = subprocess.run(command, check=True, stdout=subprocess.PIPE, text=True)
+    try:
+        result = subprocess.run(command, check=True, stdout=subprocess.PIPE, text=True,encoding=encoding)
+    except UnicodeDecodeError:
+        raise UnicodeDecodeError(f"\nError encountered. Please change the encoding parameter to ensure that the function works properly.")
     streams_info_raw = json.loads(result.stdout)
     
     streams_info = [stream for stream  in streams_info_raw['streams']]
@@ -401,7 +448,10 @@ def get_metadata2(media_path):
     
     return streams_info
 
-def get_all_metadata(media_path):
+@beartype
+def get_all_metadata(
+        media_path: Path | str,
+        encoding:str = "utf-8-sig"):
     import subprocess
     import json    
     import pandas as pd
@@ -426,10 +476,13 @@ def get_all_metadata(media_path):
         '-print_format', 'json',
         '-show_streams',
         '-show_format',
-        media_path
+        str(media_path)
     ]
-    
-    result = subprocess.run(command, check=True, stdout=subprocess.PIPE, text=True)
+    try:
+        result = subprocess.run(command, check=True, stdout=subprocess.PIPE, text=True,encoding=encoding)
+    except UnicodeDecodeError:
+        raise UnicodeDecodeError(f"\nError encountered. Please change the encoding parameter to ensure that the function works properly.")
+
     metadata = json.loads(result.stdout)
     
     # Initialize lists to hold data for each column
@@ -460,7 +513,12 @@ def get_all_metadata(media_path):
     
     return info_df
 
-def get_metadata(media_path, media:Literal["video","audio","subtitle"], language = None, file_extension = None):
+@beartype
+def get_metadata(
+        media_path: Path |str
+        ,media:Literal["video","audio","subtitle"]
+        ,language: None|str = None
+        ,file_extension: None|str = None):
     #  not tested
     if language is None:
         language_in = None
@@ -501,6 +559,7 @@ def get_metadata(media_path, media:Literal["video","audio","subtitle"], language
             
     return selected_media
 
+@beartype
 def _get_media_extension(media_path, media, language = None, file_extension = None
                          ) -> Union[list[int],int, None] :
     # not tested
@@ -519,16 +578,19 @@ def _get_media_extension(media_path, media, language = None, file_extension = No
     else:
         return unqiue_ext
 
+@beartype
 def get_video_extension(media_path, file_extension = None):
     return _get_media_extension(media_path,'video')
 
+@beartype
 def get_audio_extension(media_path, language = None, file_extension = None):
     return _get_media_extension(media_path,'audio',language)
 
+@beartype
 def get_subtitle_extension(media_path, language = None, file_extension = None):
     return _get_media_extension(media_path,'subtitle',language)
 
-
+@beartype
 def _get_media_index(media_path, media, language = None, file_extension = None):
     
     selected_media = get_metadata(media_path, media, language = language, file_extension = file_extension)
@@ -541,18 +603,19 @@ def _get_media_index(media_path, media, language = None, file_extension = None):
     else:
         return idx_list
 
+@beartype
 def get_video_index(media_path, file_extension = None):
     return _get_media_index(media_path,'video')
 
+@beartype
 def get_audio_index(media_path, language = None, file_extension = None):
     return _get_media_index(media_path,'audio',language)
 
+@beartype
 def get_subtitle_index(media_path, language = None, file_extension = None):
     return _get_media_index(media_path,'subtitle',language)
 
-
-
-
+@beartype
 def extract_subtitle(
         video_folder:     Union[Path,str],
         output_folder:    Union[Path,str],
@@ -583,7 +646,7 @@ def extract_subtitle(
         alarm_done = alarm_done,
     )
 
-
+@beartype
 def extract_sub_1_video(
     video_path:         Union[str,Path],
     output_folder:      Union[str,Path],
@@ -592,7 +655,7 @@ def extract_sub_1_video(
     alarm_done:         bool = True,
     overwrite_file:     bool = True,
     languages:           Union[str,list, None] = None,
-
+    encoding:str = "utf-8-sig"
                     ):
     # write now language input has to be 3-str letter(BigBang FR)
     # I want to generalize it and work with normal text eg "French" instead of "fre"
@@ -716,7 +779,10 @@ def extract_sub_1_video(
             else:
                 print("The output path is already existed. Please delete the file or set the overwrite parameter to TRUE")
                 return False
-        result = subprocess.run(command, text=True, stderr=subprocess.PIPE)
+        try:
+            result = subprocess.run(command, text=True, stderr=subprocess.PIPE, encoding=encoding)
+        except UnicodeDecodeError:
+            raise UnicodeDecodeError(f"\nError encountered. Please change the encoding parameter to ensure that the function works properly.")
     
         if result.returncode != 0:
             print("Error encountered:")
@@ -731,12 +797,13 @@ def extract_sub_1_video(
                 except:
                     pass
 
-
+@beartype
 def language_name_list():
     import pycountry
     language_names = [lang.name for lang in pycountry.languages if hasattr(lang, 'name')]
     return language_names
 
+@beartype
 def closest_language(misspelled_language):
     
     from fuzzywuzzy import process
@@ -748,6 +815,7 @@ def closest_language(misspelled_language):
     closest_match = process.extractOne(misspelled_language, language_names)
     return closest_match[0] if closest_match else None
 
+@beartype
 def closest_language_obj(misspelled_language):
     
     """
@@ -782,13 +850,15 @@ def closest_language_obj(misspelled_language):
     from langcodes import Language
     correct_language = closest_language(misspelled_language)
     return Language.find(correct_language)
-    
+
+@beartype
 def extract_1_audio(video_path:     Union[str,Path],
                     output_folder:  Union[str,Path],
                     output_name:    Union[str,Path], 
                     file_extension: Union[str,list] = ".mp3",
                     alarm_done:     bool = True,
-                    overwrite_file: bool = True
+                    overwrite_file: bool = True,
+                    encoding='utf-8-sig'
                     ):
     # Additional feature 1: output both .wav & .mp3
     
@@ -853,11 +923,9 @@ def extract_1_audio(video_path:     Union[str,Path],
                 file_extension = "." + file_extension
             output_name += file_extension
     
-    output_path = output_folder / output_name
+    output_path = output_folder_in / output_name
     
 
-    
-    
     command = [
         "ffmpeg",
         "-i", str(video_path),
@@ -873,8 +941,11 @@ def extract_1_audio(video_path:     Union[str,Path],
         else:
             print("The output path is already existed. Please delete the file or set the overwrite parameter to TRUE")
             return False
-    result = subprocess.run(command, text=True, stderr=subprocess.PIPE)
-    
+    try:
+        result = subprocess.run(command, text=True, stderr=subprocess.PIPE,encoding=encoding)
+    except UnicodeDecodeError:
+        raise UnicodeDecodeError(f"\nError encountered. Please change the encoding parameter to ensure that the function works properly.")
+
     if result.returncode != 0:
         print("Error encountered:")
         print(result.stderr)
@@ -884,3 +955,9 @@ def extract_1_audio(video_path:     Union[str,Path],
         
         if alarm_done:
             playsound(alarm_done_path)
+
+
+
+# delete when importing this package
+del Union,List,Tuple, Literal, Callable, Dict, Path
+del beartype, ost, pkg_resources

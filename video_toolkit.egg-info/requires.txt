@@ -14,6 +14,7 @@ lingtrain_aligner
 ffmpeg
 fuzzywuzzy
 pysubs2
+beartype
 
 [full]
 torch>=1.0
