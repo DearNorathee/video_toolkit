@@ -110,7 +110,7 @@ def extract_audio_1file(
         video_path:     Union[str,Path],
         output_folder:  Union[str,Path],
         output_name:    Union[str,Path, None] = None, 
-        output_extension: Union[str,list] = ".mp3",
+        output_extension: Union[str,list,None] = ".mp3",
         alarm_done: bool = False,
         overwrite_file: bool = True,
         one_output_per_lang: bool = True,
@@ -314,7 +314,7 @@ def _extract_media_setup(
     from playsound import playsound
     from time import time, perf_counter
     from tqdm import tqdm
-
+    import os_toolkit as ost
 
     ts01 = time()
     output_extension = [output_extension]
@@ -396,9 +396,9 @@ def _extract_media_setup(
                         output_name = output_name,
                         alarm_done=False,
                         overwrite_file=overwrite_file)
+                print(f"extracted {output_name} successfully!!!")
             except Exception as e:
                 print(f"Error occured at file {filename_list[i]}")
-            print(f"extracted {output_name} successfully!!!")
         
         # sys.stdout = original_stdout
     if alarm_done:
@@ -410,7 +410,7 @@ def _extract_media_setup(
     duration = ts02-ts01
     pw.print_time(duration)
     print()
-    return filename_list
+    # return filename_list
 
 @beartype
 def get_metadata2(
@@ -561,7 +561,7 @@ def get_metadata(
 
 @beartype
 def _get_media_extension(media_path, media, language = None, file_extension = None
-                         ) -> Union[list[int],int, None] :
+                         ) -> Union[list[str],str, None] :
     # not tested
     # return the unique list of media extension
     # return str if 1 unique extension is found
@@ -651,7 +651,7 @@ def extract_sub_1_video(
     video_path:         Union[str,Path],
     output_folder:      Union[str,Path],
     output_name:        Union[str,Path] = None, 
-    output_extension:   Union[str,list] = None,
+    output_extension:   Union[str,list|None] = None,
     alarm_done:         bool = True,
     overwrite_file:     bool = True,
     languages:           Union[str,list, None] = None,
