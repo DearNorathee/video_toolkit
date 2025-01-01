@@ -93,7 +93,13 @@ if whisper is not None:
                 loop_obj = enumerate(audio_full_paths)
 
             for i, path in loop_obj:
-                audio_to_sub_1file(model,path,output_name = output_name,output_folder = output_folder)
+                try:
+                    audio_to_sub_1file(model,path,output_name = output_name,output_folder = output_folder)
+                except FileNotFoundError as e:
+                    print(e)
+                    print(output_folder)
+                    raise FileNotFoundError(f"Please check your output_folder path. It might not have the correct path.")
+                
                 if verbose >= 1:
                     print(f"{audio_name_paths[i]} done!!")
                 

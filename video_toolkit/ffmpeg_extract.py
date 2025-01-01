@@ -280,7 +280,7 @@ def _extract_media_setup(
         output_folder: Union[str,Path],
         extract_1_file_func: Callable,
         input_extension: Union[list[str],str],
-        output_extension: Union[list[str],str],
+        output_extension: Union[list[str],str,None],
         # input_param_name: list[str],
         overwrite_file:   bool = True,
         n_limit: int = 150,
@@ -289,7 +289,7 @@ def _extract_media_setup(
         alarm_done: bool = True,
 
         one_output_per_lang: bool = True,
-        languages: Union[List[str],None] = None,
+        languages: Union[List[str],None,str] = None,
         # errors: Literal["ignore","raise"] = "ignore",
 ) -> None :
     # 
@@ -620,12 +620,12 @@ def extract_subtitle(
         video_folder:     Union[Path,str],
         output_folder:    Union[Path,str],
         video_extension:  Union[list,str] = [".mp4",".mkv"],
-        output_extension: Union[list,str] = None,
+        output_extension: Union[list,str,None] = None,
         overwrite_file:   bool = True,
         n_limit:          int = 150,
         output_prefix:    str = "",
         output_suffix:    str = "",
-        languages: List[str] | None = None,
+        languages: List[str] | None | str = None,
         alarm_done:       bool = True,
 ):
     input_param = {
