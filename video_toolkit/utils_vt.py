@@ -215,7 +215,8 @@ def split_audio_by_sub(
     alarm_done:bool = False,
     verbose:int = 1,
     modify_sub:bool = False,
-    progress_bar:bool = True
+    progress_bar:bool = True,
+    create_new_folder:bool = True,
         ) -> None:
     """
     Split audio files based on associated subtitle files.
@@ -342,7 +343,9 @@ def split_audio_by_sub(
                             alarm_done = alarm_done,
                             verbose = 0,
                             include_sentence = include_sentence,
-                            modify_sub = modify_sub)
+                            modify_sub = modify_sub,
+                            create_new_folder=create_new_folder
+                            )
 
 @beartype
 def modify_sub_df_time(sub_df:pd.DataFrame) -> pd.DataFrame:
@@ -727,6 +730,7 @@ def split_1audio_by_subtitle(
     verbose:int = 1,
     include_sentence:bool = True,
     modify_sub:bool = False,
+    create_new_folder:bool = True
         ) -> None:
     
     """
@@ -821,8 +825,12 @@ def split_1audio_by_subtitle(
     # Iterate over subtitle sentences
     n: int = subs.shape[0]
     t04: float = time.time()
-    new_folder = output_folder + "/" + media_name
-    os.makedirs(new_folder,exist_ok=True)
+
+    if create_new_folder:
+        new_folder = output_folder + "/" + media_name
+        os.makedirs(new_folder,exist_ok=True)
+    else:
+        new_folder = output_folder
     
     for i in range(n):
         start_time: datetime.time = subs.loc[i,'start']
@@ -1476,14 +1484,14 @@ def crop_video(
 def srt_to_df(
     srt_path: str | Path,
     remove_stopwords:bool = True,
-    stopwords: list[str] = ["♪","\n","<i>","</i>","<b>","</b>"]) -> pd.DataFrame | List[pd.DataFrame]:
+    stopwords: list[str] = ["♪","<i>","</i>","<b>","</b>"]) -> pd.DataFrame | List[pd.DataFrame]:
     # df = pd.DataFrame({
         #     'sentence': sentences,
         #     'start': start_times,
         #     'end': end_times
         # })
 
-# remove_newline will remove '\n' from the extracted text
+
     import pysrt
     import pandas as pd
     import py_string_tool as pst
@@ -1507,6 +1515,10 @@ def srt_to_df(
         if remove_stopwords:
             #FIX it's still can't replace properly 
             sentences = [pst.replace(sentence,stopwords,"") for sentence in sentences]
+            # remove_newline will remove '\n' from the extracted text
+            sentences = [sentence.replace("\n"," ") for sentence in sentences]
+
+
         df = pd.DataFrame({
             'sentence': sentences,
             'start': start_times,
