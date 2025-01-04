@@ -591,9 +591,9 @@ def audio_duration(media_path: str | Path | AudioSegment):
     from pydub import AudioSegment
     from datetime import datetime, timedelta
 
-    if isinstance(media_path,str, Path):
+    if isinstance(media_path,(str, Path)):
         video_audio = AudioSegment.from_file(str(media_path))
-    elif isinstance(AudioSegment):
+    elif isinstance(media_path,AudioSegment):
         video_audio = media_path
 
     # Get the duration of the audio segment in milliseconds
@@ -1571,7 +1571,7 @@ def srt_to_Excel(
                 df.to_excel(out_full_name[i], index=index)
 
 @beartype
-def to_ms(time_obj: datetime.time) -> float:
+def to_ms(time_obj: datetime.time) -> float|int:
     time_obj_ms = (time_obj.hour * 3600 + time_obj.minute * 60 + time_obj.second) * 1000 + time_obj.microsecond // 1000
     return time_obj_ms
 
