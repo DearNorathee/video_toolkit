@@ -216,7 +216,7 @@ def split_audio_by_sub(
     verbose:int = 1,
     modify_sub:bool = False,
     progress_bar:bool = True,
-    create_new_folder:bool = True,
+    create_media_folder:bool = True,
         ) -> None:
     """
     Split audio files based on associated subtitle files.
@@ -344,7 +344,7 @@ def split_audio_by_sub(
                             verbose = 0,
                             include_sentence = include_sentence,
                             modify_sub = modify_sub,
-                            create_new_folder=create_new_folder
+                            create_media_folder=create_media_folder
                             )
 
 @beartype
@@ -370,7 +370,7 @@ def modify_sub_df_time(sub_df:pd.DataFrame) -> pd.DataFrame:
 @beartype
 def sub_to_df(sub_path,
               remove_stopwords=True,
-              stopwords=["♪", "\n", "<i>", "</i>", "<b>", "</b>"]) -> pd.DataFrame | List[pd.DataFrame]:
+              stopwords=["♪", "<i>", "</i>", "<b>", "</b>"]) -> pd.DataFrame | List[pd.DataFrame]:
     """
     Convert a subtitle file (.ass or .srt) or multiple subtitle files in a directory to pandas DataFrame(s).
 
@@ -730,7 +730,7 @@ def split_1audio_by_subtitle(
     verbose:int = 1,
     include_sentence:bool = True,
     modify_sub:bool = False,
-    create_new_folder:bool = True
+    create_media_folder:bool = True
         ) -> None:
     
     """
@@ -826,7 +826,7 @@ def split_1audio_by_subtitle(
     n: int = subs.shape[0]
     t04: float = time.time()
 
-    if create_new_folder:
+    if create_media_folder:
         new_folder = output_folder + "/" + media_name
         os.makedirs(new_folder,exist_ok=True)
     else:
