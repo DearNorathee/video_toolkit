@@ -290,7 +290,7 @@ def _extract_media_setup(
 
         one_output_per_lang: bool = True,
         languages: Union[List[str],None,str] = None,
-        # errors: Literal["ignore","raise"] = "ignore",
+        errors: Literal["warn","ignore","raise"] = "warn",
 ) -> None :
     # 
     
@@ -315,6 +315,7 @@ def _extract_media_setup(
     from time import time, perf_counter
     from tqdm import tqdm
     import os_toolkit as ost
+    import warnings
 
     ts01 = time()
     output_extension = [output_extension]
@@ -396,9 +397,14 @@ def _extract_media_setup(
                         output_name = output_name,
                         alarm_done=False,
                         overwrite_file=overwrite_file)
-                print(f"extracted {output_name} successfully!!!")
+                print(f"\nExtracted {output_name} successfully!!!")
             except Exception as e:
-                print(f"Error occured at file {filename_list[i]}")
+                if errors in ["raise"]:
+                    raise RuntimeError(f"\nError occured at file {filename_list[i]}")
+                elif errors in ["warn"]:
+                    warnings.warn(f"\nError occured at file {filename_list[i]}",category = UserWarning)
+                
+                
         
         # sys.stdout = original_stdout
     if alarm_done:
