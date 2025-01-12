@@ -192,6 +192,11 @@ def df_to_srt(df: pd.DataFrame, output_name: str, output_folder: Union[str, Path
     with open(output_path, 'w', encoding='utf-8') as f:
         df_in['start'] = df_in['start'].astype(str)
         df_in['end'] = df_in['end'].astype(str)
+
+        # fix the format manually when micro seconds are 0
+        df_in['start'] = df_in['start'].apply(lambda x: f"{x}:00,000000" if '.' not in x else x)
+        df_in['end'] = df_in['end'].apply(lambda x: f"{x}:00,000000" if '.' not in x else x)
+        
         for index, row in df_in.iterrows():
             # Write subtitle index
             f.write(f"{index + 1}\n")
