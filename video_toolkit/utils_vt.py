@@ -32,14 +32,25 @@ def create_media_info_df(
     input_video_folder:str|Path  
     ,input_video_pattern: str
     ,ep_seasons: list[str]| str
-    ,media_types: list[str]
     ,input_media_folders: list[str]
-    ,input_filname_patterns: list[str]
-    ,titles: list[str]
-    ,lang_code_3chrs: list[str]
+    ,list_of_info: list[tuple|list[str]]
+    # ,media_types: list[str]
+    # ,titles: list[str]
+    # ,lang_code_3chrs: list[str]
+    # ,input_filname_patterns: list[str]
     ,output_folder:str
     ) -> pd.DataFrame:
     """
+    list_of_info would contain ('media_type','title','lang','input_filename_pattern')
+    eg:
+        list_of_info = [
+            ("subtitle", "Portuguese_Brazilian_ori", "por", "BigBang PT <>.srt"),
+            ("subtitle", "English_ori", "eng", "BigBang FR <>_1.srt"),
+            ("subtitle", "French_ori", "fre", "BigBang FR <>_1.srt"),
+            ("audio", "French", "fre", "BigBang FR <>_FR.mp3"),
+            ("subtitle", "French_whisper", "eng", "BigBang FR <>.srt"),
+        ]
+
     helper function to create media_info combinations(pd.df) to feed in to merge_media_to_video
     there's no output_name because it uses the default name
     use <> to replace the episode_season pattern
@@ -54,6 +65,9 @@ def create_media_info_df(
             x_new = x.replace(old,new)
             result[i] = x_new
         return result
+    
+    list_of_info_splitted = list(zip(*list_of_info))
+    media_types,titles,lang_code_3chrs,input_filname_patterns  = [list(item) for item in list_of_info_splitted]
 
     lengths: list[int] = [len(media_types), len(input_media_folders), len(input_filname_patterns), len(titles), len(lang_code_3chrs)]
     if len(set(lengths)) > 1:
@@ -274,7 +288,9 @@ def split_audio_by_sub(
     """
     import os
     import os_toolkit as ost
-    from tqdm.auto import tqdm
+    # tqdm.auto wouldn't work in Spyder for some unknown reasons
+    # from tqdm.auto import tqdm
+    from tqdm import tqdm
     # high tested
     
     # convert every input: using_folder_path will print out the audio and sub it uses for splitting
@@ -1559,13 +1575,15 @@ def srt_to_Excel(
         ,index:bool = True) -> None:
     import pandas as pd
     import os
+    import python_wizard as pw
+    import os_toolkit as ost
     """ 
     Wrote on Aug 27, 2023
     I already wrote it for 1 file but it took me about 3 additional hrs to 
     make it work with multiple files in folder
     """
     # output should be total_path
-    df_sub: pd.DataFrame | List[pd.DataFrame] = srt_to_df(srt_path)
+    df_sub: pd.DataFrame | list[pd.DataFrame] = srt_to_df(srt_path)
     pd_ver = pw.package_version("pandas")
     
     if isinstance(df_sub,pd.DataFrame):

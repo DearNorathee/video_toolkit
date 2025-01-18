@@ -111,7 +111,7 @@ def merge_media_to1video(
     output_name: Union[str, Path] = "",
     errors:Literal["raise","warn","ignore"] = "warn"
 ) -> None:
-    
+    # toAdd01: Add Useful OSError when any of paths aren't found
     """
     Merge additional media streams into a video file.
     
@@ -168,20 +168,46 @@ def merge_media_to1video(
     >>> merge_media_to1video(input_video_path, input_info_df, output_folder, output_name)
     """
 
-    
     # tested with 1 video
-    
-    
+
     import subprocess
     from pathlib import Path
+    import os 
+    import warnings
 
     video_path = Path(input_video_path)
-    output_path = Path(output_folder) / output_name
+    video_name = video_path.stem
+    if output_name == "":
+        output_path = Path(output_folder) / f"{video_name}.mkv"
+    else:
+        output_path = Path(output_folder) / output_name
+
+    
+    
+    if not os.path.exists(video_path):
+        if errors in ["raise"]:
+            raise FileNotFoundError(f"Please check your input video path for {video_path}")
+        elif errors in ["warn"]:
+            warnings.warn(f"Please check your input video path for {video_path}",category=UserWarning)
 
     command = ['ffmpeg', '-i', str(video_path)]
 
+    files_not_found = 0
+    file_not_found_text = ""
     for _, row in input_info_df.iterrows():
+        if not os.path.exists(str(row['input_media_path'])):
+            files_not_found += 1
+            file_not_found_text += f"\nPath media doesn't exist: {str(row['input_media_path'])}"
+
         command.extend(['-i', str(row['input_media_path'])])
+
+    if files_not_found > 0:
+        if errors in ["raise"]:
+            raise FileNotFoundError(file_not_found_text)
+        elif errors in ["warn"]:
+            warnings.warn(f"Please check your input video path for {video_path}",category=UserWarning)
+        else:
+            return
 
     command.append('-map')
     command.append('0')
