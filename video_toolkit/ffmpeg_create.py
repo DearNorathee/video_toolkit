@@ -248,9 +248,10 @@ def merge_media_to1video(
         if result.returncode != 0:
             raise Exception(result.stderr)
 
-@beartype
+# unlock bear type for now because I want to support list[int] as well
+# @beartype
 def export_audio(audio_segment:AudioSegment,
-                 start_end_time_dict: Dict[int,Tuple[int,int]],
+                 start_end_time_dict: Dict[int,Tuple[int,int]|List[int]],
                  output_names:Dict[int,str],
                  output_folder:str = "",
                  progress_bar:bool = True,
