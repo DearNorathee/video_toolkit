@@ -31,6 +31,7 @@ if whisper is not None:
             ,audio_path: Union[str,Path]
             ,output_name: Union[str,Path] = ""
             ,output_folder: Union[str,Path] = ""
+            ,language: None|str = None
             ) -> None:
         # medium tested
         # seems to work
@@ -40,6 +41,7 @@ if whisper is not None:
         
         """
         signature function that will extract the subtitle from the audio
+        language has to be 2 characters and only tested for transcribe_stable
         """
         # if output_name is "" then default it should use the same name as the audio
         if output_name == "":
@@ -55,9 +57,9 @@ if whisper is not None:
         output_path = Path(str(output_folder_in)) / output_name_in
         
         if isinstance(model, (whisper_model_Whisper)):
-            result = model.transcribe(audio_path)
+            result = model.transcribe(audio_path,language = language)
         elif isinstance(model, (faster_whisper.WhisperModel)): 
-            result = model.transcribe_stable(audio_path)
+            result = model.transcribe_stable(audio_path,language = language)
         result.to_srt_vtt(str(output_path),word_level =False)
 
     # NEXT write transcribe_to_subtitle to loop through the audio files and create subtitles
@@ -71,6 +73,7 @@ if whisper is not None:
         ,alarm_done:bool = True
         ,alarm_error:bool = True
         ,input_extension:Union[List[str],str] = [".mp3",".wav"]
+        ,language: None|str = None
         ) -> None:
         # list of files is not supported
         """
@@ -94,7 +97,7 @@ if whisper is not None:
 
             for i, path in loop_obj:
                 try:
-                    audio_to_sub_1file(model,path,output_name = output_name,output_folder = output_folder)
+                    audio_to_sub_1file(model,path,output_name = output_name,output_folder = output_folder, language=language)
                 except FileNotFoundError as e:
                     print(e)
                     print(output_folder)
@@ -110,7 +113,7 @@ if whisper is not None:
                     pass
         elif isinstance(audio_paths,list):
             for i in range(len(audio_paths)):
-                audio_to_sub_1file(model,audio_paths[i],output_name = output_name,output_folder = output_folder)
+                audio_to_sub_1file(model,audio_paths[i],output_name = output_name,output_folder = output_folder, language=language)
                 if alarm_done:
                     try:
                         play_audio(alarm_done_path)
@@ -118,7 +121,7 @@ if whisper is not None:
                         pass
             # raise NotImplementedError(f"list of files is not supported")
         elif isinstance(audio_paths,(str,Path)):
-            audio_to_sub_1file(model,audio_paths,output_name = output_name,output_folder = output_folder)
+            audio_to_sub_1file(model,audio_paths,output_name = output_name,output_folder = output_folder, language=language)
             if alarm_done:
                 try:
                     play_audio(alarm_done_path)

@@ -60,7 +60,7 @@ def is_ffmpeg_installed():
         # FFmpeg is not in PATH
         print("FFmpeg is installed but not in PATH.")
 
-@beartype
+# @beartype
 def extract_audio(
         video_folder:     Union[Path,str],
         output_folder:    Union[Path,str],
@@ -73,7 +73,7 @@ def extract_audio(
         alarm_done:       bool = True,
 
         one_output_per_lang: bool = True,
-        languages: Union[List[str],None] = None,
+        languages: Union[List[str],None,str] = None,
 ):
     # extract_audio3 is highly tested now
     # this is from extract_audio3(it's already tested through time seems pretty stable)
@@ -114,7 +114,7 @@ def extract_audio_1file(
         alarm_done: bool = False,
         overwrite_file: bool = True,
         one_output_per_lang: bool = True,
-        languages: Union[List[str],None] = None,
+        languages: Union[List[str],None,str] = None,
         
         progress_bar:bool = True,
         encoding = "utf-8-sig",
@@ -523,7 +523,7 @@ def get_all_metadata(
 def get_metadata(
         media_path: Path |str
         ,media:Literal["video","audio","subtitle"]
-        ,language: None|str = None
+        ,language: None|str|list[str] = None
         ,file_extension: None|str = None):
     #  not tested
     if language is None:

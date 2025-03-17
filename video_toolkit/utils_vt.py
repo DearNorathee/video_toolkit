@@ -208,8 +208,13 @@ def df_to_srt(df: pd.DataFrame, output_name: str, output_folder: Union[str, Path
         df_in['end'] = df_in['end'].astype(str)
 
         # fix the format manually when micro seconds are 0
-        df_in['start'] = df_in['start'].apply(lambda x: f"{x}:00,000000" if '.' not in x else x)
-        df_in['end'] = df_in['end'].apply(lambda x: f"{x}:00,000000" if '.' not in x else x)
+        # original
+        # df_in['start'] = df_in['start'].apply(lambda x: f"{x}:00,000000" if '.' not in x else x)
+        # df_in['end'] = df_in['end'].apply(lambda x: f"{x}:00,000000" if '.' not in x else x)
+        
+        # new logic
+        df_in['start'] = df_in['start'].apply(lambda x: f"{x},000000" if '.' not in x else x)
+        df_in['end'] = df_in['end'].apply(lambda x: f"{x},000000" if '.' not in x else x)
         
         for index, row in df_in.iterrows():
             # Write subtitle index
@@ -799,6 +804,7 @@ def split_1audio_by_subtitle(
     import python_wizard as pw
     import py_string_tool as pst
     import datetime
+    import pandas as pd
     # Added01: remove the tags in sentence
     #   eg: '<font face="sans-serif" size="71">Sei o que procurar.</font>' => Sei o que procurar.
 
@@ -1033,7 +1039,7 @@ def read_sentences_from_excel(
     :return: Tuple of two lists containing Portuguese and English sentences.
     """
     import dataframe_short as ds
-
+    
     df: pd.DataFrame = pd.read_excel(file_path,sheet_name=sheet_name,nrows=nrows,usecols=[portuguese_col,english_col])
 
     portuguese_sentences = df.iloc[:,0].tolist()
@@ -1628,7 +1634,7 @@ del Callable
 del Dict
 
 del AudioSegment
-del sys, datetime, pw, pd, sns
+# del sys, datetime, pw, pd, sns
 del beartype, ost, pkg_resources
 
 # TODO: srt_to_Excel => similar to srt_to_csv but output as excel

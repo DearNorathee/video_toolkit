@@ -111,7 +111,9 @@ def merge_media_to1video(
     output_name: Union[str, Path] = "",
     errors:Literal["raise","warn","ignore"] = "warn"
 ) -> None:
+    import numpy as np
     # toAdd01: Add Useful OSError when any of paths aren't found
+    
     """
     Merge additional media streams into a video file.
     
@@ -239,6 +241,9 @@ def merge_media_to1video(
             sub_count += 1
 
     command.extend(['-c', 'copy', str(output_path)])
+    # command_line, command_np is for debugging
+    command_line = " ".join(command)
+    command_np = np.array(command)
     result = subprocess.run(command, text=True, stderr=subprocess.PIPE)
     if errors in ["warn"]:
         if result.returncode != 0:
