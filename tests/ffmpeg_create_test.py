@@ -1,6 +1,15 @@
 from video_toolkit.ffmpeg_create import *
 import dataframe_short as ds
 
+def test_change_title_from_filename_1file():
+    video_path01 = r"H:\H_Video_Python\video_toolkit_test\change_title_from_filename_1file\The 100 season 6 Portuguese mp3\The 100 PT_S06E01_PT_test1.mp3"
+    change_title_from_filename_1file(video_path01,replace=True)
+    change_title_from_filename_1file(video_path01,replace=False)
+
+def test_change_filetitle_1file():
+    video_path01 = r"H:\H_Video_Python\video_toolkit_test\change_title_from_filename_1file\The 100 season 6 Portuguese mp3\The 100 PT_S06E01_PT_test1.mp3"
+    change_filetitle_1file(video_path01, "I hate politics.")
+    
 def test__create_media_dict_info():
     media_excel_path = r"C:/Users/Heng2020/OneDrive/D_Code/Python/Python NLP/NLP 02/NLP_2024/NLP 17_MergeLanguageVideo/media_info_test1.xlsm"
     media_df1 = ds.read_excel(media_excel_path,sheet_name="1video")

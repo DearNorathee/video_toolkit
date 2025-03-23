@@ -10,6 +10,227 @@ alarm_done_path = pkg_resources.resource_filename(__name__, 'assets/Sound Effect
 sound_error_path = pkg_resources.resource_filename(__name__, 'assets/Sound Effect Error.wav')
 
 @beartype
+def change_title_from_filename_1file(
+        filepath: str | Path
+        , replace: bool = True
+        , prefix: str = ""
+        , suffix: str = ""
+        ,errors:Literal["warn","raise"] = "raise"
+        ,print_errors:bool = False
+        ) -> None:
+    
+    """
+    Update the title metadata of a media file using its filename.
+    
+    This function sets the title metadata of a single media file (e.g., video or audio) 
+    based on its filename. It optionally renames the output file and allows for prefix/suffix customization.
+    
+    Parameters
+    ----------
+    filepath : str or Path
+        Path to the media file whose title metadata will be updated.
+    
+    replace : bool, default True
+        If True, replaces the original file with the modified one.
+        If False, creates a new file with an updated name.
+    
+    prefix : str, default ""
+        Optional prefix to prepend to the new filename if `replace` is False.
+    
+    suffix : str, default ""
+        Optional suffix to append to the new filename if `replace` is False.
+    
+    errors : {"warn", "raise"}, default "raise"
+        Behavior when an error occurs:
+        - "raise": Raise the exception.
+        - "warn": Display a warning message and continue.
+    
+    print_errors : bool, default False
+        If True, prints detailed error messages during processing.
+    
+    Returns
+    -------
+    None
+        The function performs in-place metadata editing or creates a new file, depending on `replace`.
+    
+    Raises
+    ------
+    FileNotFoundError
+        If the provided `filepath` does not exist.
+    
+    Notes
+    -----
+    - The title metadata is set to the filename (without extension).
+    - When `replace` is False and no prefix or suffix is provided, `_new` is appended to the filename.
+    - Internally, this function delegates the title-setting operation to `change_filetitle_1file`.
+    
+    Examples
+    --------
+    >>> change_title_from_filename_1file("video.mp4", replace=True)
+    
+    >>> change_title_from_filename_1file("movie.mkv", replace=False, prefix="eng_", suffix="_hd")
+    """
+
+    
+    import subprocess
+    import numpy as np
+    import os
+    from send2trash import send2trash
+    
+    if not os.path.exists(filepath):
+        raise FileNotFoundError("Please check the path. It doesn't exist.")
+    
+    filepath = Path(filepath)
+    filename = filepath.stem
+    new_title = filename 
+    
+    if replace:
+        new_name = f"{filename}_temp" 
+    else:
+       if prefix != "" or suffix != "":
+           new_name = f"{prefix}{filename}{suffix}"
+       else:
+           new_name = f"{filename}_new"
+            
+    output_path = filepath.with_name(f"{new_name}{filepath.suffix}")
+
+    change_filetitle_1file(
+        filepath
+        ,new_title = new_title
+        ,replace = replace
+        ,prefix =prefix
+        ,suffix =suffix
+        ,errors = errors
+        ,print_errors = print_errors
+        )
+
+
+
+@beartype
+def change_filetitle_1file(
+        filepath: str | Path
+        ,new_title: str
+        , replace: bool = False
+        , prefix: str = ""
+        , suffix: str = ""
+        ,errors:Literal["warn","raise"] = "raise"
+        ,print_errors:bool = False
+        ) -> None:
+    
+    """
+    Set or update the title metadata of a media file.
+    
+    This function modifies the title metadata of a single media file (e.g., audio or video)
+    without re-encoding. The output can either replace the original file or be saved as a new file
+    with optional prefix/suffix modifications to the name.
+    
+    Parameters
+    ----------
+    filepath : str or Path
+        Path to the input media file.
+    
+    new_title : str
+        The new title to be embedded in the file's metadata.
+    
+    replace : bool, default False
+        If True, replaces the original file with the updated one.
+        If False, creates a new file with the updated title metadata.
+    
+    prefix : str, default ""
+        Optional prefix for the output filename if `replace` is False.
+    
+    suffix : str, default ""
+        Optional suffix for the output filename if `replace` is False.
+    
+    errors : {"warn", "raise"}, default "raise"
+        Error handling behavior:
+        - "warn": Print a warning message if an error occurs.
+        - "raise": Raise an exception if an error occurs.
+    
+    print_errors : bool, default False
+        If True, prints detailed error output when an error is raised.
+    
+    Returns
+    -------
+    None
+        The function modifies or creates a file with the updated title metadata.
+    
+    Raises
+    ------
+    FileNotFoundError
+        If the specified file does not exist.
+    
+    Exception
+        If the ffmpeg command fails and `errors="raise"` is set.
+    
+    Notes
+    -----
+    - Requires `ffmpeg` to be installed and accessible via the system PATH.
+    - If `replace` is True, the original file is moved to trash and replaced by the new one.
+    - Metadata is updated without re-encoding (`-codec copy`).
+    
+    Examples
+    --------
+    >>> change_filetitle_1file("movie.mp4", new_title="My Movie", replace=False)
+    
+    >>> change_filetitle_1file("video.mkv", new_title="English Version", replace=True, errors="warn")
+    """
+
+    
+    import subprocess
+    import numpy as np
+    import os
+    from send2trash import send2trash
+    
+    # medium tested
+    
+    if not os.path.exists(filepath):
+        raise FileNotFoundError("Please check the path. It doesn't exist.")
+    
+    filepath = Path(filepath)
+    filename = filepath.stem
+    
+    if replace:
+        new_name = f"{filename}_temp" 
+    else:
+       if prefix != "" or suffix != "":
+           new_name = f"{prefix}{filename}{suffix}"
+       else:
+           new_name = f"{filename}_new"
+            
+    output_path = filepath.with_name(f"{new_name}{filepath.suffix}")
+
+    
+    command = [
+        "ffmpeg",
+        "-i", str(filepath),
+        "-metadata", f"title={new_title}",
+        "-codec", "copy",
+        str(output_path)
+    ]
+
+    command_line = " ".join(command)
+    command_np = np.array(command)
+    result = subprocess.run(command, text=True, stderr=subprocess.PIPE)
+    
+    
+    if replace:
+        send2trash(filepath)
+        output_path.rename(filepath)
+    
+    
+    if errors in ["warn"]:
+        if result.returncode != 0:
+            print("Error encountered:")
+            print(result.stderr)
+    elif errors in ["raise"]:
+        if result.returncode != 0:
+            if print_errors:
+                raise Exception(result.stderr)
+            else:
+                raise Exception()
+
+@beartype
 def _create_media_dict_info(df: pd.DataFrame) -> List[Dict[str, Any]]:
     info_dict_list: List[Dict[str, Any]] = []
     group_cols = ["input_video_name", "input_video_path", "output_folder", "output_name"]
@@ -92,11 +313,15 @@ def merge_media_to_video(info_df:pd.DataFrame,errors:Literal["raise","warn","ign
                 , output_folder = curr_info_dict["output_folder"]
                 ,output_name = curr_info_dict["output_name"]
                 ,errors = "raise"
+                ,print_errors=False
                 )
         except (TypeError,UnboundLocalError) as e:
             print(f"There's an error in while processing: {curr_info_dict['input_video_path']}\n")
             print(e)
             print()
+        except FileNotFoundError as e:
+            print(e)
+            print(f"There's no file in path: {curr_info_dict['input_video_path']}\n")
         except Exception as e:
             print("This is new Error Type")
             print(e)
@@ -109,7 +334,8 @@ def merge_media_to1video(
     input_info_df:pd.DataFrame,
     output_folder: str,
     output_name: Union[str, Path] = "",
-    errors:Literal["raise","warn","ignore"] = "warn"
+    errors:Literal["raise","warn","ignore"] = "warn",
+    print_errors:bool = True
 ) -> None:
     import numpy as np
     # toAdd01: Add Useful OSError when any of paths aren't found
@@ -251,7 +477,10 @@ def merge_media_to1video(
             print(result.stderr)
     elif errors in ["raise"]:
         if result.returncode != 0:
-            raise Exception(result.stderr)
+            if print_errors:
+                raise Exception(result.stderr)
+            else:
+                raise Exception()
 
 # unlock bear type for now because I want to support list[int] as well
 # @beartype

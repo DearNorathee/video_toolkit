@@ -496,6 +496,8 @@ def get_all_metadata(
     file_extensions = []
     languages = []
     durations = []
+    titles = []
+    
     
     # Extract stream information
     for stream in metadata.get('streams', []):
@@ -504,6 +506,10 @@ def get_all_metadata(
         # Extract language; note that 'tags' and 'language' might not exist
         language = stream.get('tags', {}).get('language', 'N/A')
         languages.append(language)
+        try:
+            titles.append(stream['tags']['title'])
+        except KeyError:
+            titles.append(None)
     
     # Extract duration from format, if available
     duration = float(metadata.get('format', {}).get('duration', 'N/A')) / 60
@@ -514,7 +520,8 @@ def get_all_metadata(
         'filetype': filetypes,
         'file_extension': file_extensions,
         'language': languages,
-        'duration_in_min': durations
+        'duration_in_min': durations,
+        'title':titles
     })
     
     return info_df
