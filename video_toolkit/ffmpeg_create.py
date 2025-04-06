@@ -18,6 +18,7 @@ def change_audio_speed_1file(
     ,output_name:str
     ,output_folder:str = ""
     ,errors:Literal["raise","warn"] = "raise"
+    ,print_errors:bool = False
     ) -> None :
  
 

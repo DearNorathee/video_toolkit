@@ -2,12 +2,12 @@ from typing import List, Literal, Dict, Union
 from pathlib import Path
 from video_toolkit.utils_vt import *
 from video_toolkit.sandbox1_vt import *
-from whisper.model import Whisper as whisper_model_Whisper
 import pkg_resources
 
 # extra import
 try:
     import whisper
+    from whisper.model import Whisper as whisper_model_Whisper
 except ImportError:
     whisper = None
 
