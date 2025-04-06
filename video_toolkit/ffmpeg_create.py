@@ -27,9 +27,10 @@ def change_audio_speed_1file(
     import numpy as np
     import os
     from send2trash import send2trash
+    from pathlib import Path
     
     # medium tested
-    
+    # TOADD01: to add if the output file already exist just replace it?
     if not os.path.exists(audio_path):
         raise FileNotFoundError("Please check the path. It doesn't exist.")
         
@@ -37,7 +38,7 @@ def change_audio_speed_1file(
         raise ValueError(f"Value of speedx should be between 0.5 and 2. Otherwise the function doesn't work.")
         
     
-    filepath = Path(filepath)
+    filepath = Path(audio_path)
     folder_path = filepath.parent
     filename = filepath.stem
     

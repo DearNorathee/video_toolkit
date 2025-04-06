@@ -25,7 +25,7 @@ sound_error_path = pkg_resources.resource_filename(__name__, 'assets/Sound Effec
 # whisper 1.1.10
 # stable_whisper 2.17.3
 # faster-whisper 1.0.3
-if whisper is not None:
+if (whisper is not None) and (faster_whisper is not None):
     def audio_to_sub_1file(
             model:Union[whisper_model_Whisper, faster_whisper.WhisperModel]
             ,audio_path: Union[str,Path]
