@@ -28,6 +28,99 @@ CODEC_DICT = {'.mp3': "libmp3lame",
 # get_audio_extension,get_video_extension, _get_media_extension
 
 @beartype
+def change_audio_speed_1file(
+        audio_path: str | Path,
+        speedx: int | float,
+        output_name: str | Path,
+        output_folder: str | Path = "") -> None:
+    
+    """
+    Adjust audio playback speed and export to specified format.
+
+    This function modifies the playback speed of an input audio file and saves it
+    with the specified output extension (e.g., .wav, .mp3). The output format is
+    automatically determined from the output file extension.
+
+    Parameters
+    ----------
+    audio_path : str or Path
+        Path to the input audio file. Supports all formats recognized by pydub
+        (MP3, WAV, OGG, FLAC, etc.).
+    speedx : int or float
+        Speed multiplier for audio playback:
+        - Values < 1.0 will slow down the audio (e.g., 0.5 for half speed)
+        - Values > 1.0 will speed up the audio (e.g., 2.0 for double speed)
+        - Value of 1.0 maintains original speed
+    output_name : str or Path
+        Output filename including extension (determines output format).
+        Example: "output.wav" for WAV format, "fast.mp3" for MP3 format.
+    output_folder : str or Path, optional
+        Destination directory for output file. If not specified, uses the same
+        directory as the input file.
+
+    Returns
+    -------
+    None
+        Output file is saved to the specified location.
+
+    Raises
+    ------
+    FileNotFoundError
+        If the input audio file does not exist.
+    ValueError
+        If speedx is zero or negative.
+    Exception
+        For pydub-related processing errors (e.g., unsupported formats).
+
+    See Also
+    --------
+    pydub.AudioSegment : Base class used for audio manipulation.
+
+    Notes
+    -----
+    1. Requires ffmpeg to be installed for handling non-WAV formats.
+    2. For batch processing, consider wrapping this function in a loop.
+
+    Examples
+    --------
+    Slow down audio by 25% and save as WAV:
+
+    >>> change_audio_speed_1file("input.mp3", 0.75, "slow.wav", "output_dir")
+
+    Speed up audio 2x and save as MP3 in same directory:
+
+    >>> change_audio_speed_1file("sound.wav", 2.0, "fast.mp3")
+    """
+    # medium tested
+    
+    from pydub import AudioSegment
+    from pathlib import Path
+    import os
+    
+    # Load audio file (supports MP3, WAV, etc.)
+    audio = AudioSegment.from_file(audio_path)
+
+    # Adjust speed (e.g., 0.9764x slower)
+    slowed_audio = audio._spawn(audio.raw_data, overrides={
+        "frame_rate": int(audio.frame_rate * speedx)
+    }).set_frame_rate(audio.frame_rate)
+
+    # Determine output folder
+    filepath = Path(audio_path)
+    folder_path = filepath.parent
+    output_folder_in = Path(output_folder) if output_folder else folder_path
+
+    if not os.path.exists(output_folder_in):
+        raise FileExistsError(f"Please check your output_folder path. It doesn't exist.")
+
+    # Get the output format from the file extension
+    output_path = output_folder_in / f"{output_name}"
+    output_format = output_path.suffix[1:].lower()  # Remove the dot and convert to lowercase
+
+    # Export slowed audio with the correct format
+    slowed_audio.export(output_path, format=output_format)
+
+@beartype
 def create_media_info_df(
     input_video_folder:str|Path  
     ,input_video_pattern: str

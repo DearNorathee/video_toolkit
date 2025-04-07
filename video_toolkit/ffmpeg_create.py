@@ -11,66 +11,7 @@ sound_error_path = pkg_resources.resource_filename(__name__, 'assets/Sound Effec
 
 
 
-@beartype
-def change_audio_speed_1file(
-    audio_path:str
-    ,speedx:float
-    ,output_name:str
-    ,output_folder:str = ""
-    ,errors:Literal["raise","warn"] = "raise"
-    ,print_errors:bool = False
-    ) -> None :
- 
 
-    
-    import subprocess
-    import numpy as np
-    import os
-    from send2trash import send2trash
-    from pathlib import Path
-    
-    # medium tested
-    # TOADD01: to add if the output file already exist just replace it?
-    if not os.path.exists(audio_path):
-        raise FileNotFoundError("Please check the path. It doesn't exist.")
-        
-    if (speedx < 0.5) or (speedx > 2):
-        raise ValueError(f"Value of speedx should be between 0.5 and 2. Otherwise the function doesn't work.")
-        
-    
-    filepath = Path(audio_path)
-    folder_path = filepath.parent
-    filename = filepath.stem
-    
-    if output_folder == "":
-        output_folder_in = folder_path
-    else:
-        output_folder_in = Path(output_folder)
-    output_path = output_folder_in.with_name(f"{output_name}")
-
-    
-    command = [
-        "ffmpeg",
-        "-i", str(filepath),
-        "-filter:a", f"-atempo={speedx}", 
-        str(output_path)
-    ]
-
-    command_line = " ".join(command)
-    command_np = np.array(command)
-    result = subprocess.run(command, text=True, stderr=subprocess.PIPE)
-    
-    
-    if errors in ["warn"]:
-        if result.returncode != 0:
-            print("Error encountered:")
-            print(result.stderr)
-    elif errors in ["raise"]:
-        if result.returncode != 0:
-            if print_errors:
-                raise Exception(result.stderr)
-            else:
-                raise Exception()
 
 @beartype
 def change_title_from_filename_1file(
