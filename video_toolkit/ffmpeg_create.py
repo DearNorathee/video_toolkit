@@ -10,9 +10,6 @@ alarm_done_path = pkg_resources.resource_filename(__name__, 'assets/Sound Effect
 sound_error_path = pkg_resources.resource_filename(__name__, 'assets/Sound Effect Error.wav')
 
 
-
-
-
 @beartype
 def change_title_from_filename_1file(
         filepath: str | Path
