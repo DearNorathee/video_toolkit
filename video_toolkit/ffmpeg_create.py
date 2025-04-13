@@ -10,15 +10,15 @@ alarm_done_path = pkg_resources.resource_filename(__name__, 'assets/Sound Effect
 sound_error_path = pkg_resources.resource_filename(__name__, 'assets/Sound Effect Error.wav')
 
 
-@beartype
+# @beartype
 def change_title_from_filename_1file(
-        filepath: str | Path
-        , replace: bool = True
-        , prefix: str = ""
-        , suffix: str = ""
-        ,errors:Literal["warn","raise"] = "raise"
-        ,print_errors:bool = False
-        ) -> None:
+    filepath: str | Path
+    , replace: bool = True
+    , prefix: str = ""
+    , suffix: str = ""
+    ,errors:Literal["warn","raise"] = "raise"
+    ,print_errors:bool = False
+    ) -> None:
     
     """
     Update the title metadata of a media file using its filename.
@@ -77,7 +77,8 @@ def change_title_from_filename_1file(
     import numpy as np
     import os
     from send2trash import send2trash
-    
+    from pathlib import Path
+
     if not os.path.exists(filepath):
         raise FileNotFoundError("Please check the path. It doesn't exist.")
     
@@ -184,7 +185,7 @@ def change_filetitle_1file(
     import numpy as np
     import os
     from send2trash import send2trash
-    
+    from pathlib import Path
     # medium tested
     
     if not os.path.exists(filepath):
