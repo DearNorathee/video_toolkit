@@ -2,6 +2,23 @@ from video_toolkit.utils_vt import *
 from pydub import AudioSegment
 import os_toolkit as ost
 
+def test_change_title_from_filename():
+    # passed for all inputs types
+    input_01_path = r"C:\Users\Norat\OneDrive\Python MyLib\Python MyLib 01_test\test_folder\test_change_title_from_filename\input_01"
+    output_01_path = r"C:\Users\Norat\OneDrive\Python MyLib\Python MyLib 01_test\test_folder\test_change_title_from_filename\output_01"
+
+    input_02_path = [
+        r"C:\Users\Norat\OneDrive\Python MyLib\Python MyLib 01_test\test_folder\test_change_title_from_filename\input_02\01 Tears of Gold.mp3"
+        ,r"C:\Users\Norat\OneDrive\Python MyLib\Python MyLib 01_test\test_folder\test_change_title_from_filename\input_02\08 Faouzia  Puppet.mp3"
+        ,r"C:\Users\Norat\OneDrive\Python MyLib\Python MyLib 01_test\test_folder\test_change_title_from_filename\input_02\12 Faouzia  Desert Rose.mp3"
+    ]
+
+    input_03_path = r"C:\Users\Norat\OneDrive\Python MyLib\Python MyLib 01_test\test_folder\test_change_title_from_filename\input_02\05 Reflection Christina Aguilera.mp3"
+    
+    change_title_from_filename(filepaths=input_01_path,output_folder=output_01_path,replace=False,verbose=0)
+    change_title_from_filename(filepaths=input_02_path,output_folder=output_01_path,replace=False)
+    change_title_from_filename(filepaths=input_03_path,output_folder=output_01_path,replace=False)
+
 def test_split_audio_by_sub():
     media_paths: list[str] = [
         r"H:\D_Video_Python\Portuguese\The Ark_PT\Audio Extracted\Portuguese\The Ark S01E03 PT_PT.mp3",

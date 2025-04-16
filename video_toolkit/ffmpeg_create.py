@@ -10,7 +10,7 @@ alarm_done_path = pkg_resources.resource_filename(__name__, 'assets/Sound Effect
 sound_error_path = pkg_resources.resource_filename(__name__, 'assets/Sound Effect Error.wav')
 
 
-# @beartype
+@beartype
 def change_title_from_filename_1file(
     filepath: str | Path
     , replace: bool = True
@@ -516,8 +516,10 @@ def export_audio(audio_segment:AudioSegment,
         
         }
 
-    TOADD: replace => it would check if file already exists, if so depending on it's True or False, it would replace the file
     """
+    # TOADD_01: replace => it would check if file already exists, if so depending on it's True or False, it would replace the file
+    # TOADD_02: replace => when there's more filenames then timestamp
+
     import py_string_tool as pst
     clean_output_names = {}
     for inx, output_name in output_names.items():
