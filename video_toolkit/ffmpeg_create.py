@@ -11,6 +11,105 @@ sound_error_path = pkg_resources.resource_filename(__name__, 'assets/Sound Effec
 
 
 @beartype
+def change_title_from_filename(
+    filepaths: Union[str, Path, list[str|Path]]
+    ,output_folder: str|Path
+
+    # input below would get import automatically
+    ,replace: bool = True
+    ,prefix: str = ""
+    ,suffix: str = ""
+    ,errors:Literal["warn","raise"] = "raise"
+    ,print_errors:bool = False
+
+    # handle_multi_input parameters
+    ,progress_bar: bool = True
+    ,verbose: int = 1
+    ,alarm_done: bool = False
+    ,alarm_error: bool = False
+    ,input_extension: str|None = [".mp3",".mp4",".wav",".srt",".mkv"]
+    ):
+    
+    """
+    Update file title metadata in batch using filenames.
+
+    This function processes one or multiple media files by updating their title metadata to match their filename.
+    Internally, it leverages the `handle_multi_input` mechanism to support a flexible range of inputs,
+    such as single file paths, lists of files, or entire directories. The actual processing is delegated to
+    the function `vt.change_title_from_filename_1file`.
+
+    Parameters
+    ----------
+    filepaths : str or Path
+        A single file path, a folder path, or a list of file paths to be processed.
+    output_folder : str or Path
+        Directory where the output files with the updated title metadata will be saved.
+
+    replace : bool, default True
+        If True, the original file is replaced by the updated file. Otherwise, a new file is created.
+    prefix : str, default ""
+        Optional prefix to add to the filename when creating a new file (applicable when `replace` is False).
+    suffix : str, default ""
+        Optional suffix to add to the filename when creating a new file (applicable when `replace` is False).
+    errors : {"warn", "raise"}, default "raise"
+        Specifies whether to issue a warning or raise an exception if an error occurs during processing.
+    print_errors : bool, default False
+        If True, prints detailed error messages when processing fails.
+
+    progress_bar : bool, default True
+        Whether to display a progress bar during batch processing.
+    verbose : int, default 1
+        Verbosity level: 0 for minimal output, higher values for more detailed processing information.
+    alarm_done : bool, default False
+        If True, plays a notification sound after successful completion.
+    alarm_error : bool, default False
+        If True, plays a notification sound when an error occurs.
+    input_extension : list of str or None, default [".mp3", ".mp4", ".wav", ".srt", ".mkv"]
+        A list of file extensions to filter by when the input is a folder. If None or "all", all files are processed.
+
+    Returns
+    -------
+    None
+        The function performs in-place updates or creates new files with the updated title metadata in the
+        specified output folder.
+
+    Notes
+    -----
+    - This function uses the `handle_multi_input` decorator (via `inp.handle_multi_input`) to extend single-file
+    processing to multiple files or folders.
+    - The title metadata is set based on the original filename (without extension) of each file.
+    - Requires that the underlying function `vt.change_title_from_filename_1file` and the `ffmpeg` tool are properly installed
+    and accessible.
+
+    Examples
+    --------
+    Update title metadata for a single file:
+    >>> change_title_from_filename("video.mp4", "./output", replace=True)
+
+    Process all media files in a folder with custom filename modifications:
+    >>> change_title_from_filename("media_folder", "./updated", replace=False, prefix="new_", suffix="_v2")
+    """
+
+    import inspect_py as inp
+
+    path_input = {
+        "filepaths":filepaths
+        ,"output_folder":output_folder
+    }
+
+    handle_multi_input_params = {
+        "progress_bar": progress_bar
+        ,"verbose":verbose
+        ,"alarm_done":alarm_done
+        ,"alarm_error":alarm_error
+        ,"input_extension":input_extension
+    }
+    func_temp = inp.handle_multi_input(**handle_multi_input_params)(change_title_from_filename_1file)
+    result = func_temp(**path_input)
+    return result
+
+
+@beartype
 def change_title_from_filename_1file(
     filepath: str | Path
     , replace: bool = True

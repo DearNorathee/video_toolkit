@@ -27,51 +27,14 @@ CODEC_DICT = {'.mp3': "libmp3lame",
 # get_subtitle_index,get_audio_index,get_video_index,_get_media_index,get_subtitle_extension,
 # get_audio_extension,get_video_extension, _get_media_extension
 
-@beartype
-def change_title_from_filename(
-    filepaths: str | Path
-    ,output_folder: str|Path
-
-    # input below would get import automatically
-    ,replace: bool = True
-    ,prefix: str = ""
-    ,suffix: str = ""
-    ,errors:Literal["warn","raise"] = "raise"
-    ,print_errors:bool = False
-
-    # handle_multi_input parameters
-    ,progress_bar: bool = True
-    ,verbose: int = 1
-    ,alarm_done: bool = False
-    ,alarm_error: bool = False
-    ,input_extension: str|None = [".mp3",".mp4",".wav",".srt",".mkv"]
-    ):
-    
-    """
-    no comment
-    """
-    path_input = {
-        "filepaths":filepaths
-        ,"output_folder":output_folder
-    }
-
-    handle_multi_input_params = {
-        "progress_bar": progress_bar
-        ,"verbose":verbose
-        ,"alarm_done":alarm_done
-        ,"alarm_error":alarm_error
-        ,"input_extension":input_extension
-    }
-    func_temp = inp.handle_multi_input(**handle_multi_input_params)(vt.change_title_from_filename_1file)
-    result = func_temp(**path_input)
-    return result
 
 @beartype
 def change_audio_speed_1file(
-        audio_path: str | Path,
-        speedx: int | float,
-        output_name: str | Path,
-        output_folder: str | Path = "") -> None:
+    audio_path: str | Path,
+    speedx: int | float,
+    output_name: str | Path,
+    output_folder: str | Path = ""
+    ) -> None:
     
     """
     Adjust audio playback speed and export to specified format.
