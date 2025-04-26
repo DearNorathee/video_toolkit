@@ -27,7 +27,7 @@ def change_title_from_filename(
     ,verbose: int = 1
     ,alarm_done: bool = False
     ,alarm_error: bool = False
-    ,input_extension: str|None = [".mp3",".mp4",".wav",".srt",".mkv"]
+    ,input_extension: str|None = [".mp3",".mp4",".wav",".srt",".mkv",".avi"]
     ):
     
     """
