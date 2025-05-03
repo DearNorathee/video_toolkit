@@ -2,6 +2,26 @@ from video_toolkit.utils_vt import *
 from pydub import AudioSegment
 import os_toolkit as ost
 
+def test_change_audio_speed():
+    audio_path01 = r"C:\C_Video_Python\The Big Bang Theory\BigBang Theory Season 02\Season 02 Audio\French"
+    test_output = r"C:\C_Video_Python\video_toolkit_test\test_change_audio_speed"
+    test_output_paths = [None for _ in range(100)]
+
+    for i, curr_path in enumerate(test_output_paths):
+        test_output_paths[i] = Path(test_output) / f"test_{str(i).zfill(2)}"
+
+    for i in range(1,2):
+        ost.delete_files_in_folder(test_output_paths[i],verbose=0)
+    
+    change_audio_speed(audio_paths = audio_path01,speedx=0.96,output_folder=test_output_paths[1])
+
+def test_change_audio_speed_1file():
+    # I use this function to create 1 audio per episode
+    audio_path01 = r"C:\C_Video_Python\video_toolkit_test\change_audio_speed_1file\BigBang season1 French\BigBang FR S01E13_FR.mp3"
+    output_folder = r"C:\C_Video_Python\The Big Bang Theory\BigBang Theory Season 01\Season 01 Audio\French_adj_speed"
+    SPEEDX = 0.95903619926980600
+    change_audio_speed_1file(audio_path01,SPEEDX,"BigBang FR S01E13_FR_cs_v2.mp3",output_folder = output_folder)
+
 def test_change_subtitle_speed():
     test_input01 = r"C:\C_Video_Python\The Big Bang Theory\BigBang Theory Season 02\Season 02 Subtitle\French_whisper_base"
     test_output = r"C:\Users\Norat\OneDrive\Python MyLib\Python MyLib 01_test\video_toolkit_test\test_change_subtitle_speed"

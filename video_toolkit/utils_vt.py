@@ -28,6 +28,87 @@ CODEC_DICT = {'.mp3': "libmp3lame",
 # get_audio_extension,get_video_extension, _get_media_extension
 
 
+@beartype
+def change_audio_speed(
+    audio_paths: Union[str, Path, list[str|Path]]
+    ,speedx:float|int
+    ,output_folder: str|Path
+    # optional
+    ,prefix:str = ""
+    ,suffix:str = ""
+    ,shift_forward_sec: float|int = 0
+    # input below would get import automatically
+    ,errors:Literal["warn","raise"] = "raise"
+    ,print_errors:bool = False
+
+    # handle_multi_input parameters
+    ,progress_bar: bool = True
+    ,verbose: int = 0
+    ,alarm_done: bool = False
+    ,alarm_error: bool = False
+    ,input_extension: str|None = [".mp3",".wav",".flac",".aac",".ogg",".m4a",".wma",".alac",".aiff",".opus"]
+    ) -> None:
+
+    
+    """
+    Change subtitle speed for a single file or a folder of files.
+
+    Parameters
+    ----------
+    sub_paths : Union[str, Path, list[str|Path]]
+        Filepath(s) of the subtitle file(s) to change speed for.
+    speedx : float|int
+        Speed multiplier to apply to the subtitle timing. e.g. 0.96 for 96% of the original speed.
+    output_folder : str|Path
+        Folder to save the output subtitle file(s) to.
+    shift_forward_sec : float|int, optional
+        Number of seconds to shift the subtitle timing forward. Defaults to 0.
+    errors : Literal["warn","raise"], optional
+        How to handle errors when reading the subtitle file(s). Defaults to "raise".
+    print_errors : bool, optional
+        Whether to print error messages when reading the subtitle file(s). Defaults to False.
+
+    handle_multi_input parameters
+    ----------------------------
+    progress_bar : bool, optional
+        Whether to show a progress bar when processing folders/lists. Defaults to True.
+    verbose : int, optional
+        Verbosity level (0=quiet, 1=normal, 2=detailed output). Defaults to 0.
+    alarm_done : bool, optional
+        Play success sound after completion. Defaults to False.
+    alarm_error : bool, optional
+        Play error sound if processing fails. Defaults to False.
+    input_extension : str|None, optional
+        File extensions to process when input is a folder. Defaults to [".ass",".srt"]
+
+    Returns
+    -------
+    None
+    """
+
+    # medium tested
+    import inspect_py as inp
+    unique_input = {
+        "filepaths":audio_paths
+        ,"output_folder":output_folder
+
+        # unique inputs for variety of functions
+        ,"speedx":speedx
+        # ,"shift_forward_sec": shift_forward_sec
+        ,"prefix":prefix
+        ,"suffix":suffix
+    }
+    handle_multi_input_params = {
+        "progress_bar": progress_bar
+        ,"verbose":verbose
+        ,"alarm_done":alarm_done
+        ,"alarm_error":alarm_error
+        ,"input_extension":input_extension
+    }
+    func_temp = inp.handle_multi_input(**handle_multi_input_params)(change_audio_speed_1file)
+    result = func_temp(**unique_input)
+    return result
+
 
 @beartype
 def change_subtitle_speed(
@@ -231,7 +312,9 @@ def change_subtitle_speed_1file(
 def change_audio_speed_1file(
     audio_path: str | Path,
     speedx: int | float,
-    output_name: str | Path,
+    output_name: str | Path = "",
+    prefix:str = "",
+    suffix:str = "",
     output_folder: str | Path = ""
     ) -> None:
     
@@ -297,6 +380,7 @@ def change_audio_speed_1file(
     from pydub import AudioSegment
     from pathlib import Path
     import os
+    import os_toolkit as ost
     
     # Load audio file (supports MP3, WAV, etc.)
     audio = AudioSegment.from_file(audio_path)
@@ -315,7 +399,12 @@ def change_audio_speed_1file(
         raise FileExistsError(f"Please check your output_folder path. It doesn't exist.")
 
     # Get the output format from the file extension
-    output_path = output_folder_in / f"{output_name}"
+    if output_name != "":
+        output_path = output_folder_in / f"{output_name}"
+    else:
+        new_name = ost.new_filename( audio_path, prefix=prefix, suffix= suffix)
+        output_path = output_folder_in / f"{new_name}"
+
     output_format = output_path.suffix[1:].lower()  # Remove the dot and convert to lowercase
 
     # Export slowed audio with the correct format
