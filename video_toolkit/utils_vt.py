@@ -36,7 +36,7 @@ def change_subtitle_speed_df_1file(
     """
     import warnings
     if isinstance(sub_file, (str,Path)):
-        df_sub = vt.sub_to_df(sub_file)
+        df_sub = sub_to_df(sub_file)
     elif isinstance(sub_file, pd.DataFrame):
         df_sub = sub_file.copy()
         
@@ -108,7 +108,7 @@ def change_subtitle_speed_1file(
     
     df_sub_adj = change_subtitle_speed_df_1file(sub_file,speedx=speedx)
     new_name = ost.new_filename( sub_file, prefix=prefix, suffix= suffix)
-    vt.df_to_srt(df_sub_adj,new_name,output_folder=output_folder)
+    df_to_srt(df_sub_adj,new_name,output_folder=output_folder)
 
 
 @beartype
@@ -1004,7 +1004,7 @@ def split_1audio_by_subtitle(
     out_audio_ext_dot = out_audio_ext if out_audio_ext[0] == "." else ("." + out_audio_ext)
     out_audio_ext_no_dot = out_audio_ext[1:] if out_audio_ext[0] == "." else ( out_audio_ext)
     
-    subs_ori: pd.DataFrame = vt.sub_to_df(subtitle_path)
+    subs_ori: pd.DataFrame = sub_to_df(subtitle_path)
 
     if modify_sub:
         subs: pd.DataFrame = modify_sub_df_time(subs_ori)
