@@ -27,10 +27,125 @@ CODEC_DICT = {'.mp3': "libmp3lame",
 # get_subtitle_index,get_audio_index,get_video_index,_get_media_index,get_subtitle_extension,
 # get_audio_extension,get_video_extension, _get_media_extension
 
+
+
+@beartype
+def change_subtitle_speed(
+    sub_paths: Union[str, Path, list[str|Path]]
+    ,speedx:float|int
+    ,output_folder: str|Path
+    # optional
+    ,shift_forward_sec: float|int = 0
+    # input below would get import automatically
+    ,prefix: str = ""
+    ,suffix: str = ""
+    ,errors:Literal["warn","raise"] = "raise"
+    ,print_errors:bool = False
+
+    # handle_multi_input parameters
+    ,progress_bar: bool = True
+    ,verbose: int = 0
+    ,alarm_done: bool = False
+    ,alarm_error: bool = False
+    ,input_extension: str|None = [".ass",".srt"]
+    ) -> None:
+    
+    """
+    Change the playback speed of subtitle file(s).
+
+    This function adjusts the timing of one or more subtitle files by a given speed factor,
+    using the single-file implementation `vt.change_subtitle_speed_1file` under the hood.
+    It supports individual files, lists of files, or entire directories via the `handle_multi_input` decorator.
+
+    Parameters
+    ----------
+    sub_paths : str, Path, or list of str or Path
+        Path(s) to the input subtitle file(s). Can be a single file path, a list of file paths,
+        or a directory containing `.ass` or `.srt` files.
+    speedx : float or int
+        The speed multiplier to apply to subtitle timing. Values >1.0 speed up subtitles,
+        values <1.0 slow them down.
+    output_folder : str or Path
+        Directory where the adjusted subtitle files will be saved.
+
+    prefix : str, default ""
+        Prefix to prepend to each output filename (ignored if `replace=True` in underlying function).
+    suffix : str, default ""
+        Suffix to append to each output filename (ignored if `replace=True` in underlying function).
+    errors : {"warn", "raise"}, default "raise"
+        Error handling strategy:
+        - "warn": print a warning on failure and continue processing other files.
+        - "raise": raise an exception on the first failure.
+    print_errors : bool, default False
+        If True, prints detailed error messages when an error occurs.
+
+    progress_bar : bool, default True
+        Whether to display a progress bar when processing multiple files.
+    verbose : int, default 0
+        Verbosity level (0 = silent, higher values produce more output).
+    alarm_done : bool, default False
+        Play a notification sound upon successful completion of all files.
+    alarm_error : bool, default False
+        Play a notification sound when any file processing fails.
+    input_extension : list of str or None, default [".ass", ".srt"]
+        File extensions to include when `sub_paths` is a directory. Use `None` or `"all"` to include all files.
+
+    Returns
+    -------
+    None
+        The processed subtitle files are written to `output_folder` with adjusted timing.
+
+    Raises
+    ------
+    FileNotFoundError
+        If a specified path in `sub_paths` does not exist.
+    ValueError
+        If `speedx` is not a positive number.
+
+    Notes
+    -----
+    - Timing is modified without re-encoding video; only subtitle timestamps are rewritten.
+    - Relies on `ffmpeg` (for underlying single-file function) and requires it to be installed and on PATH.
+
+    Examples
+    --------
+    Convert a single file:
+    >>> change_subtitle_speed("subs.srt", speedx=1.5, output_folder="./out")
+
+    Batch convert multiple files with a progress bar:
+    >>> change_subtitle_speed(["a.ass","b.srt"], speedx=0.9, output_folder="./out", progress_bar=True)
+    """
+
+    # medium tested
+    import inspect_py as inp
+    unique_input = {
+        "filepaths":sub_paths
+        ,"output_folder":output_folder
+
+        # unique inputs for variety of functions
+        ,"speedx":speedx
+        ,"shift_forward_sec": shift_forward_sec
+        ,"prefix":prefix
+        ,"suffix":suffix
+    }
+    handle_multi_input_params = {
+        "progress_bar": progress_bar
+        ,"verbose":verbose
+        ,"alarm_done":alarm_done
+        ,"alarm_error":alarm_error
+        ,"input_extension":input_extension
+    }
+    func_temp = inp.handle_multi_input(**handle_multi_input_params)(change_subtitle_speed_1file)
+    result = func_temp(**unique_input)
+    return result
+
+
 @beartype
 def change_subtitle_speed_df_1file(
         sub_file:str|Path|pd.DataFrame
-        , speedx: int|float) -> pd.DataFrame:
+        ,speedx: int|float
+        ,shift_forward_sec: float|int = 0
+        ) -> pd.DataFrame:
     """
     support both str and Path, and df
     """
@@ -42,8 +157,8 @@ def change_subtitle_speed_df_1file(
         
     df_sub_adj = df_sub.iloc[:,[0]]
     warnings.filterwarnings('ignore')
-    df_sub_adj['start'] = df_sub['start'].apply(lambda x: adjust_speed(x,speedx))
-    df_sub_adj['end'] = df_sub['end'].apply(lambda x: adjust_speed(x,speedx))
+    df_sub_adj['start'] = df_sub['start'].apply(lambda x: adjust_speed(x,speedx, shift_forward_sec))
+    df_sub_adj['end'] = df_sub['end'].apply(lambda x: adjust_speed(x,speedx, shift_forward_sec))
     warnings.filterwarnings('default')
     
     return df_sub_adj        
@@ -99,6 +214,7 @@ def change_subtitle_speed_1file(
     sub_file:str|Path
     ,speedx:int|float
     ,output_folder: str|Path
+    ,shift_forward_sec: float|int = 0
     ,prefix:str = ""
     ,suffix:str = ""
     ) -> None:
@@ -106,7 +222,7 @@ def change_subtitle_speed_1file(
     #  write now only support srt
     # medium tested
     
-    df_sub_adj = change_subtitle_speed_df_1file(sub_file,speedx=speedx)
+    df_sub_adj = change_subtitle_speed_df_1file(sub_file,speedx=speedx,shift_forward_sec=shift_forward_sec)
     new_name = ost.new_filename( sub_file, prefix=prefix, suffix= suffix)
     df_to_srt(df_sub_adj,new_name,output_folder=output_folder)
 

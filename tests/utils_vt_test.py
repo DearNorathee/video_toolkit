@@ -2,6 +2,22 @@ from video_toolkit.utils_vt import *
 from pydub import AudioSegment
 import os_toolkit as ost
 
+def test_change_subtitle_speed():
+    test_input01 = r"C:\C_Video_Python\The Big Bang Theory\BigBang Theory Season 02\Season 02 Subtitle\French_whisper_base"
+    test_output = r"C:\Users\Norat\OneDrive\Python MyLib\Python MyLib 01_test\video_toolkit_test\test_change_subtitle_speed"
+    test_output_paths = [None for _ in range(100)]
+
+    for i, curr_path in enumerate(test_output_paths):
+        test_output_paths[i] = Path(test_output) / f"test_{str(i).zfill(2)}"
+
+    for i in range(1,5):
+        ost.delete_files_in_folder(test_output_paths[i],verbose=0)
+
+    change_subtitle_speed(test_input01,speedx=0.96,output_folder=test_output_paths[1] )             
+    change_subtitle_speed(test_input01,speedx=0.96,prefix="prefix",output_folder=test_output_paths[2] )                    
+    change_subtitle_speed(test_input01,speedx=0.96,suffix="0.96x",output_folder=test_output_paths[3] )       
+    change_subtitle_speed(test_input01,speedx=0.96,prefix="shift2sec",suffix="0.96x",output_folder=test_output_paths[4],shift_forward_sec=2 )   
+
 def test_change_subtitle_speed_1file():
     sub_path01 = r"C:\C_Video_Python\The Big Bang Theory\BigBang Theory Season 02\Season 02 Subtitle\French_whisper_base\BigBang FR S02E01_FR.srt"
     output_folder01 = r"C:\Users\Norat\OneDrive\Python MyLib\Python MyLib 01_test\test_folder\test_change_subtitle_speed_1file"
