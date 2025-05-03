@@ -27,6 +27,89 @@ CODEC_DICT = {'.mp3': "libmp3lame",
 # get_subtitle_index,get_audio_index,get_video_index,_get_media_index,get_subtitle_extension,
 # get_audio_extension,get_video_extension, _get_media_extension
 
+@beartype
+def change_subtitle_speed_df_1file(
+        sub_file:str|Path|pd.DataFrame
+        , speedx: int|float) -> pd.DataFrame:
+    """
+    support both str and Path, and df
+    """
+    import warnings
+    if isinstance(sub_file, (str,Path)):
+        df_sub = vt.sub_to_df(sub_file)
+    elif isinstance(sub_file, pd.DataFrame):
+        df_sub = sub_file.copy()
+        
+    df_sub_adj = df_sub.iloc[:,[0]]
+    warnings.filterwarnings('ignore')
+    df_sub_adj['start'] = df_sub['start'].apply(lambda x: adjust_speed(x,speedx))
+    df_sub_adj['end'] = df_sub['end'].apply(lambda x: adjust_speed(x,speedx))
+    warnings.filterwarnings('default')
+    
+    return df_sub_adj        
+
+@beartype
+def adjust_speed(
+    time_obj: datetime.time,
+    speedx: float|int
+    ,shift_forward_sec: float|int = 0
+) -> datetime.time:
+    """
+    Adjust a datetime.time by a speed factor, using the datetime module alias directly.
+
+    Parameters
+    ----------
+    time_obj : datetime.time
+        The original time to adjust.
+    speedx : float
+        Speed factor: >1.0 makes time shorter (faster), <1.0 makes time longer (slower).
+
+    Returns
+    -------
+    datetime.time
+        The adjusted time.
+    """
+    # total seconds in the original time
+    #  Apr, 26, 2025
+    # 4o can't do it at one shot, this is from o4-mini
+
+    total_seconds = (
+        time_obj.hour * 3600
+        + time_obj.minute * 60
+        + time_obj.second
+        + time_obj.microsecond / 1_000_000
+    )
+
+    # adjust by speed factor
+    adjusted_seconds = total_seconds / speedx + shift_forward_sec
+
+    # reconstruct hours, minutes, seconds, microseconds
+    hours = int(adjusted_seconds // 3600)
+    rem = adjusted_seconds - hours * 3600
+    minutes = int(rem // 60)
+    rem -= minutes * 60
+    secs = int(rem)
+    micros = int((rem - secs) * 1_000_000)
+
+    return datetime.time(hour=hours, minute=minutes, second=secs, microsecond=micros)
+
+
+@beartype
+def change_subtitle_speed_1file(
+    sub_file:str|Path
+    ,speedx:int|float
+    ,output_folder: str|Path
+    ,prefix:str = ""
+    ,suffix:str = ""
+    ) -> None:
+    import os_toolkit as ost
+    #  write now only support srt
+    # medium tested
+    
+    df_sub_adj = change_subtitle_speed_df_1file(sub_file,speedx=speedx)
+    new_name = ost.new_filename( sub_file, prefix=prefix, suffix= suffix)
+    vt.df_to_srt(df_sub_adj,new_name,output_folder=output_folder)
+
 
 @beartype
 def change_audio_speed_1file(
