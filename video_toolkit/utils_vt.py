@@ -13,6 +13,8 @@ import seaborn as sns
 from pydub import AudioSegment
 from beartype import beartype
 
+from play_audio_file import play_audio_file, play_alarm_done, play_alarm_error
+
 alarm_done_path = pkg_resources.resource_filename(__name__, 'assets/Sound Effect positive-logo-opener.wav')
 sound_error_path = pkg_resources.resource_filename(__name__, 'assets/Sound Effect Error.wav')
 

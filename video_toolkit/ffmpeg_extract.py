@@ -3,6 +3,7 @@ from pathlib import Path
 import pkg_resources
 import os_toolkit as ost
 from beartype import beartype
+from play_audio_file import play_audio_file, play_alarm_done, play_alarm_error
 
 alarm_done_path = pkg_resources.resource_filename(__name__, 'assets/Sound Effect positive-logo-opener.wav')
 sound_error_path = pkg_resources.resource_filename(__name__, 'assets/Sound Effect Error.wav')
@@ -201,6 +202,7 @@ def extract_audio_1file(
             lang_obj =  closest_language_obj(language)
             # variant = "B" would return fre for french
             filter_lang_3chr.append(lang_obj.to_alpha3(variant = "B"))
+            filter_lang_3chr.append(lang_obj.to_alpha3(variant = "T"))
     
     audio_index = get_audio_index(video_path)
     metadata = get_metadata(video_path,"audio",language=filter_lang_3chr)
@@ -270,7 +272,7 @@ def extract_audio_1file(
                     print(f"\nExtract audio successfully: {curr_output_name}!!!")
                     
                     if alarm_done:
-                        playsound(alarm_done_path)
+                        play_alarm_done()
 
 
 # Sub
