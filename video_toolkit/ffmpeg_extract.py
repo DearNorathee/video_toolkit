@@ -643,6 +643,7 @@ def extract_subtitle(
         languages: List[str] | None | str = None,
         alarm_done:       bool = True,
 ):
+    # write now language input has to be 3-str letter(BigBang FR)
     input_param = {
         'video_path': 6
     }
@@ -661,11 +662,11 @@ def extract_subtitle(
         alarm_done = alarm_done,
     )
 
-@beartype
+# @beartype
 def extract_sub_1_video(
     video_path:         Union[str,Path],
     output_folder:      Union[str,Path],
-    output_name:        Union[str,Path] = None, 
+    output_name:        Union[str,Path,None] = None, 
     output_extension:   Union[str,list|None] = None,
     alarm_done:         bool = True,
     overwrite_file:     bool = True,
@@ -678,6 +679,8 @@ def extract_sub_1_video(
     # medium tested
     # ToAdd feature 03: create a suffix for langauge 
     # ToAdd feature 04: generalize it and work with normal text eg "French" instead of "fre"
+    # ToAdd: throw error 05: when it's audio file to warn user !!!!!!!!!!!
+    
 
     # Added 01: extract mutiple subtitles for many languages
     # Added 02: select only some languages to extract
@@ -734,14 +737,19 @@ def extract_sub_1_video(
 
     video_name = ost.extract_filename(video_path,with_extension=False)
     ori_extension = get_subtitle_extension(video_path,languages)
-
+    
+    if ori_extension in [".mov_text","mov_text"]:
+        modified_extension = ".srt"
+    else:
+        modified_extension = ori_extension
+    
     if output_extension is None:
         if output_name is None:
             output_name = video_name
-        if ori_extension not in output_name:
-            if "." not in ori_extension:
-                ori_extension = "." + ori_extension
-            output_name += ori_extension
+        if modified_extension not in output_name:
+            if "." not in modified_extension:
+                ori_extension = "." + modified_extension
+            output_name += modified_extension
 
 
     elif isinstance(output_extension, str):
@@ -772,7 +780,7 @@ def extract_sub_1_video(
     if output_extension:
         output_ext_no_dot = output_extension.replace('.','')
     else:
-        output_ext_no_dot = ori_extension.replace('.','')
+        output_ext_no_dot = modified_extension.replace('.','')
     
     for i, sub_index in enumerate(subtitle_stream_index_list):
 
@@ -808,7 +816,8 @@ def extract_sub_1_video(
             
             if alarm_done:
                 try:
-                    playsound(alarm_done_path)
+                    play_alarm_done()
+                    # playsound(alarm_done_path)
                 except:
                     pass
 
