@@ -3,6 +3,7 @@ from pathlib import Path
 from video_toolkit.utils_vt import *
 from video_toolkit.sandbox1_vt import *
 import pkg_resources
+from video_toolkit.utils_vt import VIDEO_ALL_EXTENSIONS, AUDIO_ALL_EXTENSIONS, SUBTITLE_ALL_EXTENSIONS, CODEC_DICT, MEDIA_ALL_EXTENSIONS
 
 # extra import
 try:

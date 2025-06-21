@@ -4,15 +4,10 @@ import pkg_resources
 import os_toolkit as ost
 from beartype import beartype
 from play_audio_file import play_audio_file, play_alarm_done, play_alarm_error
+from video_toolkit.utils_vt import VIDEO_ALL_EXTENSIONS, AUDIO_ALL_EXTENSIONS, SUBTITLE_ALL_EXTENSIONS, CODEC_DICT, MEDIA_ALL_EXTENSIONS
 
 alarm_done_path = pkg_resources.resource_filename(__name__, 'assets/Sound Effect positive-logo-opener.wav')
 sound_error_path = pkg_resources.resource_filename(__name__, 'assets/Sound Effect Error.wav')
-
-CODEC_DICT = {'.mp3': "libmp3lame",
-                  'mp3' : "libmp3lame",
-                  '.wav': "pcm_s24le",
-                  'wav' : "pcm_s24le"
-                  }
 
 @beartype
 def count_audio(media_path,language = None,file_extension = None):

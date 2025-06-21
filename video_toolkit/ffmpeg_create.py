@@ -5,13 +5,14 @@ from video_toolkit.ffmpeg_extract import *
 import pandas as pd
 from beartype import beartype
 import pkg_resources
+from video_toolkit.utils_vt import VIDEO_ALL_EXTENSIONS, AUDIO_ALL_EXTENSIONS, SUBTITLE_ALL_EXTENSIONS, CODEC_DICT, MEDIA_ALL_EXTENSIONS
 
 alarm_done_path = pkg_resources.resource_filename(__name__, 'assets/Sound Effect positive-logo-opener.wav')
 sound_error_path = pkg_resources.resource_filename(__name__, 'assets/Sound Effect Error.wav')
 
 
 def cut_front_1audio(
-    audio_path: Union[str, Path],
+    filepaths: Union[str, Path],
     sec: Union[int, float],
     output_name: Optional[str] = None,
     output_folder: Union[str, Path] = ""
@@ -34,7 +35,14 @@ def cut_front_1audio(
     # medium tested
     # ffmpeg version is much faster than pydub
     import subprocess
-    inp = Path(audio_path)
+    from pathlib import Path
+    import os
+
+
+    if not os.path.exists(filepaths):
+        raise FileNotFoundError("Please check the path. It doesn't exist.")
+    
+    inp = Path(filepaths)
     out_dir = Path(output_folder) if output_folder else inp.parent
     out_dir.mkdir(parents=True, exist_ok=True)
 
@@ -74,6 +82,13 @@ def add_front_1audio(
         Directory to save the output. Defaults to the same folder as the input.
     """
     import subprocess
+    from pathlib import Path
+    import os
+
+
+    if not os.path.exists(audio_path):
+        raise FileNotFoundError("Please check the path. It doesn't exist.")
+
     # not tested
     inp = Path(audio_path)
     out_dir = Path(output_folder) if output_folder else inp.parent
@@ -125,6 +140,13 @@ def cut_back_1audio(
     # not tested
     import subprocess
     import json
+    from pathlib import Path
+    import os
+
+
+    if not os.path.exists(audio_path):
+        raise FileNotFoundError("Please check the path. It doesn't exist.")
+
     inp = Path(audio_path)
     out_dir = Path(output_folder) if output_folder else inp.parent
     out_dir.mkdir(parents=True, exist_ok=True)
@@ -175,6 +197,13 @@ def add_back_1audio(
         Directory to save the output file. Defaults to the same folder as the input.
     """
     import subprocess
+    from pathlib import Path
+    import os
+
+
+    if not os.path.exists(audio_path):
+        raise FileNotFoundError("Please check the path. It doesn't exist.")
+
     # not tested
     inp = Path(audio_path)
     out_dir = Path(output_folder) if output_folder else inp.parent

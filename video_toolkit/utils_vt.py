@@ -15,6 +15,9 @@ from beartype import beartype
 
 from play_audio_file import play_audio_file, play_alarm_done, play_alarm_error
 
+
+
+
 alarm_done_path = pkg_resources.resource_filename(__name__, 'assets/Sound Effect positive-logo-opener.wav')
 sound_error_path = pkg_resources.resource_filename(__name__, 'assets/Sound Effect Error.wav')
 
@@ -23,6 +26,11 @@ CODEC_DICT = {'.mp3': "libmp3lame",
                   '.wav': "pcm_s24le",
                   'wav' : "pcm_s24le"
                   }
+
+VIDEO_ALL_EXTENSIONS = [".mp4", ".mkv", ".avi", ".mov", ".wmv", ".flv", ".webm", ".mts", ".m2ts"]
+SUBTITLE_ALL_EXTENSIONS = [".srt", ".ass", ".ssa", ".vtt", ".sub", ".idx"]
+AUDIO_ALL_EXTENSIONS = [".mp3", ".aac", ".wav", ".flac", ".alac", ".ogg", ".wma", ".m4a", ".aiff"]
+MEDIA_ALL_EXTENSIONS = VIDEO_ALL_EXTENSIONS + SUBTITLE_ALL_EXTENSIONS + AUDIO_ALL_EXTENSIONS
 
 # v02 => add extract_audio2, extract_subtitle, _extract_media_setup,extract_sub_1_video
 # get_metadata2, get_all_metadata, get_metadata

@@ -1,6 +1,12 @@
 from video_toolkit.ffmpeg_create import *
 import dataframe_short as ds
 
+def test_cut_front_1audio():
+    audio01 = r"C:\C_Video_Python\The Big Bang Theory\BigBang Theory Season 02\Season 02 Audio\German\ori_audio\BigBang DE S02E01_DE.mp3"
+    output_folder01 = r"C:\C_Video_Python\The Big Bang Theory\BigBang Theory Season 02\Season 02 Audio\German\test_01"
+    outname01 = "BigBang DE S02E01_DE_cut_v02.mp3"
+    cut_front_1audio(audio01,1,outname01,output_folder01)
+
 def test_change_title_from_filename_1file():
     video_path01 = r"H:\H_Video_Python\video_toolkit_test\change_title_from_filename_1file\The 100 season 6 Portuguese mp3\The 100 PT_S06E01_PT_test1.mp3"
     change_title_from_filename_1file(video_path01,replace=True)
