@@ -293,6 +293,7 @@ def _extract_media_setup(
         one_output_per_lang: bool = True,
         languages: Union[List[str],None,str] = None,
         errors: Literal["warn","ignore","raise"] = "warn",
+        verbose:int = 0,
 ) -> None :
     # 
     
@@ -399,7 +400,8 @@ def _extract_media_setup(
                         output_name = output_name,
                         alarm_done=False,
                         overwrite_file=overwrite_file)
-                print(f"\nExtracted {output_name} successfully!!!")
+                if verbose > 0:
+                    print(f"\nExtracted {output_name} successfully!!!")
             except Exception as e:
                 if errors in ["raise"]:
                     raise RuntimeError(f"\nError occured at file {filename_list[i]}")
@@ -642,8 +644,12 @@ def extract_subtitle(
         output_suffix:    str = "",
         languages: List[str] | None | str = None,
         alarm_done:       bool = True,
+        verbose:int = 0,
 ):
     # write now language input has to be 3-str letter(BigBang FR)
+    
+    # ToAdd01: suffix with language code instead of index
+    
     input_param = {
         'video_path': 6
     }
@@ -660,6 +666,7 @@ def extract_subtitle(
         output_suffix = output_suffix,
         languages=languages,
         alarm_done = alarm_done,
+        verbose = verbose,
     )
 
 # @beartype

@@ -1,5 +1,5 @@
 from pydub import AudioSegment
-from typing import Union,List,Tuple, Literal, Callable, Dict, Any
+from typing import Union,List,Tuple, Literal, Callable, Dict, Any, Optional
 from pathlib import Path
 from video_toolkit.ffmpeg_extract import *
 import pandas as pd
@@ -8,6 +8,191 @@ import pkg_resources
 
 alarm_done_path = pkg_resources.resource_filename(__name__, 'assets/Sound Effect positive-logo-opener.wav')
 sound_error_path = pkg_resources.resource_filename(__name__, 'assets/Sound Effect Error.wav')
+
+
+def cut_front_1audio(
+    audio_path: Union[str, Path],
+    sec: Union[int, float],
+    output_name: Optional[str] = None,
+    output_folder: Union[str, Path] = ""
+) -> None:
+    """
+    Cuts out the first `sec` seconds from an audio file using ffmpeg.
+
+    Parameters
+    ----------
+    audio_path : str or Path
+        Path to the input audio file.
+    sec : int or float
+        Number of seconds to remove from the start.
+    output_name : str or None, optional
+        Filename for the output. If None, original filename is used.
+    output_folder : str or Path, optional
+        Directory to save the output. If empty, saves alongside the input file.
+    """
+    
+    # medium tested
+    # ffmpeg version is much faster than pydub
+    import subprocess
+    inp = Path(audio_path)
+    out_dir = Path(output_folder) if output_folder else inp.parent
+    out_dir.mkdir(parents=True, exist_ok=True)
+
+    name = output_name or inp.name
+    out_path = out_dir / name
+
+    # Use ffmpeg to seek past the first `sec` seconds and copy streams
+    command = [
+        "ffmpeg",
+        "-y",              # overwrite if exists
+        "-ss", str(sec),   # seek to `sec`
+        "-i", str(inp),    # input file
+        "-c", "copy",      # copy codecs (no re-encode)
+        str(out_path)      # output file
+    ]
+    subprocess.run(command, check=True)
+
+
+def add_front_1audio(
+    audio_path: Union[str, Path],
+    sec: Union[int, float],
+    output_name: Optional[str] = None,
+    output_folder: Union[str, Path] = ""
+) -> None:
+    """
+    Prepends `sec` seconds of silence to an audio file using ffmpeg.
+
+    Parameters
+    ----------
+    audio_path : str or Path
+        Path to the input audio file.
+    sec : int or float
+        Number of seconds of silence to add at the front.
+    output_name : str or None, optional
+        Filename for the output. If None, the original filename is used.
+    output_folder : str or Path, optional
+        Directory to save the output. Defaults to the same folder as the input.
+    """
+    import subprocess
+    # not tested
+    inp = Path(audio_path)
+    out_dir = Path(output_folder) if output_folder else inp.parent
+    out_dir.mkdir(parents=True, exist_ok=True)
+
+    name = output_name or inp.name
+    out_path = out_dir / name
+
+    # milliseconds of silence
+    ms = int(sec * 1000)
+    # adelay accepts a single value to apply to all channels
+    delay_arg = f"{ms}"
+
+    cmd = [
+        "ffmpeg",
+        "-y",                # overwrite if exists
+        "-i", str(inp),      # input file
+        "-af", f"adelay={delay_arg}",  # prepend silence
+        str(out_path)        # output file
+    ]
+    subprocess.run(cmd, check=True)
+
+
+def cut_back_1audio(
+    audio_path: Union[str, Path],
+    sec: Union[int, float],
+    output_name: Optional[str] = None,
+    output_folder: Union[str, Path] = ""
+) -> None:
+    """
+    Cuts out the last `sec` seconds from an audio file using ffmpeg.
+
+    Parameters
+    ----------
+    audio_path : str or Path
+        Path to the input audio file.
+    sec : int or float
+        Number of seconds to remove from the end.
+    output_name : str or None, optional
+        Filename for the output. If None, original filename is used.
+    output_folder : str or Path, optional
+        Directory to save the output. Defaults to the same folder as the input.
+
+    Returns
+    -------
+    None
+    """
+    
+    # not tested
+    import subprocess
+    import json
+    inp = Path(audio_path)
+    out_dir = Path(output_folder) if output_folder else inp.parent
+    out_dir.mkdir(parents=True, exist_ok=True)
+
+    name = output_name or inp.name
+    out_path = out_dir / name
+
+    # Get duration via ffprobe
+    probe = subprocess.run(
+        ["ffprobe", "-v", "error", "-show_entries", "format=duration",
+         "-of", "json", str(inp)],
+        capture_output=True, text=True, check=True
+    )
+    duration = float(json.loads(probe.stdout)["format"]["duration"])
+    # Calculate the new duration
+    keep_duration = max(duration - sec, 0)
+
+    # FFmpeg command to cut to the new duration
+    cmd = [
+        "ffmpeg",
+        "-y",                 # overwrite
+        "-i", str(inp),
+        "-t", str(keep_duration),
+        "-c", "copy",
+        str(out_path)
+    ]
+    subprocess.run(cmd, check=True)
+
+
+def add_back_1audio(
+    audio_path: Union[str, Path],
+    sec: Union[int, float],
+    output_name: Optional[str] = None,
+    output_folder: Union[str, Path] = ""
+) -> None:
+    """
+    Appends `sec` seconds of silence to the end of an audio file using ffmpeg.
+
+    Parameters
+    ----------
+    audio_path : str or Path
+        Path to the input audio file.
+    sec : int or float
+        Number of seconds of silence to add at the end.
+    output_name : str or None, optional
+        Filename for the output. If None, uses the original filename.
+    output_folder : str or Path, optional
+        Directory to save the output file. Defaults to the same folder as the input.
+    """
+    import subprocess
+    # not tested
+    inp = Path(audio_path)
+    out_dir = Path(output_folder) if output_folder else inp.parent
+    out_dir.mkdir(parents=True, exist_ok=True)
+
+    name = output_name or inp.name
+    out_path = out_dir / name
+
+    # Use ffmpeg's apad filter to append silence
+    cmd = [
+        "ffmpeg",
+        "-y",                # overwrite output if exists
+        "-i", str(inp),      # input file
+        "-af", f"apad=pad_dur={sec}",  # append silence for `sec` seconds
+        "-c:a", "libmp3lame",  # re-encode to MP3
+        str(out_path)         # output file
+    ]
+    subprocess.run(cmd, check=True)
 
 
 @beartype
