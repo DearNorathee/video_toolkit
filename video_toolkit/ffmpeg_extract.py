@@ -60,7 +60,7 @@ def is_ffmpeg_installed():
 def extract_audio(
         video_folder:     Union[Path,str],
         output_folder:    Union[Path,str],
-        video_extension:  Union[list,str] = [".mp4",".mkv"],
+        video_extension:  Union[list,str] = VIDEO_ALL_EXTENSIONS,
         output_extension: Union[list,str] = ".mp3",
         overwrite_file:   bool = True,
         n_limit:          int = 150,
@@ -134,6 +134,7 @@ def extract_audio_1file(
     # Next right now I got a name BigBang_FR_S06E01.mp3_EN which is wrong
     
     from langcodes import Language
+    import warnings
     """
     Extract audio from a video file. If video has multiple audio in different languages,
     this function also support that
@@ -166,6 +167,9 @@ def extract_audio_1file(
         DESCRIPTION.
 
     """
+
+    # Bug fixed01: when there's missing langauge('N/A')
+
     from tqdm import tqdm
     from langcodes import Language
     from pathlib import Path
@@ -220,10 +224,13 @@ def extract_audio_1file(
         loop_obj = enumerate(video_lang_list)
 
     for i, language_3_str in loop_obj:
-        
-        lang_obj =  Language.get(language_3_str)
-        language_2_str = str(lang_obj).upper()
-        lang_obj.to_alpha3()
+        if language_3_str not in ["N/A"]:
+            lang_obj =  Language.get(language_3_str)
+            language_2_str = str(lang_obj).upper()
+            lang_obj.to_alpha3()
+        else:
+            language_2_str = "NA"
+
         for j, curr_file_ext in enumerate(file_extension_in):
             
             if curr_file_ext not in output_name_in:
