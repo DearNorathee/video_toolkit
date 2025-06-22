@@ -11,8 +11,201 @@ alarm_done_path = pkg_resources.resource_filename(__name__, 'assets/Sound Effect
 sound_error_path = pkg_resources.resource_filename(__name__, 'assets/Sound Effect Error.wav')
 
 
+def cut_front_audio(
+    filepaths: Union[str, Path,list[str|Path]]
+    ,sec: Union[int, float]
+    ,output_folder: Union[str, Path] = ""
+    # handle_multi_input parameter
+    
+    ,progress_bar: bool = True
+    ,verbose: int = 0
+    ,alarm_done: bool = True
+    ,alarm_error: bool = True
+    ,input_extension: str|None = AUDIO_ALL_EXTENSIONS
+) -> None:
+    """
+    Cuts out the first `sec` seconds from an audio file using ffmpeg.
+
+    Parameters
+    ----------
+    audio_path : str or Path
+        Path to the input audio file.
+    sec : int or float
+        Number of seconds to remove from the start.
+    output_name : str or None, optional
+        Filename for the output. If None, original filename is used.
+    output_folder : str or Path, optional
+        Directory to save the output. If empty, saves alongside the input file.
+    """
+    
+    # little tested
+    # ffmpeg version is much faster than pydub
+    import inspect_py as inp
+
+    path_input = {
+        "filepaths":filepaths
+        ,"output_folder":output_folder
+        ,"output_name":None
+        ,"sec":sec
+    }
+
+    handle_multi_input_params = {
+        "progress_bar": progress_bar
+        ,"verbose":verbose
+        ,"alarm_done":alarm_done
+        ,"alarm_error":alarm_error
+        ,"input_extension":input_extension
+    }
+    func_temp = inp.handle_multi_input(**handle_multi_input_params)(cut_front_1audio)
+    result = func_temp(**path_input)
+
+def add_front_audio(
+    filepaths: Union[str, Path,list[str|Path]]
+    ,sec: Union[int, float]
+    ,output_folder: Union[str, Path] = ""
+    # handle_multi_input parameters
+    
+    ,progress_bar: bool = True
+    ,verbose: int = 0
+    ,alarm_done: bool = True
+    ,alarm_error: bool = True
+    ,input_extension: str|None = AUDIO_ALL_EXTENSIONS
+) -> None:
+    """
+    Cuts out the first `sec` seconds from an audio file using ffmpeg.
+
+    Parameters
+    ----------
+    audio_path : str or Path
+        Path to the input audio file.
+    sec : int or float
+        Number of seconds to remove from the start.
+    output_name : str or None, optional
+        Filename for the output. If None, original filename is used.
+    output_folder : str or Path, optional
+        Directory to save the output. If empty, saves alongside the input file.
+    """
+    
+    # not tested
+    # ffmpeg version is much faster than pydub
+    import inspect_py as inp
+
+    path_input = {
+        "filepaths":filepaths
+        ,"output_folder":output_folder
+        ,"output_name":None
+        ,"sec":sec
+    }
+
+    handle_multi_input_params = {
+        "progress_bar": progress_bar
+        ,"verbose":verbose
+        ,"alarm_done":alarm_done
+        ,"alarm_error":alarm_error
+        ,"input_extension":input_extension
+    }
+    func_temp = inp.handle_multi_input(**handle_multi_input_params)(add_front_1audio)
+    result = func_temp(**path_input)
+
+def cut_back_audio(
+    filepaths: Union[str, Path,list[str|Path]]
+    ,sec: Union[int, float]
+    ,output_folder: Union[str, Path] = ""
+    # handle_multi_input parameters
+    
+    ,progress_bar: bool = True
+    ,verbose: int = 0
+    ,alarm_done: bool = True
+    ,alarm_error: bool = True
+    ,input_extension: str|None = AUDIO_ALL_EXTENSIONS
+) -> None:
+    """
+    Cuts out the first `sec` seconds from an audio file using ffmpeg.
+
+    Parameters
+    ----------
+    audio_path : str or Path
+        Path to the input audio file.
+    sec : int or float
+        Number of seconds to remove from the start.
+    output_name : str or None, optional
+        Filename for the output. If None, original filename is used.
+    output_folder : str or Path, optional
+        Directory to save the output. If empty, saves alongside the input file.
+    """
+    
+    # not tested
+    # ffmpeg version is much faster than pydub
+    import inspect_py as inp
+
+    path_input = {
+        "filepaths":filepaths
+        ,"output_folder":output_folder
+        ,"output_name":None
+        ,"sec":sec
+    }
+
+    handle_multi_input_params = {
+        "progress_bar": progress_bar
+        ,"verbose":verbose
+        ,"alarm_done":alarm_done
+        ,"alarm_error":alarm_error
+        ,"input_extension":input_extension
+    }
+    func_temp = inp.handle_multi_input(**handle_multi_input_params)(cut_back_1audio)
+    result = func_temp(**path_input)
+
+def add_back_audio(
+    filepaths: Union[str, Path,list[str|Path]]
+    ,sec: Union[int, float]
+    ,output_folder: Union[str, Path] = ""
+    # handle_multi_input parameters
+    
+    ,progress_bar: bool = True
+    ,verbose: int = 0
+    ,alarm_done: bool = True
+    ,alarm_error: bool = True
+    ,input_extension: str|None = AUDIO_ALL_EXTENSIONS
+) -> None:
+    """
+    Cuts out the first `sec` seconds from an audio file using ffmpeg.
+
+    Parameters
+    ----------
+    audio_path : str or Path
+        Path to the input audio file.
+    sec : int or float
+        Number of seconds to remove from the start.
+    output_name : str or None, optional
+        Filename for the output. If None, original filename is used.
+    output_folder : str or Path, optional
+        Directory to save the output. If empty, saves alongside the input file.
+    """
+    
+    # not tested
+    # ffmpeg version is much faster than pydub
+    import inspect_py as inp
+
+    path_input = {
+        "filepaths":filepaths
+        ,"output_folder":output_folder
+        ,"output_name":None
+        ,"sec":sec
+    }
+
+    handle_multi_input_params = {
+        "progress_bar": progress_bar
+        ,"verbose":verbose
+        ,"alarm_done":alarm_done
+        ,"alarm_error":alarm_error
+        ,"input_extension":input_extension
+    }
+    func_temp = inp.handle_multi_input(**handle_multi_input_params)(add_back_1audio)
+    result = func_temp(**path_input)
+
+
 def cut_front_1audio(
-    filepaths: Union[str, Path],
+    audio_path: Union[str, Path],
     sec: Union[int, float],
     output_name: Optional[str] = None,
     output_folder: Union[str, Path] = ""
@@ -39,10 +232,10 @@ def cut_front_1audio(
     import os
 
 
-    if not os.path.exists(filepaths):
+    if not os.path.exists(audio_path):
         raise FileNotFoundError("Please check the path. It doesn't exist.")
     
-    inp = Path(filepaths)
+    inp = Path(audio_path)
     out_dir = Path(output_folder) if output_folder else inp.parent
     out_dir.mkdir(parents=True, exist_ok=True)
 

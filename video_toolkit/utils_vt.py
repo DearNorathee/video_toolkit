@@ -39,6 +39,66 @@ MEDIA_ALL_EXTENSIONS = VIDEO_ALL_EXTENSIONS + SUBTITLE_ALL_EXTENSIONS + AUDIO_AL
 
 
 @beartype
+def create_series_working_folder(
+    series_name:str,  
+    create_structure_at:str|Path,  
+    audio_folders:list[str],  
+    subtitle_folders:list[str],  
+    end_seasons:int
+    ):
+
+    """
+    Create folder structure for a TV series with given parameters.
+
+    Parameters
+    ----------
+    series_name : str
+        Name of the TV series.
+    create_structure_at : str or Path
+        Root folder where the folder structure will be created.
+    audio_folders : list[str]
+        List of audio languages to create folders for.
+    subtitle_folders : list[str]
+        List of subtitle languages to create folders for.
+    end_seasons : int
+        Number of seasons to create folders for.
+
+    Returns
+    -------
+    None
+    """
+    import os_toolkit as ost
+    # medium tested
+    # what folder_structure example looks like for 1 season
+    # folder_structure = {
+    #     "The Big Bang Theory":{
+    #         "BigBang Theory Season 07": {
+    #             "Season 07 Audio": audio_folders,
+    #             "Season 07 Splitted Audio": audio_folders,
+    #             "Season 07 Subtitle": subtitle_folders,
+    #             }
+    #         }
+    #     }
+    
+    folder_structure = {
+        series_name:{}
+        }
+    
+    
+    for season in range(1,end_seasons+1):
+        season_str = str(season).zfill(2)
+        curr_season_structure = {
+                    f"Season {season_str} Audio": audio_folders,
+                    f"Season {season_str} Splitted Audio": audio_folders,
+                    f"Season {season_str} Subtitle": subtitle_folders,
+                    }
+                
+        folder_structure[series_name][f"{series_name} Season {season_str}"] = curr_season_structure
+        # pprint(curr_season_structure)
+    # pprint(folder_structure)
+    ost.create_folder_structure(root_folder = create_structure_at , structure = folder_structure)
+
+@beartype
 def change_audio_speed(
     audio_paths: Union[str, Path, list[str|Path]]
     ,speedx:float|int
@@ -259,6 +319,7 @@ def adjust_speed(
     time_obj: datetime.time,
     speedx: float|int
     ,shift_forward_sec: float|int = 0
+    ,if_negative_error_value:int|float = 0
 ) -> datetime.time:
     """
     Adjust a datetime.time by a speed factor, using the datetime module alias directly.
@@ -278,7 +339,7 @@ def adjust_speed(
     # total seconds in the original time
     #  Apr, 26, 2025
     # 4o can't do it at one shot, this is from o4-mini
-
+    import warnings
     total_seconds = (
         time_obj.hour * 3600
         + time_obj.minute * 60
@@ -287,7 +348,13 @@ def adjust_speed(
     )
 
     # adjust by speed factor
+    # if adjusted_seconds is negative?
     adjusted_seconds = total_seconds / speedx + shift_forward_sec
+
+    if adjusted_seconds < 0:
+        warnings.warn(
+            f"Adjusted seconds is negative: {adjusted_seconds}. ")
+        adjusted_seconds = if_negative_error_value
 
     # reconstruct hours, minutes, seconds, microseconds
     hours = int(adjusted_seconds // 3600)
