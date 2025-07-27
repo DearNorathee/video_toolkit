@@ -2,6 +2,38 @@ from video_toolkit.utils_vt import *
 from pydub import AudioSegment
 import os_toolkit as ost
 
+
+def test_clean_netflix_srt_1file():
+    sub_path = r"C:\C_Video_Python\The Big Bang Theory\BigBang Theory Season 06\Season 06 Subtitle\German Netflix\original\BigBang DE S06E01.srt"
+    output_folder = r"C:\C_Video_Python\The Big Bang Theory\BigBang Theory Season 06\Season 06 Subtitle\German Netflix\original_no_speakers"
+    clean_Netflix_srt_1file(sub_path, output_folder)
+
+def test_clean_netflix_srt():
+    sub_path01 = r"C:\C_Video_Python\The Big Bang Theory\BigBang Theory Season 06\Season 06 Subtitle\German Netflix\original"
+    output_folder01 = r"C:\C_Video_Python\video_toolkit_test\test_clean_netflix_srt\test_01"
+
+    sub_path02 = r"C:\C_Video_Python\The Big Bang Theory\BigBang Theory Season 06\Season 06 Subtitle\German Netflix\original\BigBang DE S06E01.srt"
+    output_folder02 = r"C:\C_Video_Python\video_toolkit_test\test_clean_netflix_srt\test_02"
+
+    sub_path03 = [
+        r"C:\C_Video_Python\The Big Bang Theory\BigBang Theory Season 06\Season 06 Subtitle\German Netflix\original\BigBang DE S06E01.srt",
+        r"C:\C_Video_Python\The Big Bang Theory\BigBang Theory Season 06\Season 06 Subtitle\German Netflix\original\BigBang DE S06E02.srt",
+        r"C:\C_Video_Python\The Big Bang Theory\BigBang Theory Season 06\Season 06 Subtitle\German Netflix\original\BigBang DE S06E03.srt",
+        
+        ]
+    output_folder03 = r"C:\C_Video_Python\video_toolkit_test\test_clean_netflix_srt\test_03"
+
+    sub_path04 = [
+        r"C:\C_Video_Python\The Big Bang Theory\BigBang Theory Season 06\Season 06 Subtitle\German Netflix\original"
+    ]
+    output_folder04 = r"C:\C_Video_Python\video_toolkit_test\test_clean_netflix_srt\test_04"
+
+    clean_Netflix_srt(sub_path01, output_folder01)
+    clean_Netflix_srt(sub_path02, output_folder02)
+    clean_Netflix_srt(sub_path03, output_folder03)
+    # list of folders are not yet implemented in inp.handle_multi_input
+    # clean_Netflix_srt(sub_path04, output_folder04)  
+
 def test_change_audio_speed():
     audio_path01 = r"C:\C_Video_Python\The Big Bang Theory\BigBang Theory Season 02\Season 02 Audio\French"
     test_output = r"C:\C_Video_Python\video_toolkit_test\test_change_audio_speed"

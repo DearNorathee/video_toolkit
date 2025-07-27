@@ -78,7 +78,7 @@ def clean_Netflix_srt_1file(
 
 
     # medium tested
-    df_sub_ori = vt.sub_to_df(sub_path)
+    df_sub_ori = sub_to_df(sub_path)
     df_sub_copy_step1 = df_sub_ori.copy()
 
     PATTERN = r'^((?:\([A-Z\' ]+\)|[A-Z\']+):\s)'
@@ -91,7 +91,7 @@ def clean_Netflix_srt_1file(
     df_sub_copy_step2 = df_sub_copy_step1[['sentence','start','end']]
 
     # out_sub_path = Path(output_folder) / Path(sub_path).name
-    vt.df_to_srt(df_sub_copy_step2
+    df_to_srt(df_sub_copy_step2
                 ,output_name=Path(sub_path).name
                 ,output_folder=output_folder)
 
@@ -109,7 +109,7 @@ def clean_Netflix_srt(
     ,verbose: int = 0
     ,alarm_done: bool = False
     ,alarm_error: bool = False
-    ,input_extension: str|None = vt.SUBTITLE_ALL_EXTENSIONS
+    ,input_extension: str|None = SUBTITLE_ALL_EXTENSIONS
     ):
 
     """
