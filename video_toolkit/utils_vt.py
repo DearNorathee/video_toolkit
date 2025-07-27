@@ -38,6 +38,165 @@ MEDIA_ALL_EXTENSIONS = VIDEO_ALL_EXTENSIONS + SUBTITLE_ALL_EXTENSIONS + AUDIO_AL
 # get_audio_extension,get_video_extension, _get_media_extension
 
 
+
+@beartype
+def clean_Netflix_srt_1file(
+    sub_path:str|Path
+    ,output_folder:str|Path ) -> None:
+
+    """
+    Clean Netflix-style speaker labels from an SRT subtitle file.
+
+    This function processes a single `.srt` subtitle file by removing speaker name prefixes 
+    commonly found in Netflix subtitles (e.g., "JOHN:", "(MAN):"). The cleaned subtitles are 
+    saved in a new file with the same filename in the specified output folder.
+
+    Parameters
+    ----------
+    sub_path : str or Path
+        Path to the input `.srt` subtitle file.
+
+    output_folder : str or Path
+        Folder where the cleaned subtitle file will be saved.
+
+    Returns
+    -------
+    None
+        A new `.srt` file is saved in `output_folder`, containing cleaned subtitle sentences.
+
+    Notes
+    -----
+    - Only speaker prefixes in uppercase or enclosed in parentheses followed by a colon (e.g., "JOHN:", "(WOMAN):") are removed.
+    - The original sentence is stored in the `sentence_ori` column, and the speaker prefix (if detected) is stored in `speaker_prefix`.
+    - The final output subtitle contains only the cleaned `sentence`, `start`, and `end` fields.
+
+    Examples
+    --------
+    Clean a Netflix-style subtitle file and output the result:
+    >>> clean_netflix_srt_1file("episode1.srt", "cleaned_subs/")
+    """
+
+
+    # medium tested
+    df_sub_ori = vt.sub_to_df(sub_path)
+    df_sub_copy_step1 = df_sub_ori.copy()
+
+    PATTERN = r'^((?:\([A-Z\' ]+\)|[A-Z\']+):\s)'
+
+    df_sub_copy_step1['sentence_ori'] = df_sub_copy_step1['sentence'].copy()
+    # extract into a new column; missing ones become NaN
+    df_sub_copy_step1['speaker_prefix'] = df_sub_copy_step1['sentence'].str.extract(PATTERN)
+    df_sub_copy_step1['sentence'] = df_sub_copy_step1['sentence_ori'].str.replace(PATTERN, '', regex=True)
+
+    df_sub_copy_step2 = df_sub_copy_step1[['sentence','start','end']]
+
+    # out_sub_path = Path(output_folder) / Path(sub_path).name
+    vt.df_to_srt(df_sub_copy_step2
+                ,output_name=Path(sub_path).name
+                ,output_folder=output_folder)
+
+@beartype
+def clean_Netflix_srt(
+    filepaths: Union[str, Path, list[str|Path]]
+    ,output_folder: str|Path
+    # input below would get import automatically
+    ,replace: bool = True
+    ,errors:Literal["warn","raise"] = "raise"
+    ,print_errors:bool = False
+
+    # handle_multi_input parameters
+    ,progress_bar: bool = True
+    ,verbose: int = 0
+    ,alarm_done: bool = False
+    ,alarm_error: bool = False
+    ,input_extension: str|None = vt.SUBTITLE_ALL_EXTENSIONS
+    ):
+
+    """
+    Batch clean Netflix-style speaker labels from subtitle files.
+
+    This function removes speaker name prefixes (e.g., "JOHN:", "(MAN):") commonly found in Netflix-style 
+    subtitles from one or more `.srt` files. It supports flexible inputs such as individual files, lists of files, 
+    or entire directories. The actual cleaning is performed by `clean_Netflix_srt_1file`, and batch handling 
+    is delegated via `handle_multi_input`.
+
+    Parameters
+    ----------
+    filepaths : str, Path, or list of str or Path
+        Input subtitle path(s) to clean. Can be a single file, a list of files, or a folder 
+        containing `.srt` or similar subtitle files.
+
+    output_folder : str or Path
+        Directory where cleaned subtitle files will be saved.
+
+    replace : bool, default True
+        If True, the original files are replaced. If False, new files are saved with modified names 
+        (prefix/suffix handled internally by the decorated function if needed).
+
+    errors : {"warn", "raise"}, default "raise"
+        Determines how to handle errors:
+        - "warn": Print a warning and continue.
+        - "raise": Raise an exception immediately on error.
+
+    print_errors : bool, default False
+        If True, print the full error details when `errors="raise"` is set.
+
+    progress_bar : bool, default True
+        Whether to display a progress bar during batch processing.
+
+    verbose : int, default 0
+        Controls the verbosity level. Set to 1 or 2 for more detailed logs.
+
+    alarm_done : bool, default False
+        If True, plays a notification sound when all processing is complete.
+
+    alarm_error : bool, default False
+        If True, plays a sound when an error is encountered.
+
+    input_extension : list of str or None, default vt.SUBTITLE_ALL_EXTENSIONS
+        Extensions to look for when `filepaths` is a folder. By default, all supported subtitle types are included.
+
+    Returns
+    -------
+    None
+        Cleaned subtitle files are saved to `output_folder`.
+
+    Notes
+    -----
+    - Speaker name prefixes in all caps (e.g., "JOHN:") or in parentheses (e.g., "(MAN):") are stripped 
+    from the beginning of each subtitle sentence.
+    - Requires subtitle files to be in a valid `.srt`-compatible format that can be parsed into a DataFrame.
+    - Uses the `handle_multi_input` utility to enable flexible multi-file processing.
+
+    Examples
+    --------
+    Clean a single subtitle file:
+    >>> clean_Netflix_srt("show.srt", output_folder="cleaned_subs")
+
+    Clean all subtitle files in a folder:
+    >>> clean_Netflix_srt("subs_folder", output_folder="cleaned", verbose=1)
+
+    Clean a list of files and save with modified names:
+    >>> clean_Netflix_srt(["ep1.srt", "ep2.srt"], output_folder="out", replace=False)
+    """
+
+    # high tested both, 1 file, folder_path and list of srt files
+    import inspect_py as inp
+    path_input = {
+        "filepaths":filepaths
+        ,"output_folder":output_folder
+    }
+    handle_multi_input_params = {
+        "progress_bar": progress_bar
+        ,"verbose":verbose
+        ,"alarm_done":alarm_done
+        ,"alarm_error":alarm_error
+        ,"input_extension":input_extension
+    }
+    func_temp = inp.handle_multi_input(**handle_multi_input_params)(clean_Netflix_srt_1file)
+    result = func_temp(**path_input)
+    return result
+
 @beartype
 def create_series_working_folder(
     series_name:str,  
@@ -915,7 +1074,9 @@ def sub_to_df(sub_path,
 @beartype
 def ass_to_df(ass_path: str | Path,
               remove_stopwords:bool =True,
-              stopwords=["♪", "\n", "<i>", "</i>", "<b>", "</b>"]) -> pd.DataFrame | List[pd.DataFrame]:
+              stopwords=["♪", "\n", "<i>", "</i>", "<b>", "</b>"]
+              ,replace_dash:bool = True
+              ) -> pd.DataFrame | List[pd.DataFrame]:
     
 
     """
@@ -929,6 +1090,8 @@ def ass_to_df(ass_path: str | Path,
         If True, specified stopwords will be removed from the sentences. Default is True.
     stopwords : list of str, optional
         A list of stopwords to remove from the sentences. Default is ["♪", "\\n", "<i>", "</i>", "<b>", "</b>"].
+    replace_dash
+        Make it easier to paste into Excel
 
     Returns
     -------
@@ -982,6 +1145,10 @@ def ass_to_df(ass_path: str | Path,
             'start': start_times,
             'end': end_times
         })
+        
+        if replace_dash:
+            df['sentence'] = df['sentence'].str.replace('-', '–', regex=False)
+        
         return df
 
     if ass_path.is_file() and ass_path.suffix == '.ass':
@@ -1971,7 +2138,10 @@ def crop_video(
 def srt_to_df(
     srt_path: str | Path,
     remove_stopwords:bool = True,
-    stopwords: list[str] = ["♪","<i>","</i>","<b>","</b>"]) -> pd.DataFrame | List[pd.DataFrame]:
+    stopwords: list[str] = ["♪","<i>","</i>","<b>","</b>"],
+    replace_dash:bool = True
+    
+    ) -> pd.DataFrame | List[pd.DataFrame]:
     # df = pd.DataFrame({
         #     'sentence': sentences,
         #     'start': start_times,
@@ -2011,6 +2181,9 @@ def srt_to_df(
             'start': start_times,
             'end': end_times
         })
+        
+        if replace_dash:
+            df['sentence'] = df['sentence'].str.replace('-', '–', regex=False)
         return df
     else:
         # many srt's file using folder
