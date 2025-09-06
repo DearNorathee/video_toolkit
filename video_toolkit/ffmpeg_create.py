@@ -979,7 +979,7 @@ def merge_media_to1video(
     command.extend(['-c', 'copy', str(output_path)])
     # command_line, command_np is for debugging
     command_line = " ".join(command)
-    command_np = np.array(command)
+    command_np = pd.DataFrame(command)
     result = subprocess.run(command, text=True, stderr=subprocess.PIPE)
     if errors in ["warn"]:
         if result.returncode != 0:
