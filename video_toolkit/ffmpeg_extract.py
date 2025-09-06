@@ -671,6 +671,55 @@ def extract_subtitle(
         verbose = verbose,
     )
 
+
+@beartype
+def extract_subtitle_v2(
+    filepaths:     Union[Path,str],
+    output_folder:    Union[Path,str],
+    output_extension: Union[list,str,None] = None,
+    overwrite_file:   bool = True,
+    n_limit:          int = 150,
+    output_prefix:    str = "",
+    output_suffix:    str = "",
+    languages: List[str] | None | str = None,
+    encoding:str = "utf-8-sig"
+
+    # handle_multi_input parameters
+    ,progress_bar: bool = True
+    ,verbose: int = 1
+    ,alarm_done: bool = False
+    ,alarm_error: bool = False
+    ,input_extension: str|None = [".mp4",".mkv"]
+):
+    # write now language input has to be 3-str letter(BigBang FR)
+    
+    # ToAdd01: suffix with language code instead of index
+    # v02 => use inp.handle_multi_input()
+    import inspect_py as inp
+
+    path_input = {
+        "filepaths":filepaths
+        ,"output_folder":output_folder
+        ,"output_name": None
+        ,"output_extension":output_extension
+        ,"alarm_done":False
+        ,"overwrite_file":overwrite_file
+        ,"languages":languages
+        ,"encoding":encoding
+    }
+    handle_multi_input_params = {
+        "progress_bar": progress_bar
+        ,"verbose":verbose
+        ,"alarm_done":alarm_done
+        ,"alarm_error":alarm_error
+        ,"input_extension":input_extension
+    }
+    
+    func_temp = inp.handle_multi_input(**handle_multi_input_params)(extract_sub_1_video)
+    result = func_temp(**path_input)
+    return result
+
+
 # @beartype
 def extract_sub_1_video(
     video_path:         Union[str,Path],

@@ -16,18 +16,18 @@ class Test_extract_subtitle(unittest.TestCase):
 def test_extract_subtitle():
 # extract_subtitle doesn't work on just 1 video
     
-    # folder01 = Path(r"H:\D_Video\The Ark Season 01 Portuguese")
-    # output_folder01 = Path(r'H:\D_Video\The Ark Season 01 Portuguese\Subtitles')
-    # extract_subtitle(folder01,output_folder01)
+    folder01 = Path(r"C:\DVDFab\StreamFab\Output\Amazon\The Wheel of Time\S01\The Wheel of Time_S01E02_Shadow's Waiting.mkv")
+    output_folder01 = Path(r'C:\C_Video_Python\video_toolkit_test\test_extract_subtitle\test_01')
+    vt.extract_subtitle(folder01,output_folder01)
 
     # folder02 = Path(r"C:\Users\Heng2020\OneDrive\Python NLP\InputData\The Matrix Resurrections 2021.mkv")
     # output_folder02 = Path(r'C:\Users\Heng2020\OneDrive\Python NLP\OutputData\SubtitleMatrix')
     # extract_subtitle(folder02,output_folder02)
 
     # test when input is .ass but output is .srt
-    folder03 = Path(r"H:\D_Video\The Ark Season 01 Portuguese")
-    output_folder03 = Path(r'C:\Users\Heng2020\OneDrive\Python NLP\OutputData\The Ark season 1 srt')
-    vt.extract_subtitle(folder03,output_folder03, output_extension= ".srt")
+    # folder03 = Path(r"H:\D_Video\The Ark Season 01 Portuguese")
+    # output_folder03 = Path(r'C:\Users\Heng2020\OneDrive\Python NLP\OutputData\The Ark season 1 srt')
+    # vt.extract_subtitle(folder03,output_folder03, output_extension= ".srt")
 
 def test_extract_sub_1_video():
     folder02 = Path(r"C:\Users\Heng2020\OneDrive\Python NLP\InputData\The Matrix Resurrections 2021.mkv")
@@ -204,8 +204,9 @@ def test_make_1_season_Excel_unaligned():
 
 
 if __name__ == '__main__':
-    # test_extract_subtitle()
+    test_extract_subtitle()
     # test_align_1_season()
-    test_align_1_season02()
+    # test_align_1_season02()
     # test_extract_sub_1_video()
     # unittest.main()
+
