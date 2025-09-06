@@ -16,9 +16,9 @@ class Test_extract_subtitle(unittest.TestCase):
 def test_extract_subtitle():
 # extract_subtitle doesn't work on just 1 video
     
-    folder01 = Path(r"C:\DVDFab\StreamFab\Output\Amazon\The Wheel of Time\S01\The Wheel of Time_S01E02_Shadow's Waiting.mkv")
+    folder01 = Path(r"C:\DVDFab\StreamFab\Output\Amazon\The Wheel of Time\S01_high_res\The Wheel of Time_S01E01_Leavetaking.mkv")
     output_folder01 = Path(r'C:\C_Video_Python\video_toolkit_test\test_extract_subtitle\test_01')
-    vt.extract_subtitle(folder01,output_folder01)
+    vt.extract_subtitle_v2(folder01,output_folder01)
 
     # folder02 = Path(r"C:\Users\Heng2020\OneDrive\Python NLP\InputData\The Matrix Resurrections 2021.mkv")
     # output_folder02 = Path(r'C:\Users\Heng2020\OneDrive\Python NLP\OutputData\SubtitleMatrix')
@@ -30,9 +30,14 @@ def test_extract_subtitle():
     # vt.extract_subtitle(folder03,output_folder03, output_extension= ".srt")
 
 def test_extract_sub_1_video():
-    folder02 = Path(r"C:\Users\Heng2020\OneDrive\Python NLP\InputData\The Matrix Resurrections 2021.mkv")
-    output_folder02 = Path(r'C:\Users\Heng2020\OneDrive\Python NLP\OutputData\SubtitleMatrix')
-    vt.extract_sub_1_video(folder02,output_folder02)
+
+    folder01 = Path(r"C:\DVDFab\StreamFab\Output\Amazon\The Wheel of Time\S01_high_res\The Wheel of Time_S01E01_Leavetaking.mkv")
+    output_folder01 = Path(r'C:\C_Video_Python\video_toolkit_test\test_extract_subtitle\test_01')
+    vt.extract_sub_1_video(folder01,output_folder01, alarm_done=False)
+
+    # folder02 = Path(r"G:\My Drive\G_Videos\Polyglot\The Matrix Resurrections 2021.mkv")
+    # output_folder02 = Path(r'C:\C_Video_Python\video_toolkit_test\test_extract_subtitle\test_01')
+    # vt.extract_sub_1_video(folder02,output_folder02)
 
 
 
@@ -79,12 +84,21 @@ class Test_extract_1_subtitle(unittest.TestCase):
 
 
 
-def test_get_metadata():
+def test_get_all_metadata():
     
-    folder = Path(r"H:\D_Video\The Ark Season 01 Portuguese")
+    folder = Path(r"C:\C_Video\The Ark Season 01 Portuguese")
     video_name = "The Ark S01E02 PT.mkv"
     video_path = folder / video_name
-    test = vt.get_all_metadata(video_path)
+    actual01 = vt.get_all_metadata(video_path)
+
+    # case02: when file is not found
+    try:
+        video_path02 = r"C:\DVDFab\StreamFab\Output\Amazon\The Wheel of Time\S01\The Wheel of Time_S01E02_Shadow's Waiting.mkv"
+        video_path02 = r"C:\DVDFab\StreamFab\Output\Amazon\The Wheel of Time\S01\The Wheel of Time_S01E02_Shadow's Waiting.mkv"
+        actual02 = vt.get_all_metadata(video_path02)
+    except FileNotFoundError:
+        logging.debug('Case 02 passed.✅')
+        
     logging.debug('Done From test_get_subtitle_stream_index')
 
 def test_get_subtitle_index():
@@ -204,6 +218,9 @@ def test_make_1_season_Excel_unaligned():
 
 
 if __name__ == '__main__':
+
+    test_extract_sub_1_video()
+    test_get_all_metadata()
     test_extract_subtitle()
     # test_align_1_season()
     # test_align_1_season02()

@@ -482,6 +482,10 @@ def get_all_metadata(
     Returns:
     - DataFrame with columns for 'filetype', 'file_extension', 'language', and 'duration'.
     """
+    import os
+    if not os.path.isfile(media_path):           # only passes for regular files
+        raise FileNotFoundError(f"File not found: {media_path}")
+        
     command = [
         'ffprobe',
         '-v', 'quiet',
@@ -806,7 +810,7 @@ def extract_sub_1_video(
             output_name = video_name
         if modified_extension not in output_name:
             if "." not in modified_extension:
-                ori_extension = "." + modified_extension
+                modified_extension = "." + modified_extension
             output_name += modified_extension
 
 
