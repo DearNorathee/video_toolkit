@@ -4,6 +4,44 @@ from beartype import beartype
 
 
 @beartype
+def extract_subtitle(
+        video_folder:     Union[Path,str],
+        output_folder:    Union[Path,str],
+        video_extension:  Union[list,str] = [".mp4",".mkv"],
+        output_extension: Union[list,str,None] = None,
+        overwrite_file:   bool = True,
+        n_limit:          int = 150,
+        output_prefix:    str = "",
+        output_suffix:    str = "",
+        languages: List[str] | None | str = None,
+        alarm_done:       bool = True,
+        verbose:int = 0,
+):
+    # write now language input has to be 3-str letter(BigBang FR)
+    
+    # ToAdd01: suffix with language code instead of index
+    
+    input_param = {
+        'video_path': 6
+    }
+    
+    _extract_media_setup(
+        input_folder = video_folder,
+        output_folder = output_folder,
+        input_extension = video_extension,
+        output_extension = output_extension,
+        extract_1_file_func = extract_sub_1_video,
+        overwrite_file = overwrite_file,
+        n_limit = n_limit,
+        output_prefix = output_prefix,
+        output_suffix = output_suffix,
+        languages=languages,
+        alarm_done = alarm_done,
+        verbose = verbose,
+    )
+
+
+@beartype
 def change_audio_speed_1file(
     audio_path:str
     ,speedx:float

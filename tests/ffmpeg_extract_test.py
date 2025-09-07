@@ -25,7 +25,7 @@ def test_extract_subtitle():
     # when it's folder path
     folder02 = Path(r"C:\DVDFab\StreamFab\Output\Amazon\The Peripheral_experiments\S01")
     output_folder02 = Path(r'C:\C_Video_Python\video_toolkit_test\test_extract_subtitle\test_02')
-    vt.extract_subtitle_v2(folder02,output_folder02)
+    vt.extract_subtitle(folder02,output_folder02)
 
     # test when input is .ass but output is .srt
     # folder03 = Path(r"H:\D_Video\The Ark Season 01 Portuguese")
@@ -165,7 +165,7 @@ def test_extract_audio_1file():
     #                     languages="french"
     #                     )
     
-    extract_audio_1file(video_path = matrix_video_path,
+    vt.extract_audio_1file(video_path = matrix_video_path,
                         output_folder = output_folder03,
                         alarm_done = alarm_done_path,
                         languages=["french","portugus","spanish","englih"]
@@ -178,25 +178,6 @@ def test_extract_audio3():
     vt.extract_audio(folder_FR_bigbang, output_folder01)
     print("test_extract_audio3")
 
-def test_extract_1_audio():
-    
-    folder = Path(r"E:\Videos\The Big Bang Theory\The Big Bang Theory French Season 06")
-    video_name = "The Big Bang Theory French S06E01.mp4"
-    video_path = folder / video_name
-    output_folder = Path(r"C:\Users\Heng2020\OneDrive\Python NLP\NLP 06_ffmpeg")
-    output_name = "The Big Bang Theory French S06E01.mp3"
-    output_path = output_folder / output_name
-    
-    extract_1_audio(video_path,output_folder,output_name)
-    extract_1_audio(video_path,output_folder,output_name,overwrite_file = False)
-
-def test_extract_audio():
-    
-    from pathlib import Path
-    French_bigbang = Path(r"E:\Videos\The Big Bang Theory\The Big Bang Theory French Season 06")
-    output_folder = Path(r"E:\Videos\The Big Bang Theory\The Big Bang Theory French Season 06\Audio")
-    extract_audio1(French_bigbang,output_folder,n_limit=10)
-    return True
 
 if __name__ == '__main__':
 

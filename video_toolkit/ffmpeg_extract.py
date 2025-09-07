@@ -5,6 +5,7 @@ import os_toolkit as ost
 from beartype import beartype
 from play_audio_file import play_audio_file, play_alarm_done, play_alarm_error
 from video_toolkit.utils_vt import VIDEO_ALL_EXTENSIONS, AUDIO_ALL_EXTENSIONS, SUBTITLE_ALL_EXTENSIONS, CODEC_DICT, MEDIA_ALL_EXTENSIONS
+from video_toolkit.language import *
 
 alarm_done_path = pkg_resources.resource_filename(__name__, 'assets/Sound Effect positive-logo-opener.wav')
 sound_error_path = pkg_resources.resource_filename(__name__, 'assets/Sound Effect Error.wav')
@@ -638,46 +639,10 @@ def get_audio_index(media_path, language = None, file_extension = None):
 def get_subtitle_index(media_path, language = None, file_extension = None):
     return _get_media_index(media_path,'subtitle',language)
 
+
+
 @beartype
 def extract_subtitle(
-        video_folder:     Union[Path,str],
-        output_folder:    Union[Path,str],
-        video_extension:  Union[list,str] = [".mp4",".mkv"],
-        output_extension: Union[list,str,None] = None,
-        overwrite_file:   bool = True,
-        n_limit:          int = 150,
-        output_prefix:    str = "",
-        output_suffix:    str = "",
-        languages: List[str] | None | str = None,
-        alarm_done:       bool = True,
-        verbose:int = 0,
-):
-    # write now language input has to be 3-str letter(BigBang FR)
-    
-    # ToAdd01: suffix with language code instead of index
-    
-    input_param = {
-        'video_path': 6
-    }
-    
-    _extract_media_setup(
-        input_folder = video_folder,
-        output_folder = output_folder,
-        input_extension = video_extension,
-        output_extension = output_extension,
-        extract_1_file_func = extract_sub_1_video,
-        overwrite_file = overwrite_file,
-        n_limit = n_limit,
-        output_prefix = output_prefix,
-        output_suffix = output_suffix,
-        languages=languages,
-        alarm_done = alarm_done,
-        verbose = verbose,
-    )
-
-
-@beartype
-def extract_subtitle_v2(
     filepaths:     Union[Path,str],
     output_folder:    Union[Path,str],
     output_extension: Union[list,str,None] = None,
@@ -698,7 +663,6 @@ def extract_subtitle_v2(
     # write now language input has to be 3-str letter(BigBang FR)
     
     # ToAdd01: suffix with language code instead of index
-    # v02 => use inp.handle_multi_input()
     import inspect_py as inp
 
     path_input = {
@@ -883,59 +847,6 @@ def extract_sub_1_video(
                 except:
                     pass
 
-@beartype
-def language_name_list():
-    import pycountry
-    language_names = [lang.name for lang in pycountry.languages if hasattr(lang, 'name')]
-    return language_names
-
-@beartype
-def closest_language(misspelled_language):
-    
-    from fuzzywuzzy import process
-    import pycountry
-    # Get a list of all language names
-    language_names = [lang.name for lang in pycountry.languages if hasattr(lang, 'name')]
-
-    # Use fuzzy matching to find the closest match
-    closest_match = process.extractOne(misspelled_language, language_names)
-    return closest_match[0] if closest_match else None
-
-@beartype
-def closest_language_obj(misspelled_language):
-    
-    """
-    Find the closest matching language object for a potentially misspelled language code.
-    
-    Parameters:
-    -----------
-    misspelled_language : str
-        The potentially misspelled language code.
-    
-    Returns:
-    --------
-    langcodes.Language
-        A language object representing the closest matching language.
-    
-    Notes:
-    ------
-    - This function uses the 'langcodes' library to find the closest matching language object
-      for a potentially misspelled language code.
-    - It can be useful for language code correction or normalization.
-    
-    Example:
-    --------
-    >>> closest_language_obj("englsh")
-    <Language('en', 'English')>
-    >>> closest_language_obj("español")
-    <Language('es', 'Spanish')>
-    
-    """
-    
-    
-    from langcodes import Language
-    correct_language = closest_language(misspelled_language)
-    return Language.find(correct_language)
 
 @beartype
 def extract_1_audio(video_path:     Union[str,Path],
