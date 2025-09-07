@@ -682,15 +682,15 @@ def extract_subtitle_v2(
     output_folder:    Union[Path,str],
     output_extension: Union[list,str,None] = None,
     overwrite_file:   bool = True,
-    n_limit:          int = 150,
-    output_prefix:    str = "",
-    output_suffix:    str = "",
+    # n_limit:          int = 150,
+    # output_prefix:    str = "",
+    # output_suffix:    str = "",
     languages: List[str] | None | str = None,
     encoding:str = "utf-8-sig"
 
     # handle_multi_input parameters
     ,progress_bar: bool = True
-    ,verbose: int = 1
+    ,verbose: int = 0
     ,alarm_done: bool = False
     ,alarm_error: bool = False
     ,input_extension: str|None = [".mp4",".mkv"]

@@ -2,6 +2,7 @@ import unittest
 import video_toolkit as vt
 from pathlib import Path
 import logging
+
 should_skip = True
 
 # @unittest.skipIf(should_skip, "Skipping: Test_extract_subtitle")
@@ -13,16 +14,18 @@ class Test_extract_subtitle(unittest.TestCase):
     def test_basic01(self):
         vt.extract_subtitle(self.folder01, self.output_folder01)
 
+
 def test_extract_subtitle():
 # extract_subtitle doesn't work on just 1 video
     
-    folder01 = Path(r"C:\DVDFab\StreamFab\Output\Amazon\The Wheel of Time\S01_high_res\The Wheel of Time_S01E01_Leavetaking.mkv")
-    output_folder01 = Path(r'C:\C_Video_Python\video_toolkit_test\test_extract_subtitle\test_01')
-    vt.extract_subtitle_v2(folder01,output_folder01)
+    # folder01 = Path(r"C:\DVDFab\StreamFab\Output\Amazon\The Wheel of Time\S01_high_res\The Wheel of Time_S01E01_Leavetaking.mkv")
+    # output_folder01 = Path(r'C:\C_Video_Python\video_toolkit_test\test_extract_subtitle\test_01')
+    # vt.extract_subtitle_v2(folder01,output_folder01)
 
-    # folder02 = Path(r"C:\Users\Heng2020\OneDrive\Python NLP\InputData\The Matrix Resurrections 2021.mkv")
-    # output_folder02 = Path(r'C:\Users\Heng2020\OneDrive\Python NLP\OutputData\SubtitleMatrix')
-    # extract_subtitle(folder02,output_folder02)
+    # when it's folder path
+    folder02 = Path(r"C:\DVDFab\StreamFab\Output\Amazon\The Peripheral_experiments\S01")
+    output_folder02 = Path(r'C:\C_Video_Python\video_toolkit_test\test_extract_subtitle\test_02')
+    vt.extract_subtitle_v2(folder02,output_folder02)
 
     # test when input is .ass but output is .srt
     # folder03 = Path(r"H:\D_Video\The Ark Season 01 Portuguese")
@@ -35,8 +38,8 @@ def test_extract_sub_1_video():
     output_folder01 = Path(r'C:\C_Video_Python\video_toolkit_test\test_extract_subtitle\test_01')
     vt.extract_sub_1_video(folder01,output_folder01, alarm_done=False)
 
-    # folder02 = Path(r"G:\My Drive\G_Videos\Polyglot\The Matrix Resurrections 2021.mkv")
-    # output_folder02 = Path(r'C:\C_Video_Python\video_toolkit_test\test_extract_subtitle\test_01')
+    # folder02 = Path(r"C:\DVDFab\StreamFab\Output\Amazon\The Peripheral_experiments\S01")
+    # output_folder02 = Path(r'C:\C_Video_Python\video_toolkit_test\test_extract_subtitle\test_02')
     # vt.extract_sub_1_video(folder02,output_folder02)
 
 
@@ -78,10 +81,6 @@ class Test_extract_1_subtitle(unittest.TestCase):
         actual = vt.extract_sub_1_video(self.video_path01,self.output_folder01,output_extension='.srt')
         expect = None
         self.assertEqual(expect, None)
-
-
-        
-
 
 
 def test_get_all_metadata():
@@ -140,90 +139,67 @@ def test_extract_audio():
     vt.extract_audio1(French_bigbang,output_folder,n_limit=10)
     return True
 
-def test_crop_video():
-    from pathlib import Path
-    video_path = r"C:\Users\Heng2020\OneDrive\Python NLP\InputData\Westworld S04E01 Portuguese.mkv"
-    t1 = "0:02:25"
-    t2 = "0:06:00"
-    
-    vt.crop_video(video_path,t1,t2)
 
-def test_create_subtitle():
-    import whisper
-    from whisper.utils import get_writer
-    from playsound import playsound
-    from time import time
-    
+def test_extract_audio_1file():
+    folder_FR_bigbang = Path(r"H:\D_Download\Video 01\[ Torrent911.io ] The.Big.Bang.Theory.2007-2019.Integrale.Multi.WEB-DL.1080p.AVC-Ducks\Saison 6")
+    chosen_video_name = "The Big Bang Theory_S06E01.mkv"
+    chosen_video_path = folder_FR_bigbang / chosen_video_name
     alarm_done_path = r"H:\D_Music\Sound Effect positive-logo-opener.mp3"
     
-    ts01 = time()
+    output_folder01 = r"C:\Users\Heng2020\OneDrive\D_Code\Python\Python NLP\NLP 01\OutputData\extract_audio_1file\test_01_all"
+    output_folder02 = r"C:\Users\Heng2020\OneDrive\D_Code\Python\Python NLP\NLP 01\OutputData\extract_audio_1file\test_02_only_French"
+    output_folder03 = r"C:\Users\Heng2020\OneDrive\D_Code\Python\Python NLP\NLP 01\OutputData\extract_audio_1file\test_03_Matrix_some_misspelled"
+    output_name = "BigBang_FR_S06E01"
     
-    input_path = r"C:\Users\Heng2020\OneDrive\Python NLP\InputData\Westworld S04E01 Portuguese_01.mkv"
     
-    model = whisper.load_model("base")
-    result = model.transcribe(input_path)
     
-    output_directory = r"C:\Users\Heng2020\OneDrive\Python NLP\InputData\Westworld S04E01 Portuguese_01.srt"
+    matrix_video_path = r"G:/My Drive/G_Videos/Polyglot/The Matrix Resurrections 2021.mkv"
+    # extract_audio_1file(video_path = chosen_video_path,
+    #                     output_folder = output_folder01,
+    #                     output_name = output_name,
+    #                     alarm_done_path = alarm_done_path)
     
-    writer = get_writer("srt", str(output_directory))
-    writer(result, output_name)
-    ts02 = time()
+    # extract_audio_1file(video_path = chosen_video_path,
+    #                     output_folder = output_folder02,
+    #                     alarm_done_path = alarm_done_path,
+    #                     languages="french"
+    #                     )
     
-    duration = ts02 - ts01 
-    print(duration)
+    extract_audio_1file(video_path = matrix_video_path,
+                        output_folder = output_folder03,
+                        alarm_done = alarm_done_path,
+                        languages=["french","portugus","spanish","englih"]
+                        )
 
+def test_extract_audio3():
+    import video_toolkit as vt
+    folder_FR_bigbang = Path(r"H:\D_Download\Video 01\[ Torrent911.io ] The.Big.Bang.Theory.2007-2019.Integrale.Multi.WEB-DL.1080p.AVC-Ducks\Saison 6")
+    output_folder01 = r"C:\Users\Heng2020\OneDrive\D_Code\Python\Python NLP\NLP 01\OutputData\extract_audio3\test_01"
+    vt.extract_audio(folder_FR_bigbang, output_folder01)
+    print("test_extract_audio3")
 
-def test_align_1_season():
-    # imported from NLP 09_SenMem Pipeline
-    folder = r"C:\Users\Heng2020\OneDrive\Python NLP\NLP 09_SenMem Pipeline"
-    filename = r"BigBang S01.xlsx"
-    output_name = "BigBang S01_aligned.xlsx"
+def test_extract_1_audio():
     
-    folderpath = Path(folder)
-    file_path = folderpath / filename
+    folder = Path(r"E:\Videos\The Big Bang Theory\The Big Bang Theory French Season 06")
+    video_name = "The Big Bang Theory French S06E01.mp4"
+    video_path = folder / video_name
+    output_folder = Path(r"C:\Users\Heng2020\OneDrive\Python NLP\NLP 06_ffmpeg")
+    output_name = "The Big Bang Theory French S06E01.mp3"
+    output_path = output_folder / output_name
     
-    ans_df = vt.align_1_season(file_path,output_name,n_episodes = 3)
-    print('From test_align_1_season')
+    extract_1_audio(video_path,output_folder,output_name)
+    extract_1_audio(video_path,output_folder,output_name,overwrite_file = False)
 
-def test_align_1_season02():
-    EN_folder_path = r"C:\Users\Heng2020\OneDrive\D_Documents\_LearnLanguages 04 BigBang PT\_BigBang EN\S02"
-    PT_folder_path = r"C:\Users\Heng2020\OneDrive\D_Documents\_LearnLanguages 04 BigBang PT\_BigBang PT\S02"
-    out_unaligned_name = "BigBang S02_unaligned.xlsx"
-    out_aligned_name = "BigBang S02_aligned.xlsx"
-
-
-    unaligned_folder = r"C:\Users\Heng2020\OneDrive\D_Documents\_LearnLanguages 04 BigBang PT"
-    aligned_folder = r"C:\Users\Heng2020\OneDrive\D_Documents\_LearnLanguages 04 BigBang PT\_BigBang PT"
-    excel_1_season_path = Path(unaligned_folder) / out_unaligned_name
-
-    df_unaligned = vt.make_1_season_Excel_unaligned(EN_folder_path,PT_folder_path,out_unaligned_name,output_folder=unaligned_folder)
-    df_aligned = vt.align_1_season(excel_1_season_path,
-                                   out_excel_name = out_aligned_name,
-                                   output_folder = aligned_folder,
-                                   )
-    print('From test_align_1_season02')
-
-
-
-
-def test_make_1_season_Excel_unaligned():
-    # imported from NLP 09_SenMem Pipeline
-    EN_folder_path = r"C:\Users\Heng2020\OneDrive\D_Documents\_LearnLanguages 04 BigBang PT\_BigBang EN\S01"
-    PT_folder_path = r"C:\Users\Heng2020\OneDrive\D_Documents\_LearnLanguages 04 BigBang PT\_BigBang PT\S01"
-    out_excel_name = "BigBang S01.xlsx"
-    output_folder = None
-    df_test = vt.make_1_season_Excel_unaligned(EN_folder_path,PT_folder_path,out_excel_name,output_folder=output_folder)
-
-
-
+def test_extract_audio():
+    
+    from pathlib import Path
+    French_bigbang = Path(r"E:\Videos\The Big Bang Theory\The Big Bang Theory French Season 06")
+    output_folder = Path(r"E:\Videos\The Big Bang Theory\The Big Bang Theory French Season 06\Audio")
+    extract_audio1(French_bigbang,output_folder,n_limit=10)
+    return True
 
 if __name__ == '__main__':
 
-    test_extract_sub_1_video()
-    test_get_all_metadata()
-    test_extract_subtitle()
-    # test_align_1_season()
-    # test_align_1_season02()
     # test_extract_sub_1_video()
-    # unittest.main()
-
+    # test_get_all_metadata()
+    test_extract_subtitle()
