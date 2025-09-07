@@ -113,10 +113,9 @@ def extract_audio_v2(
         n_limit:          int = 150,
         output_prefix:    str = "",
         output_suffix:    str = "",
-        alarm_done:       bool = True,
 
         one_output_per_lang: bool = True,
-        languages: Union[List[str],None,str] = None,
+        languages: Union[List[str],None,str] = None
 
         ,progress_bar: bool = True
         ,verbose: int = 0
@@ -147,7 +146,6 @@ def extract_audio_v2(
         ,"alarm_done":False
         ,"overwrite_file":overwrite_file
         ,"languages":languages
-        ,"encoding":encoding
     }
     handle_multi_input_params = {
         "progress_bar": progress_bar
@@ -157,7 +155,7 @@ def extract_audio_v2(
         ,"input_extension":video_extension
     }
     
-    func_temp = inp.handle_multi_input(**handle_multi_input_params)(extract_sub_1_video)
+    func_temp = inp.handle_multi_input(**handle_multi_input_params)(extract_audio_1file)
     result = func_temp(**path_input)
     return result
 
@@ -300,7 +298,9 @@ def extract_audio_1file(
                     file_extension_in[j] = "." + curr_file_ext
                 else:
                     file_extension_in[j] = curr_file_ext
-                curr_output_name = output_name_in + "_" + language_2_str + file_extension_in[j]
+                # add index because if there are same language with multiple audio
+                # it would create a unique name
+                curr_output_name = f"{output_name_in}_{str(j)}_{language_2_str}_file_extension_in[j]"
                 output_name_list.append(curr_output_name)
                 output_path = output_folder_in / curr_output_name
                 output_path_list.append(output_path)
