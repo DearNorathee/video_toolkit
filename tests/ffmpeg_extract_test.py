@@ -132,11 +132,23 @@ def test_extract_1_audio():
     vt.extract_1_audio(video_path,output_folder,output_name,overwrite_file = False)
 
 def test_extract_audio():
-    
     from pathlib import Path
-    French_bigbang = Path(r"E:\Videos\The Big Bang Theory\The Big Bang Theory French Season 06")
-    output_folder = Path(r"E:\Videos\The Big Bang Theory\The Big Bang Theory French Season 06\Audio")
-    vt.extract_audio1(French_bigbang,output_folder,n_limit=10)
+    input_path01 = r"C:\DVDFab\StreamFab\Output\Netflix\3 Body Problem_01\3 Body Problem_S01E03_Destroyer of Worlds.mp4"
+    input_path02 = r"C:\DVDFab\StreamFab\Output\Amazon\The Peripheral_experiments\S01"
+    input_path03 = [
+        r"C:\DVDFab\StreamFab\Output\Netflix\3 Body Problem_01\3 Body Problem_S01E03_Destroyer of Worlds.mp4"
+        ,r"C:\DVDFab\StreamFab\Output\Netflix\3 Body Problem_01\3 Body Problem_S01E04_Our Lord.mp4"
+    ]
+
+    output_path01 = r'C:\C_Video_Python\video_toolkit_test\test_extract_audio\test_01_1file'
+    output_path02 = r'C:\C_Video_Python\video_toolkit_test\test_extract_audio\test_02_folder'
+    output_path03 = r'CC:\C_Video_Python\video_toolkit_test\test_extract_audio\test_03_list_of_file'
+
+
+
+    vt.extract_audio_v2(input_path01,output_path01)
+    vt.extract_audio_v2(input_path02,output_path02)
+    vt.extract_audio_v2(input_path03,output_path03)
     return True
 
 
@@ -149,6 +161,11 @@ def test_extract_audio_1file():
     output_folder01 = r"C:\Users\Heng2020\OneDrive\D_Code\Python\Python NLP\NLP 01\OutputData\extract_audio_1file\test_01_all"
     output_folder02 = r"C:\Users\Heng2020\OneDrive\D_Code\Python\Python NLP\NLP 01\OutputData\extract_audio_1file\test_02_only_French"
     output_folder03 = r"C:\Users\Heng2020\OneDrive\D_Code\Python\Python NLP\NLP 01\OutputData\extract_audio_1file\test_03_Matrix_some_misspelled"
+
+    input_video04 = r"C:\DVDFab\StreamFab\Output\Amazon\The Wheel of Time\S01_high_res\The Wheel of Time_S01E01_Leavetaking.mkv"
+    output_folder04 = r"C:\C_Video_Python\video_toolkit_test\test_extract_audio_1file\test_04"
+
+
     output_name = "BigBang_FR_S06E01"
     
     
@@ -165,22 +182,23 @@ def test_extract_audio_1file():
     #                     languages="french"
     #                     )
     
-    vt.extract_audio_1file(video_path = matrix_video_path,
-                        output_folder = output_folder03,
-                        alarm_done = alarm_done_path,
-                        languages=["french","portugus","spanish","englih"]
+    # vt.extract_audio_1file(video_path = matrix_video_path,
+    #                     output_folder = output_folder03,
+    #                     alarm_done = alarm_done_path,
+    #                     languages=["french","portugus","spanish","englih"]
+    #                     )
+    
+    vt.extract_audio_1file(video_path = input_video04,
+                        output_folder = output_folder04,
+                        alarm_done = True,
+                        
+                        # languages=["french","portugus","spanish","englih"]
                         )
-
-def test_extract_audio3():
-    import video_toolkit as vt
-    folder_FR_bigbang = Path(r"H:\D_Download\Video 01\[ Torrent911.io ] The.Big.Bang.Theory.2007-2019.Integrale.Multi.WEB-DL.1080p.AVC-Ducks\Saison 6")
-    output_folder01 = r"C:\Users\Heng2020\OneDrive\D_Code\Python\Python NLP\NLP 01\OutputData\extract_audio3\test_01"
-    vt.extract_audio(folder_FR_bigbang, output_folder01)
-    print("test_extract_audio3")
 
 
 if __name__ == '__main__':
-
+    test_extract_audio()
+    test_extract_audio_1file()
     # test_extract_sub_1_video()
     # test_get_all_metadata()
     test_extract_subtitle()

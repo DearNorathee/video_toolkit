@@ -102,6 +102,67 @@ def extract_audio(
 
     )
 
+
+# @beartype
+def extract_audio_v2(
+        filepaths:     Union[Path,str],
+        output_folder:    Union[Path,str],
+        video_extension:  Union[list,str] = VIDEO_ALL_EXTENSIONS,
+        output_extension: Union[list,str] = ".mp3",
+        overwrite_file:   bool = True,
+        n_limit:          int = 150,
+        output_prefix:    str = "",
+        output_suffix:    str = "",
+        alarm_done:       bool = True,
+
+        one_output_per_lang: bool = True,
+        languages: Union[List[str],None,str] = None,
+
+        ,progress_bar: bool = True
+        ,verbose: int = 0
+        ,alarm_done: bool = False
+        ,alarm_error: bool = False
+    ):
+    # extract_audio3 is highly tested now
+    # this is from extract_audio3(it's already tested through time seems pretty stable)
+    """
+    the diff between 
+    extract_audio1 - use manually code to loop through folder
+    extract_audio2 - powered by _extract_media_setup while 
+    extract_audio3 - use extract_audio_1file as a base(which is more general than extract_audio1 & extract_audio2), but need more testing to see if it works
+    
+    # after testing I would then rename extract_audio3 to just extract_audio
+    
+    """
+
+
+        # ToAdd01: suffix with language code instead of index
+    import inspect_py as inp
+
+    path_input = {
+        "filepaths":filepaths
+        ,"output_folder":output_folder
+        ,"output_name": None
+        ,"output_extension":output_extension
+        ,"alarm_done":False
+        ,"overwrite_file":overwrite_file
+        ,"languages":languages
+        ,"encoding":encoding
+    }
+    handle_multi_input_params = {
+        "progress_bar": progress_bar
+        ,"verbose":verbose
+        ,"alarm_done":alarm_done
+        ,"alarm_error":alarm_error
+        ,"input_extension":video_extension
+    }
+    
+    func_temp = inp.handle_multi_input(**handle_multi_input_params)(extract_sub_1_video)
+    result = func_temp(**path_input)
+    return result
+
+
+
 @beartype
 def extract_audio_1file(
         video_path:     Union[str,Path],
@@ -110,7 +171,7 @@ def extract_audio_1file(
         output_extension: Union[str,list,None] = ".mp3",
         alarm_done: bool = False,
         overwrite_file: bool = True,
-        one_output_per_lang: bool = True,
+        one_output_per_lang: bool = False,
         languages: Union[List[str],None,str] = None,
         
         progress_bar:bool = True,
@@ -272,8 +333,7 @@ def extract_audio_1file(
                     print(result.stderr)
                 
                 elif result.returncode == 0:
-                    print(f"\nExtract audio successfully: {curr_output_name}!!!")
-                    
+                    # print(f"\nExtract audio successfully: {curr_output_name}!!!")
                     if alarm_done:
                         play_alarm_done()
 
@@ -658,7 +718,7 @@ def extract_subtitle(
     ,verbose: int = 0
     ,alarm_done: bool = False
     ,alarm_error: bool = False
-    ,input_extension: str|None = [".mp4",".mkv"]
+    ,input_extension: str|None|list[str] = VIDEO_ALL_EXTENSIONS
 ):
     # write now language input has to be 3-str letter(BigBang FR)
     
