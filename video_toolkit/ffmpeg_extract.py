@@ -300,7 +300,7 @@ def extract_audio_1file(
                     file_extension_in[j] = curr_file_ext
                 # add index because if there are same language with multiple audio
                 # it would create a unique name
-                curr_output_name = f"{output_name_in}_{str(j)}_{language_2_str}_file_extension_in[j]"
+                curr_output_name = f"{output_name_in}_{str(j+i)}_{language_2_str}{file_extension_in[j]}"
                 output_name_list.append(curr_output_name)
                 output_path = output_folder_in / curr_output_name
                 output_path_list.append(output_path)
@@ -862,7 +862,8 @@ def extract_sub_1_video(
     #     str(output_path)
     # ]
     subtitle_stream_index_list = list(subtitle_stream_index) if isinstance(subtitle_stream_index, list) else [subtitle_stream_index]
-
+    meta_data = get_all_metadata(video_path)
+    sub_language = meta_data.loc[subtitle_stream_index_list, 'language'].tolist()  # or use the robust form above
     if output_extension:
         output_ext_no_dot = output_extension.replace('.','')
     else:
@@ -870,7 +871,7 @@ def extract_sub_1_video(
     
     for i, sub_index in enumerate(subtitle_stream_index_list):
 
-        curr_output_path = ost.add_suffix_to_name(output_path,i+1)
+        curr_output_path = ost.add_suffix_to_name(output_path, f"{i+1}_{sub_language[i]}")
 
         command = [
             'ffmpeg',

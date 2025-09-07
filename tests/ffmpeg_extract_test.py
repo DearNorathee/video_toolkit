@@ -18,9 +18,9 @@ class Test_extract_subtitle(unittest.TestCase):
 def test_extract_subtitle():
 # extract_subtitle doesn't work on just 1 video
     
-    # folder01 = Path(r"C:\DVDFab\StreamFab\Output\Amazon\The Wheel of Time\S01_high_res\The Wheel of Time_S01E01_Leavetaking.mkv")
-    # output_folder01 = Path(r'C:\C_Video_Python\video_toolkit_test\test_extract_subtitle\test_01')
-    # vt.extract_subtitle_v2(folder01,output_folder01)
+    folder01 = Path(r"C:\DVDFab\StreamFab\Output\Amazon\The Wheel of Time\S01_high_res\The Wheel of Time_S01E01_Leavetaking.mkv")
+    output_folder01 = Path(r'C:\C_Video_Python\video_toolkit_test\test_extract_subtitle\test_01_02')
+    vt.extract_subtitle(folder01,output_folder01)
 
     # when it's folder path
     folder02 = Path(r"C:\DVDFab\StreamFab\Output\Amazon\The Peripheral_experiments\S01")
@@ -142,13 +142,13 @@ def test_extract_audio():
 
     output_path01 = r'C:\C_Video_Python\video_toolkit_test\test_extract_audio\test_01_1file'
     output_path02 = r'C:\C_Video_Python\video_toolkit_test\test_extract_audio\test_02_folder'
-    output_path03 = r'CC:\C_Video_Python\video_toolkit_test\test_extract_audio\test_03_list_of_file'
+    output_path03 = r'C:\C_Video_Python\video_toolkit_test\test_extract_audio\test_03_list_of_file'
 
 
 
-    vt.extract_audio_v2(input_path01,output_path01)
-    vt.extract_audio_v2(input_path02,output_path02)
-    vt.extract_audio_v2(input_path03,output_path03)
+    # vt.extract_audio_v2(input_path01,output_path01,output_extension="wav")
+    # vt.extract_audio_v2(input_path02,output_path02,output_extension="wav")
+    vt.extract_audio_v2(input_path03,output_path03,output_extension="wav")
     return True
 
 
@@ -197,8 +197,8 @@ def test_extract_audio_1file():
 
 
 if __name__ == '__main__':
-    test_extract_audio()
-    test_extract_audio_1file()
+    # test_extract_audio()
+    # test_extract_audio_1file()
     # test_extract_sub_1_video()
     # test_get_all_metadata()
     test_extract_subtitle()
