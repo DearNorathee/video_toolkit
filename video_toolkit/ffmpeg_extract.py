@@ -66,6 +66,7 @@ def extract_audio(
         video_extension:  Union[list,str] = VIDEO_ALL_EXTENSIONS,
         output_extension: Union[list,str] = ".mp3",
         overwrite_file:   bool = True,
+        title_as_out_name:bool = False,
         n_limit:          int = 150,
         output_prefix:    str = "",
         output_suffix:    str = "",
@@ -101,7 +102,9 @@ def extract_audio(
         ,"output_extension":output_extension
         ,"alarm_done":False
         ,"overwrite_file":overwrite_file
+        ,"one_output_per_lang":one_output_per_lang
         ,"languages":languages
+        ,"title_as_out_name":title_as_out_name
     }
     handle_multi_input_params = {
         "progress_bar": progress_bar
@@ -736,6 +739,7 @@ def extract_sub_1_video(
     alarm_done:         bool = True,
     overwrite_file:     bool = True,
     languages:           Union[str,list, None] = None,
+    title_as_out_name:  bool = False,
     encoding:str = "utf-8-sig"
                     ):
     # write now language input has to be 3-str letter(BigBang FR)
@@ -796,6 +800,7 @@ def extract_sub_1_video(
     import subprocess
     from playsound import playsound
     import os
+    import re
     # only input language as str for now
     
     output_folder_in = Path(output_folder)
@@ -850,7 +855,16 @@ def extract_sub_1_video(
     
     for i, sub_index in enumerate(subtitle_stream_index_list):
 
-        curr_output_path = ost.add_suffix_to_name(output_path, f"{i+1}_{sub_language[i]}")
+        if title_as_out_name and "title" in meta_data.columns:
+            raw_title = meta_data.loc[sub_index, 'title']
+            suffix_core = (re.sub(r'[\\/:*?"<>|]+', "_", str(raw_title).strip())
+                           if isinstance(raw_title, str) and raw_title.strip()
+                           else sub_language[i])
+        else:
+            suffix_core = sub_language[i]
+
+        curr_output_path = ost.add_suffix_to_name(output_path, f"{i+1}_{suffix_core}")
+        # curr_output_path = ost.add_suffix_to_name(output_path, f"{i+1}_{sub_language[i]}")
 
         command = [
             'ffmpeg',
