@@ -3,6 +3,52 @@ from pathlib import Path
 from beartype import beartype
 
 
+# @beartype
+def extract_audio(
+        video_folder:     Union[Path,str],
+        output_folder:    Union[Path,str],
+        video_extension:  Union[list,str] = VIDEO_ALL_EXTENSIONS,
+        output_extension: Union[list,str] = ".mp3",
+        overwrite_file:   bool = True,
+        n_limit:          int = 150,
+        output_prefix:    str = "",
+        output_suffix:    str = "",
+        alarm_done:       bool = True,
+
+        one_output_per_lang: bool = True,
+        languages: Union[List[str],None,str] = None,
+):
+    # extract_audio3 is highly tested now
+    # this is from extract_audio3(it's already tested through time seems pretty stable)
+    """
+    the diff between 
+    extract_audio1 - use manually code to loop through folder
+    extract_audio2 - powered by _extract_media_setup while 
+    extract_audio3 - use extract_audio_1file as a base(which is more general than extract_audio1 & extract_audio2), but need more testing to see if it works
+    
+    # after testing I would then rename extract_audio3 to just extract_audio
+    
+    """
+
+
+    _extract_media_setup(
+        input_folder = video_folder,
+        output_folder = output_folder,
+        input_extension = video_extension,
+        output_extension = output_extension,
+        extract_1_file_func = extract_audio_1file,
+        overwrite_file = overwrite_file,
+        n_limit = n_limit,
+        output_prefix = output_prefix,
+        output_suffix = output_suffix,
+        alarm_done = alarm_done,
+
+        one_output_per_lang = one_output_per_lang,
+        languages = languages
+
+    )
+
+
 @beartype
 def extract_subtitle(
         video_folder:     Union[Path,str],

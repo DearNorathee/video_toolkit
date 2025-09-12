@@ -57,54 +57,10 @@ def is_ffmpeg_installed():
         # FFmpeg is not in PATH
         print("FFmpeg is installed but not in PATH.")
 
+
+
 # @beartype
 def extract_audio(
-        video_folder:     Union[Path,str],
-        output_folder:    Union[Path,str],
-        video_extension:  Union[list,str] = VIDEO_ALL_EXTENSIONS,
-        output_extension: Union[list,str] = ".mp3",
-        overwrite_file:   bool = True,
-        n_limit:          int = 150,
-        output_prefix:    str = "",
-        output_suffix:    str = "",
-        alarm_done:       bool = True,
-
-        one_output_per_lang: bool = True,
-        languages: Union[List[str],None,str] = None,
-):
-    # extract_audio3 is highly tested now
-    # this is from extract_audio3(it's already tested through time seems pretty stable)
-    """
-    the diff between 
-    extract_audio1 - use manually code to loop through folder
-    extract_audio2 - powered by _extract_media_setup while 
-    extract_audio3 - use extract_audio_1file as a base(which is more general than extract_audio1 & extract_audio2), but need more testing to see if it works
-    
-    # after testing I would then rename extract_audio3 to just extract_audio
-    
-    """
-
-
-    _extract_media_setup(
-        input_folder = video_folder,
-        output_folder = output_folder,
-        input_extension = video_extension,
-        output_extension = output_extension,
-        extract_1_file_func = extract_audio_1file,
-        overwrite_file = overwrite_file,
-        n_limit = n_limit,
-        output_prefix = output_prefix,
-        output_suffix = output_suffix,
-        alarm_done = alarm_done,
-
-        one_output_per_lang = one_output_per_lang,
-        languages = languages
-
-    )
-
-
-# @beartype
-def extract_audio_v2(
         filepaths:     Union[Path,str],
         output_folder:    Union[Path,str],
         video_extension:  Union[list,str] = VIDEO_ALL_EXTENSIONS,
@@ -163,18 +119,27 @@ def extract_audio_v2(
 
 @beartype
 def extract_audio_1file(
-        video_path:     Union[str,Path],
-        output_folder:  Union[str,Path],
-        output_name:    Union[str,Path, None] = None, 
-        output_extension: Union[str,list,None] = ".mp3",
-        alarm_done: bool = False,
-        overwrite_file: bool = True,
-        one_output_per_lang: bool = False,
-        languages: Union[List[str],None,str] = None,
-        
-        progress_bar:bool = True,
-        encoding = "utf-8-sig",
+    video_path:     Union[str,Path],
+    output_folder:  Union[str,Path],
+    output_name:    Union[str,Path, None] = None, 
+    output_extension: Union[str,list,None] = ".mp3",
+    alarm_done: bool = False,
+    overwrite_file: bool = True,
+    one_output_per_lang: bool = False,
+    languages: Union[List[str],None,str] = None,
+    title_as_out_name: bool = False,
+    
+    progress_bar:bool = True,
+    encoding = "utf-8-sig",
                     ) -> None:
+    
+    from tqdm import tqdm
+    from langcodes import Language
+    from pathlib import Path
+    import subprocess
+    from playsound import playsound
+    import os
+    import re
     # time spend 5 hr
     # this support multiple output_extension
     # medium tested
@@ -195,6 +160,8 @@ def extract_audio_1file(
     
     from langcodes import Language
     import warnings
+
+    # comment
     """
     Extract audio from a video file. If video has multiple audio in different languages,
     this function also support that
@@ -237,6 +204,8 @@ def extract_audio_1file(
     from playsound import playsound
     import os
 
+    if not os.path.exists(str(output_folder)):
+        raise FileNotFoundError(f"Output folder does not exist: {output_folder}")
     
     codec = CODEC_DICT[output_extension]
     
@@ -300,7 +269,18 @@ def extract_audio_1file(
                     file_extension_in[j] = curr_file_ext
                 # add index because if there are same language with multiple audio
                 # it would create a unique name
-                curr_output_name = f"{output_name_in}_{str(j+i)}_{language_2_str}{file_extension_in[j]}"
+                # choose suffix: title (sanitized) vs language code
+
+                if title_as_out_name and "title" in metadata_filter.columns:
+                    raw_title = metadata_filter.iloc[i]["title"]
+                    suffix = str(raw_title).strip()
+                    if suffix.lower() in ["", "none", "nan", "n/a"]:
+                        suffix = language_2_str
+                    suffix = re.sub(r'[\\/:*?"<>|]+', "_", suffix)
+                else:
+                    suffix = language_2_str
+
+                curr_output_name = f"{output_name_in}_{str(j+i)}_{suffix}{file_extension_in[j]}"
                 output_name_list.append(curr_output_name)
                 output_path = output_folder_in / curr_output_name
                 output_path_list.append(output_path)
@@ -336,7 +316,6 @@ def extract_audio_1file(
                     # print(f"\nExtract audio successfully: {curr_output_name}!!!")
                     if alarm_done:
                         play_alarm_done()
-
 
 # Sub
 @beartype
