@@ -801,6 +801,8 @@ def extract_sub_1_video(
     from playsound import playsound
     import os
     import re
+    from tqdm.auto import tqdm
+    import warnings
     # only input language as str for now
     
     output_folder_in = Path(output_folder)
@@ -808,6 +810,10 @@ def extract_sub_1_video(
     video_name = ost.extract_filename(video_path,with_extension=False)
     ori_extension = get_subtitle_extension(video_path,languages)
     
+    if ori_extension is None:
+        warnings.warn(f"\nNo subtitle extension found for {video_name}")
+        return False
+
     if ori_extension in [".mov_text","mov_text"]:
         modified_extension = ".srt"
     else:
@@ -853,7 +859,12 @@ def extract_sub_1_video(
     else:
         output_ext_no_dot = modified_extension.replace('.','')
     
-    for i, sub_index in enumerate(subtitle_stream_index_list):
+    if len(subtitle_stream_index_list) > 5:
+        loop_obj = tqdm(enumerate(subtitle_stream_index_list), total=len(subtitle_stream_index_list),colour = 'blue')
+    else:
+        loop_obj = enumerate(subtitle_stream_index_list)
+
+    for i, sub_index in loop_obj:
 
         if title_as_out_name and "title" in meta_data.columns:
             raw_title = meta_data.loc[sub_index, 'title']
@@ -896,10 +907,13 @@ def extract_sub_1_video(
             
             if alarm_done:
                 try:
-                    play_alarm_done()
+                    # play_alarm_done()
+                    pass
                     # playsound(alarm_done_path)
                 except:
-                    pass
+                    play_alarm_error()
+    if alarm_done:
+        play_alarm_done()
 
 
 @beartype

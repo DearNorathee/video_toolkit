@@ -21,11 +21,34 @@ from play_audio_file import play_audio_file, play_alarm_done, play_alarm_error
 alarm_done_path = pkg_resources.resource_filename(__name__, 'assets/Sound Effect positive-logo-opener.wav')
 sound_error_path = pkg_resources.resource_filename(__name__, 'assets/Sound Effect Error.wav')
 
-CODEC_DICT = {'.mp3': "libmp3lame",
-                  'mp3' : "libmp3lame",
-                  '.wav': "pcm_s24le",
-                  'wav' : "pcm_s24le"
-                  }
+CODEC_DICT = {
+    '.mp3':  'libmp3lame',
+    'mp3':   'libmp3lame',
+
+    '.aac':  'aac',
+    'aac':   'aac',
+
+    '.wav':  'pcm_s24le',
+    'wav':   'pcm_s24le',
+
+    '.flac': 'flac',
+    'flac':  'flac',
+
+    '.alac': 'alac',
+    'alac':  'alac',
+
+    '.ogg':  'libvorbis',   # default to Vorbis in OGG
+    'ogg':   'libvorbis',
+
+    '.wma':  'wmav2',
+    'wma':   'wmav2',
+
+    '.m4a':  'aac',         # typical m4a = AAC; switch to ALAC if you need lossless
+    'm4a':   'aac',
+
+    '.aiff': 'pcm_s16be',   # AIFF usually big-endian PCM
+    'aiff':  'pcm_s16be',
+}
 
 VIDEO_ALL_EXTENSIONS = [".mp4", ".mkv", ".avi", ".mov", ".wmv", ".flv", ".webm", ".mts", ".m2ts"]
 SUBTITLE_ALL_EXTENSIONS = [".srt", ".ass", ".ssa", ".vtt", ".sub", ".idx"]
@@ -1107,9 +1130,12 @@ def modify_sub_df_time(sub_df:pd.DataFrame) -> pd.DataFrame:
     return sub_df_copy
 
 @beartype
-def sub_to_df(sub_path,
-              remove_stopwords=True,
-              stopwords=["♪", "<i>", "</i>", "<b>", "</b>"]) -> pd.DataFrame | List[pd.DataFrame]:
+def sub_to_df(
+    sub_path,
+    remove_stopwords=True,
+    stopwords=["♪", "<i>", "</i>", "<b>", "</b>"]
+    dropna: bool = True,
+    ) -> pd.DataFrame | List[pd.DataFrame]:
     """
     Convert a subtitle file (.ass or .srt) or multiple subtitle files in a directory to pandas DataFrame(s).
 
@@ -1139,9 +1165,9 @@ def sub_to_df(sub_path,
 
     def process_file(file_path):
         if file_path.suffix.lower() == '.ass':
-            return ass_to_df(file_path, remove_stopwords=remove_stopwords, stopwords=stopwords)
+            return ass_to_df(file_path, remove_stopwords=remove_stopwords, stopwords=stopwords,dropna=dropna)
         elif file_path.suffix.lower() == '.srt':
-            return srt_to_df(file_path, remove_stopwords=remove_stopwords, stopwords=stopwords)
+            return srt_to_df(file_path, remove_stopwords=remove_stopwords, stopwords=stopwords,dropna=dropna)
         else:
             raise ValueError(f"Unsupported file extension: {file_path.suffix}")
 
@@ -1166,10 +1192,12 @@ def sub_to_df(sub_path,
         raise ValueError("The provided path must be a .ass or .srt file or a directory containing such files.")
 
 @beartype
-def ass_to_df(ass_path: str | Path,
-              remove_stopwords:bool =True,
-              stopwords=["♪", "\n", "<i>", "</i>", "<b>", "</b>"]
-              ,replace_dash:bool = True
+def ass_to_df(
+    ass_path: str | Path,
+    remove_stopwords:bool =True,
+    stopwords=["♪", "\n", "<i>", "</i>", "<b>", "</b>"]
+    ,replace_dash:bool = True
+    ,dropna: bool = True
               ) -> pd.DataFrame | List[pd.DataFrame]:
     
 
@@ -1200,6 +1228,7 @@ def ass_to_df(ass_path: str | Path,
     """
 
     # seems to work now
+    # dropna is not tested
 
     import pandas as pd
     from pathlib import Path
@@ -1242,7 +1271,8 @@ def ass_to_df(ass_path: str | Path,
         
         if replace_dash:
             df['sentence'] = df['sentence'].str.replace('-', '–', regex=False)
-        
+        if dropna:
+            df = df[df['sentence'].fillna('').str.strip() != ''].reset_index(drop=True)
         return df
 
     if ass_path.is_file() and ass_path.suffix == '.ass':
@@ -2233,7 +2263,8 @@ def srt_to_df(
     srt_path: str | Path,
     remove_stopwords:bool = True,
     stopwords: list[str] = ["♪","<i>","</i>","<b>","</b>"],
-    replace_dash:bool = True
+    replace_dash:bool = True,
+    dropna: bool = True
     
     ) -> pd.DataFrame | List[pd.DataFrame]:
     # df = pd.DataFrame({
@@ -2278,6 +2309,9 @@ def srt_to_df(
         
         if replace_dash:
             df['sentence'] = df['sentence'].str.replace('-', '–', regex=False)
+        if dropna:
+            df = df[df['sentence'].fillna('').str.strip() != ''].reset_index(drop=True)
+
         return df
     else:
         # many srt's file using folder
