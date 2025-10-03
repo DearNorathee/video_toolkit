@@ -1133,7 +1133,7 @@ def modify_sub_df_time(sub_df:pd.DataFrame) -> pd.DataFrame:
 def sub_to_df(
     sub_path,
     remove_stopwords=True,
-    stopwords=["♪", "<i>", "</i>", "<b>", "</b>"]
+    stopwords=["♪", "<i>", "</i>", "<b>", "</b>"],
     dropna: bool = True,
     ) -> pd.DataFrame | List[pd.DataFrame]:
     """

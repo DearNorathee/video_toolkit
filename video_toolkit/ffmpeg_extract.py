@@ -258,6 +258,7 @@ def extract_audio_1file(
     for i, language_3_str in loop_obj:
         if language_3_str not in ["N/A"]:
             lang_obj =  Language.get(language_3_str)
+            # to get 2 language code you can simply do str(lang_obj)
             language_2_str = str(lang_obj).upper()
             lang_obj.to_alpha3()
         else:
