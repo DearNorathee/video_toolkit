@@ -21,15 +21,18 @@ def all_lang_obj_list() -> list[Language]:
             not_found_languages.append(language)
     return result
 
+
 def make_all_language_dict(
     key_as:Literal["alpha3","alpha2","name","object"]
     ,value_as:Literal["alpha3","alpha2","name","object"]
     ) -> dict[str|Language,str|Language]:
     all_lang_obj_list_in = all_lang_obj_list()
     result = dict()
+
+    # medium tested
     # to get 2 language code you can simply do str(lang_obj)
     # but there are some languages with no 2 language code, in that case I would default to 3str
-    # 
+    # # key observation: main language would have 2key code as well
 
     for lang_obj in all_lang_obj_list_in:
         lang_alpha3 = lang_obj.to_alpha3()
