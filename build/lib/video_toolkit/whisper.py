@@ -2,12 +2,13 @@ from typing import List, Literal, Dict, Union
 from pathlib import Path
 from video_toolkit.utils_vt import *
 from video_toolkit.sandbox1_vt import *
-from whisper.model import Whisper as whisper_model_Whisper
 import pkg_resources
+from video_toolkit.utils_vt import VIDEO_ALL_EXTENSIONS, AUDIO_ALL_EXTENSIONS, SUBTITLE_ALL_EXTENSIONS, CODEC_DICT, MEDIA_ALL_EXTENSIONS
 
 # extra import
 try:
     import whisper
+    from whisper.model import Whisper as whisper_model_Whisper
 except ImportError:
     whisper = None
 
@@ -25,12 +26,13 @@ sound_error_path = pkg_resources.resource_filename(__name__, 'assets/Sound Effec
 # whisper 1.1.10
 # stable_whisper 2.17.3
 # faster-whisper 1.0.3
-if whisper is not None:
+if (whisper is not None) and (faster_whisper is not None):
     def audio_to_sub_1file(
             model:Union[whisper_model_Whisper, faster_whisper.WhisperModel]
             ,audio_path: Union[str,Path]
             ,output_name: Union[str,Path] = ""
             ,output_folder: Union[str,Path] = ""
+            ,language: None|str = None
             ) -> None:
         # medium tested
         # seems to work
@@ -40,6 +42,7 @@ if whisper is not None:
         
         """
         signature function that will extract the subtitle from the audio
+        language has to be 2 characters and only tested for transcribe_stable
         """
         # if output_name is "" then default it should use the same name as the audio
         if output_name == "":
@@ -55,9 +58,9 @@ if whisper is not None:
         output_path = Path(str(output_folder_in)) / output_name_in
         
         if isinstance(model, (whisper_model_Whisper)):
-            result = model.transcribe(audio_path)
+            result = model.transcribe(audio_path,language = language)
         elif isinstance(model, (faster_whisper.WhisperModel)): 
-            result = model.transcribe_stable(audio_path)
+            result = model.transcribe(audio_path,language = language)
         result.to_srt_vtt(str(output_path),word_level =False)
 
     # NEXT write transcribe_to_subtitle to loop through the audio files and create subtitles
@@ -71,6 +74,7 @@ if whisper is not None:
         ,alarm_done:bool = True
         ,alarm_error:bool = True
         ,input_extension:Union[List[str],str] = [".mp3",".wav"]
+        ,language: None|str = None
         ) -> None:
         # list of files is not supported
         """
@@ -93,7 +97,13 @@ if whisper is not None:
                 loop_obj = enumerate(audio_full_paths)
 
             for i, path in loop_obj:
-                audio_to_sub_1file(model,path,output_name = output_name,output_folder = output_folder)
+                try:
+                    audio_to_sub_1file(model,path,output_name = output_name,output_folder = output_folder, language=language)
+                except FileNotFoundError as e:
+                    print(e)
+                    print(output_folder)
+                    raise FileNotFoundError(f"Please check your output_folder path. It might not have the correct path.")
+                
                 if verbose >= 1:
                     print(f"{audio_name_paths[i]} done!!")
                 
@@ -104,7 +114,7 @@ if whisper is not None:
                     pass
         elif isinstance(audio_paths,list):
             for i in range(len(audio_paths)):
-                audio_to_sub_1file(model,audio_paths[i],output_name = output_name,output_folder = output_folder)
+                audio_to_sub_1file(model,audio_paths[i],output_name = output_name,output_folder = output_folder, language=language)
                 if alarm_done:
                     try:
                         play_audio(alarm_done_path)
@@ -112,7 +122,7 @@ if whisper is not None:
                         pass
             # raise NotImplementedError(f"list of files is not supported")
         elif isinstance(audio_paths,(str,Path)):
-            audio_to_sub_1file(model,audio_paths,output_name = output_name,output_folder = output_folder)
+            audio_to_sub_1file(model,audio_paths,output_name = output_name,output_folder = output_folder, language=language)
             if alarm_done:
                 try:
                     play_audio(alarm_done_path)

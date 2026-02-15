@@ -60,7 +60,7 @@ if (whisper is not None) and (faster_whisper is not None):
         if isinstance(model, (whisper_model_Whisper)):
             result = model.transcribe(audio_path,language = language)
         elif isinstance(model, (faster_whisper.WhisperModel)): 
-            result = model.transcribe_stable(audio_path,language = language)
+            result = model.transcribe(audio_path,language = language)
         result.to_srt_vtt(str(output_path),word_level =False)
 
     # NEXT write transcribe_to_subtitle to loop through the audio files and create subtitles

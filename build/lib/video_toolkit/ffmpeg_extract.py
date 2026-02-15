@@ -3,15 +3,12 @@ from pathlib import Path
 import pkg_resources
 import os_toolkit as ost
 from beartype import beartype
+from play_audio_file import play_audio_file, play_alarm_done, play_alarm_error
+from video_toolkit.utils_vt import VIDEO_ALL_EXTENSIONS, AUDIO_ALL_EXTENSIONS, SUBTITLE_ALL_EXTENSIONS, CODEC_DICT, MEDIA_ALL_EXTENSIONS
+from video_toolkit.language import *
 
 alarm_done_path = pkg_resources.resource_filename(__name__, 'assets/Sound Effect positive-logo-opener.wav')
 sound_error_path = pkg_resources.resource_filename(__name__, 'assets/Sound Effect Error.wav')
-
-CODEC_DICT = {'.mp3': "libmp3lame",
-                  'mp3' : "libmp3lame",
-                  '.wav': "pcm_s24le",
-                  'wav' : "pcm_s24le"
-                  }
 
 @beartype
 def count_audio(media_path,language = None,file_extension = None):
@@ -60,21 +57,28 @@ def is_ffmpeg_installed():
         # FFmpeg is not in PATH
         print("FFmpeg is installed but not in PATH.")
 
-@beartype
+
+
+# @beartype
 def extract_audio(
-        video_folder:     Union[Path,str],
+        filepaths:     Union[Path,str],
         output_folder:    Union[Path,str],
-        video_extension:  Union[list,str] = [".mp4",".mkv"],
+        video_extension:  Union[list,str] = VIDEO_ALL_EXTENSIONS,
         output_extension: Union[list,str] = ".mp3",
         overwrite_file:   bool = True,
+        title_as_out_name:bool = False,
         n_limit:          int = 150,
         output_prefix:    str = "",
         output_suffix:    str = "",
-        alarm_done:       bool = True,
 
-        one_output_per_lang: bool = True,
-        languages: Union[List[str],None] = None,
-):
+        one_output_per_lang: bool = False,
+        languages: Union[List[str],None,str] = None
+
+        ,progress_bar: bool = True
+        ,verbose: int = 0
+        ,alarm_done: bool = False
+        ,alarm_error: bool = False
+    ):
     # extract_audio3 is highly tested now
     # this is from extract_audio3(it's already tested through time seems pretty stable)
     """
@@ -88,37 +92,57 @@ def extract_audio(
     """
 
 
-    _extract_media_setup(
-        input_folder = video_folder,
-        output_folder = output_folder,
-        input_extension = video_extension,
-        output_extension = output_extension,
-        extract_1_file_func = extract_audio_1file,
-        overwrite_file = overwrite_file,
-        n_limit = n_limit,
-        output_prefix = output_prefix,
-        output_suffix = output_suffix,
-        alarm_done = alarm_done,
+        # ToAdd01: suffix with language code instead of index
+    import inspect_py as inp
 
-        one_output_per_lang = one_output_per_lang,
-        languages = languages
+    path_input = {
+        "filepaths":filepaths
+        ,"output_folder":output_folder
+        ,"output_name": None
+        ,"output_extension":output_extension
+        ,"alarm_done":False
+        ,"overwrite_file":overwrite_file
+        ,"one_output_per_lang":one_output_per_lang
+        ,"languages":languages
+        ,"title_as_out_name":title_as_out_name
+    }
+    handle_multi_input_params = {
+        "progress_bar": progress_bar
+        ,"verbose":verbose
+        ,"alarm_done":alarm_done
+        ,"alarm_error":alarm_error
+        ,"input_extension":video_extension
+    }
+    
+    func_temp = inp.handle_multi_input(**handle_multi_input_params)(extract_audio_1file)
+    result = func_temp(**path_input)
+    return result
 
-    )
+
 
 @beartype
 def extract_audio_1file(
-        video_path:     Union[str,Path],
-        output_folder:  Union[str,Path],
-        output_name:    Union[str,Path, None] = None, 
-        output_extension: Union[str,list] = ".mp3",
-        alarm_done: bool = False,
-        overwrite_file: bool = True,
-        one_output_per_lang: bool = True,
-        languages: Union[List[str],None] = None,
-        
-        progress_bar:bool = True,
-        encoding = "utf-8-sig",
+    video_path:     Union[str,Path],
+    output_folder:  Union[str,Path],
+    output_name:    Union[str,Path, None] = None, 
+    output_extension: Union[str,list,None] = ".mp3",
+    alarm_done: bool = False,
+    overwrite_file: bool = True,
+    one_output_per_lang: bool = False,
+    languages: Union[List[str],None,str] = None,
+    title_as_out_name: bool = False,
+    
+    progress_bar:bool = True,
+    encoding = "utf-8-sig",
                     ) -> None:
+    
+    from tqdm import tqdm
+    from langcodes import Language
+    from pathlib import Path
+    import subprocess
+    from playsound import playsound
+    import os
+    import re
     # time spend 5 hr
     # this support multiple output_extension
     # medium tested
@@ -138,6 +162,9 @@ def extract_audio_1file(
     # Next right now I got a name BigBang_FR_S06E01.mp3_EN which is wrong
     
     from langcodes import Language
+    import warnings
+
+    # comment
     """
     Extract audio from a video file. If video has multiple audio in different languages,
     this function also support that
@@ -170,6 +197,9 @@ def extract_audio_1file(
         DESCRIPTION.
 
     """
+
+    # Bug fixed01: when there's missing langauge('N/A')
+
     from tqdm import tqdm
     from langcodes import Language
     from pathlib import Path
@@ -177,6 +207,8 @@ def extract_audio_1file(
     from playsound import playsound
     import os
 
+    if not os.path.exists(str(output_folder)):
+        raise FileNotFoundError(f"Output folder does not exist: {output_folder}")
     
     codec = CODEC_DICT[output_extension]
     
@@ -201,6 +233,7 @@ def extract_audio_1file(
             lang_obj =  closest_language_obj(language)
             # variant = "B" would return fre for french
             filter_lang_3chr.append(lang_obj.to_alpha3(variant = "B"))
+            filter_lang_3chr.append(lang_obj.to_alpha3(variant = "T"))
     
     audio_index = get_audio_index(video_path)
     metadata = get_metadata(video_path,"audio",language=filter_lang_3chr)
@@ -223,10 +256,14 @@ def extract_audio_1file(
         loop_obj = enumerate(video_lang_list)
 
     for i, language_3_str in loop_obj:
-        
-        lang_obj =  Language.get(language_3_str)
-        language_2_str = str(lang_obj).upper()
-        lang_obj.to_alpha3()
+        if language_3_str not in ["N/A"]:
+            lang_obj =  Language.get(language_3_str)
+            # to get 2 language code you can simply do str(lang_obj)
+            language_2_str = str(lang_obj).upper()
+            lang_obj.to_alpha3()
+        else:
+            language_2_str = "NA"
+
         for j, curr_file_ext in enumerate(file_extension_in):
             
             if curr_file_ext not in output_name_in:
@@ -234,7 +271,20 @@ def extract_audio_1file(
                     file_extension_in[j] = "." + curr_file_ext
                 else:
                     file_extension_in[j] = curr_file_ext
-                curr_output_name = output_name_in + "_" + language_2_str + file_extension_in[j]
+                # add index because if there are same language with multiple audio
+                # it would create a unique name
+                # choose suffix: title (sanitized) vs language code
+
+                if title_as_out_name and "title" in metadata_filter.columns:
+                    raw_title = metadata_filter.iloc[i]["title"]
+                    suffix = str(raw_title).strip()
+                    if suffix.lower() in ["", "none", "nan", "n/a"]:
+                        suffix = language_2_str
+                    suffix = re.sub(r'[\\/:*?"<>|]+', "_", suffix)
+                else:
+                    suffix = language_2_str
+
+                curr_output_name = f"{output_name_in}_{str(j+i)}_{suffix}{file_extension_in[j]}"
                 output_name_list.append(curr_output_name)
                 output_path = output_folder_in / curr_output_name
                 output_path_list.append(output_path)
@@ -267,11 +317,9 @@ def extract_audio_1file(
                     print(result.stderr)
                 
                 elif result.returncode == 0:
-                    print(f"\nExtract audio successfully: {curr_output_name}!!!")
-                    
+                    # print(f"\nExtract audio successfully: {curr_output_name}!!!")
                     if alarm_done:
-                        playsound(alarm_done_path)
-
+                        play_alarm_done()
 
 # Sub
 @beartype
@@ -280,7 +328,7 @@ def _extract_media_setup(
         output_folder: Union[str,Path],
         extract_1_file_func: Callable,
         input_extension: Union[list[str],str],
-        output_extension: Union[list[str],str],
+        output_extension: Union[list[str],str,None],
         # input_param_name: list[str],
         overwrite_file:   bool = True,
         n_limit: int = 150,
@@ -289,8 +337,9 @@ def _extract_media_setup(
         alarm_done: bool = True,
 
         one_output_per_lang: bool = True,
-        languages: Union[List[str],None] = None,
-        # errors: Literal["ignore","raise"] = "ignore",
+        languages: Union[List[str],None,str] = None,
+        errors: Literal["warn","ignore","raise"] = "warn",
+        verbose:int = 0,
 ) -> None :
     # 
     
@@ -314,7 +363,8 @@ def _extract_media_setup(
     from playsound import playsound
     from time import time, perf_counter
     from tqdm import tqdm
-
+    import os_toolkit as ost
+    import warnings
 
     ts01 = time()
     output_extension = [output_extension]
@@ -396,9 +446,15 @@ def _extract_media_setup(
                         output_name = output_name,
                         alarm_done=False,
                         overwrite_file=overwrite_file)
+                if verbose > 0:
+                    print(f"\nExtracted {output_name} successfully!!!")
             except Exception as e:
-                print(f"Error occured at file {filename_list[i]}")
-            print(f"extracted {output_name} successfully!!!")
+                if errors in ["raise"]:
+                    raise RuntimeError(f"\nError occured at file {filename_list[i]}")
+                elif errors in ["warn"]:
+                    warnings.warn(f"\nError occured at file {filename_list[i]}",category = UserWarning)
+                
+                
         
         # sys.stdout = original_stdout
     if alarm_done:
@@ -410,7 +466,7 @@ def _extract_media_setup(
     duration = ts02-ts01
     pw.print_time(duration)
     print()
-    return filename_list
+    # return filename_list
 
 @beartype
 def get_metadata2(
@@ -470,6 +526,10 @@ def get_all_metadata(
     Returns:
     - DataFrame with columns for 'filetype', 'file_extension', 'language', and 'duration'.
     """
+    import os
+    if not os.path.isfile(media_path):           # only passes for regular files
+        raise FileNotFoundError(f"File not found: {media_path}")
+        
     command = [
         'ffprobe',
         '-v', 'quiet',
@@ -490,6 +550,8 @@ def get_all_metadata(
     file_extensions = []
     languages = []
     durations = []
+    titles = []
+    
     
     # Extract stream information
     for stream in metadata.get('streams', []):
@@ -498,6 +560,10 @@ def get_all_metadata(
         # Extract language; note that 'tags' and 'language' might not exist
         language = stream.get('tags', {}).get('language', 'N/A')
         languages.append(language)
+        try:
+            titles.append(stream['tags']['title'])
+        except KeyError:
+            titles.append(None)
     
     # Extract duration from format, if available
     duration = float(metadata.get('format', {}).get('duration', 'N/A')) / 60
@@ -508,7 +574,8 @@ def get_all_metadata(
         'filetype': filetypes,
         'file_extension': file_extensions,
         'language': languages,
-        'duration_in_min': durations
+        'duration_in_min': durations,
+        'title':titles
     })
     
     return info_df
@@ -517,7 +584,7 @@ def get_all_metadata(
 def get_metadata(
         media_path: Path |str
         ,media:Literal["video","audio","subtitle"]
-        ,language: None|str = None
+        ,language: None|str|list[str] = None
         ,file_extension: None|str = None):
     #  not tested
     if language is None:
@@ -561,7 +628,7 @@ def get_metadata(
 
 @beartype
 def _get_media_extension(media_path, media, language = None, file_extension = None
-                         ) -> Union[list[int],int, None] :
+                         ) -> Union[list[str],str, None] :
     # not tested
     # return the unique list of media extension
     # return str if 1 unique extension is found
@@ -615,46 +682,65 @@ def get_audio_index(media_path, language = None, file_extension = None):
 def get_subtitle_index(media_path, language = None, file_extension = None):
     return _get_media_index(media_path,'subtitle',language)
 
-@beartype
-def extract_subtitle(
-        video_folder:     Union[Path,str],
-        output_folder:    Union[Path,str],
-        video_extension:  Union[list,str] = [".mp4",".mkv"],
-        output_extension: Union[list,str] = None,
-        overwrite_file:   bool = True,
-        n_limit:          int = 150,
-        output_prefix:    str = "",
-        output_suffix:    str = "",
-        languages: List[str] | None = None,
-        alarm_done:       bool = True,
-):
-    input_param = {
-        'video_path': 6
-    }
-    
-    _extract_media_setup(
-        input_folder = video_folder,
-        output_folder = output_folder,
-        input_extension = video_extension,
-        output_extension = output_extension,
-        extract_1_file_func = extract_sub_1_video,
-        overwrite_file = overwrite_file,
-        n_limit = n_limit,
-        output_prefix = output_prefix,
-        output_suffix = output_suffix,
-        languages=languages,
-        alarm_done = alarm_done,
-    )
+
 
 @beartype
+def extract_subtitle(
+    filepaths:     Union[Path,str],
+    output_folder:    Union[Path,str],
+    output_extension: Union[list,str,None] = None,
+    overwrite_file:   bool = True,
+    # n_limit:          int = 150,
+    # output_prefix:    str = "",
+    # output_suffix:    str = "",
+    languages: List[str] | None | str = None,
+    encoding:str = "utf-8-sig"
+
+    # handle_multi_input parameters
+    ,progress_bar: bool = True
+    ,verbose: int = 0
+    ,alarm_done: bool = False
+    ,alarm_error: bool = False
+    ,input_extension: str|None|list[str] = VIDEO_ALL_EXTENSIONS
+):
+    # write now language input has to be 3-str letter(BigBang FR)
+    
+    # ToAdd01: suffix with language code instead of index
+    import inspect_py as inp
+
+    path_input = {
+        "filepaths":filepaths
+        ,"output_folder":output_folder
+        ,"output_name": None
+        ,"output_extension":output_extension
+        ,"alarm_done":False
+        ,"overwrite_file":overwrite_file
+        ,"languages":languages
+        ,"encoding":encoding
+    }
+    handle_multi_input_params = {
+        "progress_bar": progress_bar
+        ,"verbose":verbose
+        ,"alarm_done":alarm_done
+        ,"alarm_error":alarm_error
+        ,"input_extension":input_extension
+    }
+    
+    func_temp = inp.handle_multi_input(**handle_multi_input_params)(extract_sub_1_video)
+    result = func_temp(**path_input)
+    return result
+
+
+# @beartype
 def extract_sub_1_video(
     video_path:         Union[str,Path],
     output_folder:      Union[str,Path],
-    output_name:        Union[str,Path] = None, 
-    output_extension:   Union[str,list] = None,
+    output_name:        Union[str,Path,None] = None, 
+    output_extension:   Union[str,list|None] = None,
     alarm_done:         bool = True,
     overwrite_file:     bool = True,
     languages:           Union[str,list, None] = None,
+    title_as_out_name:  bool = False,
     encoding:str = "utf-8-sig"
                     ):
     # write now language input has to be 3-str letter(BigBang FR)
@@ -663,6 +749,8 @@ def extract_sub_1_video(
     # medium tested
     # ToAdd feature 03: create a suffix for langauge 
     # ToAdd feature 04: generalize it and work with normal text eg "French" instead of "fre"
+    # ToAdd: throw error 05: when it's audio file to warn user !!!!!!!!!!!
+    
 
     # Added 01: extract mutiple subtitles for many languages
     # Added 02: select only some languages to extract
@@ -713,20 +801,32 @@ def extract_sub_1_video(
     import subprocess
     from playsound import playsound
     import os
+    import re
+    from tqdm import tqdm
+    import warnings
     # only input language as str for now
     
     output_folder_in = Path(output_folder)
 
     video_name = ost.extract_filename(video_path,with_extension=False)
     ori_extension = get_subtitle_extension(video_path,languages)
+    
+    if ori_extension is None:
+        warnings.warn(f"\nNo subtitle extension found for {video_name}")
+        return False
 
+    if ori_extension in [".mov_text","mov_text"]:
+        modified_extension = ".srt"
+    else:
+        modified_extension = ori_extension
+    
     if output_extension is None:
         if output_name is None:
             output_name = video_name
-        if ori_extension not in output_name:
-            if "." not in ori_extension:
-                ori_extension = "." + ori_extension
-            output_name += ori_extension
+        if modified_extension not in output_name:
+            if "." not in modified_extension:
+                modified_extension = "." + modified_extension
+            output_name += modified_extension
 
 
     elif isinstance(output_extension, str):
@@ -753,15 +853,30 @@ def extract_sub_1_video(
     #     str(output_path)
     # ]
     subtitle_stream_index_list = list(subtitle_stream_index) if isinstance(subtitle_stream_index, list) else [subtitle_stream_index]
-
+    meta_data = get_all_metadata(video_path)
+    sub_language = meta_data.loc[subtitle_stream_index_list, 'language'].tolist()  # or use the robust form above
     if output_extension:
         output_ext_no_dot = output_extension.replace('.','')
     else:
-        output_ext_no_dot = ori_extension.replace('.','')
+        output_ext_no_dot = modified_extension.replace('.','')
     
-    for i, sub_index in enumerate(subtitle_stream_index_list):
+    if len(subtitle_stream_index_list) > 5:
+        loop_obj = tqdm(enumerate(subtitle_stream_index_list), total=len(subtitle_stream_index_list),colour = 'blue')
+    else:
+        loop_obj = enumerate(subtitle_stream_index_list)
 
-        curr_output_path = ost.add_suffix_to_name(output_path,i+1)
+    for i, sub_index in loop_obj:
+
+        if title_as_out_name and "title" in meta_data.columns:
+            raw_title = meta_data.loc[sub_index, 'title']
+            suffix_core = (re.sub(r'[\\/:*?"<>|]+', "_", str(raw_title).strip())
+                           if isinstance(raw_title, str) and raw_title.strip()
+                           else sub_language[i])
+        else:
+            suffix_core = sub_language[i]
+
+        curr_output_path = ost.add_suffix_to_name(output_path, f"{i+1}_{suffix_core}")
+        # curr_output_path = ost.add_suffix_to_name(output_path, f"{i+1}_{sub_language[i]}")
 
         command = [
             'ffmpeg',
@@ -793,63 +908,14 @@ def extract_sub_1_video(
             
             if alarm_done:
                 try:
-                    playsound(alarm_done_path)
-                except:
+                    # play_alarm_done()
                     pass
+                    # playsound(alarm_done_path)
+                except:
+                    play_alarm_error()
+    if alarm_done:
+        play_alarm_done()
 
-@beartype
-def language_name_list():
-    import pycountry
-    language_names = [lang.name for lang in pycountry.languages if hasattr(lang, 'name')]
-    return language_names
-
-@beartype
-def closest_language(misspelled_language):
-    
-    from fuzzywuzzy import process
-    import pycountry
-    # Get a list of all language names
-    language_names = [lang.name for lang in pycountry.languages if hasattr(lang, 'name')]
-
-    # Use fuzzy matching to find the closest match
-    closest_match = process.extractOne(misspelled_language, language_names)
-    return closest_match[0] if closest_match else None
-
-@beartype
-def closest_language_obj(misspelled_language):
-    
-    """
-    Find the closest matching language object for a potentially misspelled language code.
-    
-    Parameters:
-    -----------
-    misspelled_language : str
-        The potentially misspelled language code.
-    
-    Returns:
-    --------
-    langcodes.Language
-        A language object representing the closest matching language.
-    
-    Notes:
-    ------
-    - This function uses the 'langcodes' library to find the closest matching language object
-      for a potentially misspelled language code.
-    - It can be useful for language code correction or normalization.
-    
-    Example:
-    --------
-    >>> closest_language_obj("englsh")
-    <Language('en', 'English')>
-    >>> closest_language_obj("español")
-    <Language('es', 'Spanish')>
-    
-    """
-    
-    
-    from langcodes import Language
-    correct_language = closest_language(misspelled_language)
-    return Language.find(correct_language)
 
 @beartype
 def extract_1_audio(video_path:     Union[str,Path],

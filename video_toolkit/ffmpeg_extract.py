@@ -71,7 +71,7 @@ def extract_audio(
         output_prefix:    str = "",
         output_suffix:    str = "",
 
-        one_output_per_lang: bool = True,
+        one_output_per_lang: bool = False,
         languages: Union[List[str],None,str] = None
 
         ,progress_bar: bool = True
@@ -802,7 +802,7 @@ def extract_sub_1_video(
     from playsound import playsound
     import os
     import re
-    from tqdm.auto import tqdm
+    from tqdm import tqdm
     import warnings
     # only input language as str for now
     

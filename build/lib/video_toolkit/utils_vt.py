@@ -13,33 +13,780 @@ import seaborn as sns
 from pydub import AudioSegment
 from beartype import beartype
 
+from play_audio_file import play_audio_file, play_alarm_done, play_alarm_error
+
+
+
+
 alarm_done_path = pkg_resources.resource_filename(__name__, 'assets/Sound Effect positive-logo-opener.wav')
 sound_error_path = pkg_resources.resource_filename(__name__, 'assets/Sound Effect Error.wav')
 
-CODEC_DICT = {'.mp3': "libmp3lame",
-                  'mp3' : "libmp3lame",
-                  '.wav': "pcm_s24le",
-                  'wav' : "pcm_s24le"
-                  }
+CODEC_DICT = {
+    '.mp3':  'libmp3lame',
+    'mp3':   'libmp3lame',
+
+    '.aac':  'aac',
+    'aac':   'aac',
+
+    '.wav':  'pcm_s24le',
+    'wav':   'pcm_s24le',
+
+    '.flac': 'flac',
+    'flac':  'flac',
+
+    '.alac': 'alac',
+    'alac':  'alac',
+
+    '.ogg':  'libvorbis',   # default to Vorbis in OGG
+    'ogg':   'libvorbis',
+
+    '.wma':  'wmav2',
+    'wma':   'wmav2',
+
+    '.m4a':  'aac',         # typical m4a = AAC; switch to ALAC if you need lossless
+    'm4a':   'aac',
+
+    '.aiff': 'pcm_s16be',   # AIFF usually big-endian PCM
+    'aiff':  'pcm_s16be',
+}
+
+VIDEO_ALL_EXTENSIONS = [".mp4", ".mkv", ".avi", ".mov", ".wmv", ".flv", ".webm", ".mts", ".m2ts"]
+SUBTITLE_ALL_EXTENSIONS = [".srt", ".ass", ".ssa", ".vtt", ".sub", ".idx"]
+AUDIO_ALL_EXTENSIONS = [".mp3", ".aac", ".wav", ".flac", ".alac", ".ogg", ".wma", ".m4a", ".aiff"]
+MEDIA_ALL_EXTENSIONS = VIDEO_ALL_EXTENSIONS + SUBTITLE_ALL_EXTENSIONS + AUDIO_ALL_EXTENSIONS
 
 # v02 => add extract_audio2, extract_subtitle, _extract_media_setup,extract_sub_1_video
 # get_metadata2, get_all_metadata, get_metadata
 # get_subtitle_index,get_audio_index,get_video_index,_get_media_index,get_subtitle_extension,
 # get_audio_extension,get_video_extension, _get_media_extension
 
+
+
+def align_simple_subtitle(
+        df_sub_left:pd.DataFrame
+        ,df_sub_right:pd.DataFrame
+        ,verbose:int = 1
+        ) -> pd.DataFrame:
+    
+    """
+    Align two subtitle DataFrames based on start times(for simple subtitles such as French Elisa)
+    
+    This function takes two subtitle DataFrames (e.g., from different subtitle tracks or languages) 
+    and aligns them by matching start times (minute + 0.01 × seconds). It returns a merged DataFrame 
+    showing side-by-side subtitle sentences along with indicators for potential alignment issues.
+    
+    Parameters
+    ----------
+    df_sub_left : pd.DataFrame
+        DataFrame containing the first subtitle set. Must contain the following columns:
+        - 'start': Subtitle start timestamp (datetime-like or timedelta-like object).
+        - 'end': Subtitle end timestamp.
+        - 'sentence': Subtitle text.
+    
+    df_sub_right : pd.DataFrame
+        DataFrame containing the second subtitle set. Must contain the same columns as `df_sub_left`.
+    
+    Returns
+    -------
+    pd.DataFrame
+        A merged DataFrame with the following columns:
+        - 'left_start_ts', 'left_end_ts', 'sentence_left': Original timing and text from `df_sub_left`.
+        - 'right_start_ts', 'right_end_ts', 'sentence_right': Original timing and text from `df_sub_right`.
+        - 'left_start_time', 'right_start_time': Numeric values computed from start timestamps for alignment.
+        - 'start_time': Combined start time for sorting.
+        - 'has_issue': Boolean flag indicating whether one of the subtitles is missing for a given start time.
+    
+    Notes
+    -----
+    - Matching is done using a simplified time representation (`minute + second × 0.01`), which may 
+      not be precise enough for all cases.
+    - Rows where one side is missing are flagged in `has_issue` for manual inspection.
+    - A summary of the number of mismatches is printed after processing.
+    
+    Examples
+    --------
+    Align two subtitle tracks:
+    >>> df1 = vt.sub_to_df("english.srt")
+    >>> df2 = vt.sub_to_df("spanish.srt")
+    >>> aligned_df = align_simple_subtitle(df1, df2)
+    There are 3 issues in total. Fix manually.
+    """
+
+    # low tested
+    import dataframe_short.move_column as mc
+
+    df_sub_left = df_sub_left.rename(columns = {
+        'start':'left_start_ts',
+        'end': 'left_end_ts',
+        'sentence':'sentence_left'
+        })
+    df_sub_left.index = range(1, len(df_sub_left) + 1)
+    
+    df_sub_right = df_sub_right.rename(columns = {
+        'start':'right_start_ts',
+        'end': 'right_end_ts',
+        'sentence':'sentence_right'
+        })
+    df_sub_right.index = range(1, len(df_sub_right) + 1)
+    
+    df_sub_left['left_start_time'] = df_sub_left['left_start_ts'].apply(lambda t: t.minute + t.second*0.01)
+    df_sub_right['right_start_time'] = df_sub_right['right_start_ts'].apply(lambda t: t.minute + t.second*0.01)
+    
+    df_merge_step1 = df_sub_left.merge(df_sub_right, left_on = ['left_start_time'], right_on = ['right_start_time'], how ='left')
+    
+    df_only_in_right = df_sub_left.merge(df_sub_right, left_on = ['left_start_time'], right_on = ['right_start_time'], how ='right', indicator = True)
+    df_only_in_right = df_only_in_right.loc[df_only_in_right['_merge'].isin(['right_only'])]
+    df_only_in_right = df_only_in_right.drop(columns = ['_merge'])
+    
+    
+    df_merge_step2 = pd.concat([df_merge_step1,df_only_in_right])
+    df_merge_step2['start_time'] = df_merge_step2['left_start_time'].combine_first(df_merge_step2['right_start_time'])
+    
+    df_merge_step2 = df_merge_step2.sort_values(['start_time'])
+    
+    df_merge_step2['has_issue'] = False
+    df_merge_step2.loc[df_merge_step2['left_start_time'].isna() | df_merge_step2['right_start_time'].isna() ,'has_issue'] = True
+    
+    
+    issue_count = df_merge_step2['has_issue'].sum()
+    mc.to_first_col(df_merge_step2, cols =  ['sentence_left','sentence_right','has_issue'])
+    
+    if verbose >= 1:
+        print(f'There are {issue_count} issues in total. Fix manually.')
+    return df_merge_step2
+
+
+@beartype
+def clean_Netflix_srt_1file(
+    sub_path:str|Path
+    ,output_folder:str|Path ) -> None:
+
+    """
+    Clean Netflix-style speaker labels from an SRT subtitle file.
+
+    This function processes a single `.srt` subtitle file by removing speaker name prefixes 
+    commonly found in Netflix subtitles (e.g., "JOHN:", "(MAN):"). The cleaned subtitles are 
+    saved in a new file with the same filename in the specified output folder.
+
+    Parameters
+    ----------
+    sub_path : str or Path
+        Path to the input `.srt` subtitle file.
+
+    output_folder : str or Path
+        Folder where the cleaned subtitle file will be saved.
+
+    Returns
+    -------
+    None
+        A new `.srt` file is saved in `output_folder`, containing cleaned subtitle sentences.
+
+    Notes
+    -----
+    - Only speaker prefixes in uppercase or enclosed in parentheses followed by a colon (e.g., "JOHN:", "(WOMAN):") are removed.
+    - The original sentence is stored in the `sentence_ori` column, and the speaker prefix (if detected) is stored in `speaker_prefix`.
+    - The final output subtitle contains only the cleaned `sentence`, `start`, and `end` fields.
+
+    Examples
+    --------
+    Clean a Netflix-style subtitle file and output the result:
+    >>> clean_netflix_srt_1file("episode1.srt", "cleaned_subs/")
+    """
+
+
+    # medium tested
+    df_sub_ori = sub_to_df(sub_path)
+    df_sub_copy_step1 = df_sub_ori.copy()
+
+    PATTERN = r'^((?:\([A-Z\' ]+\)|[A-Z\']+):\s)'
+
+    df_sub_copy_step1['sentence_ori'] = df_sub_copy_step1['sentence'].copy()
+    # extract into a new column; missing ones become NaN
+    df_sub_copy_step1['speaker_prefix'] = df_sub_copy_step1['sentence'].str.extract(PATTERN)
+    df_sub_copy_step1['sentence'] = df_sub_copy_step1['sentence_ori'].str.replace(PATTERN, '', regex=True)
+
+    df_sub_copy_step2 = df_sub_copy_step1[['sentence','start','end']]
+
+    # out_sub_path = Path(output_folder) / Path(sub_path).name
+    df_to_srt(df_sub_copy_step2
+                ,output_name=Path(sub_path).name
+                ,output_folder=output_folder)
+
+@beartype
+def clean_Netflix_srt(
+    filepaths: Union[str, Path, list[str|Path]]
+    ,output_folder: str|Path
+    # input below would get import automatically
+    ,replace: bool = True
+    ,errors:Literal["warn","raise"] = "raise"
+    ,print_errors:bool = False
+
+    # handle_multi_input parameters
+    ,progress_bar: bool = True
+    ,verbose: int = 0
+    ,alarm_done: bool = False
+    ,alarm_error: bool = False
+    ,input_extension: str|None = SUBTITLE_ALL_EXTENSIONS
+    ):
+
+    """
+    Batch clean Netflix-style speaker labels from subtitle files.
+
+    This function removes speaker name prefixes (e.g., "JOHN:", "(MAN):") commonly found in Netflix-style 
+    subtitles from one or more `.srt` files. It supports flexible inputs such as individual files, lists of files, 
+    or entire directories. The actual cleaning is performed by `clean_Netflix_srt_1file`, and batch handling 
+    is delegated via `handle_multi_input`.
+
+    Parameters
+    ----------
+    filepaths : str, Path, or list of str or Path
+        Input subtitle path(s) to clean. Can be a single file, a list of files, or a folder 
+        containing `.srt` or similar subtitle files.
+
+    output_folder : str or Path
+        Directory where cleaned subtitle files will be saved.
+
+    replace : bool, default True
+        If True, the original files are replaced. If False, new files are saved with modified names 
+        (prefix/suffix handled internally by the decorated function if needed).
+
+    errors : {"warn", "raise"}, default "raise"
+        Determines how to handle errors:
+        - "warn": Print a warning and continue.
+        - "raise": Raise an exception immediately on error.
+
+    print_errors : bool, default False
+        If True, print the full error details when `errors="raise"` is set.
+
+    progress_bar : bool, default True
+        Whether to display a progress bar during batch processing.
+
+    verbose : int, default 0
+        Controls the verbosity level. Set to 1 or 2 for more detailed logs.
+
+    alarm_done : bool, default False
+        If True, plays a notification sound when all processing is complete.
+
+    alarm_error : bool, default False
+        If True, plays a sound when an error is encountered.
+
+    input_extension : list of str or None, default vt.SUBTITLE_ALL_EXTENSIONS
+        Extensions to look for when `filepaths` is a folder. By default, all supported subtitle types are included.
+
+    Returns
+    -------
+    None
+        Cleaned subtitle files are saved to `output_folder`.
+
+    Notes
+    -----
+    - Speaker name prefixes in all caps (e.g., "JOHN:") or in parentheses (e.g., "(MAN):") are stripped 
+    from the beginning of each subtitle sentence.
+    - Requires subtitle files to be in a valid `.srt`-compatible format that can be parsed into a DataFrame.
+    - Uses the `handle_multi_input` utility to enable flexible multi-file processing.
+
+    Examples
+    --------
+    Clean a single subtitle file:
+    >>> clean_Netflix_srt("show.srt", output_folder="cleaned_subs")
+
+    Clean all subtitle files in a folder:
+    >>> clean_Netflix_srt("subs_folder", output_folder="cleaned", verbose=1)
+
+    Clean a list of files and save with modified names:
+    >>> clean_Netflix_srt(["ep1.srt", "ep2.srt"], output_folder="out", replace=False)
+    """
+
+    # high tested both, 1 file, folder_path and list of srt files
+    import inspect_py as inp
+    path_input = {
+        "filepaths":filepaths
+        ,"output_folder":output_folder
+    }
+    handle_multi_input_params = {
+        "progress_bar": progress_bar
+        ,"verbose":verbose
+        ,"alarm_done":alarm_done
+        ,"alarm_error":alarm_error
+        ,"input_extension":input_extension
+    }
+    func_temp = inp.handle_multi_input(**handle_multi_input_params)(clean_Netflix_srt_1file)
+    result = func_temp(**path_input)
+    return result
+
+@beartype
+def create_series_working_folder(
+    series_name:str,  
+    create_structure_at:str|Path,  
+    audio_folders:list[str],  
+    subtitle_folders:list[str],  
+    end_seasons:int
+    ):
+
+    """
+    Create folder structure for a TV series with given parameters.
+
+    Parameters
+    ----------
+    series_name : str
+        Name of the TV series.
+    create_structure_at : str or Path
+        Root folder where the folder structure will be created.
+    audio_folders : list[str]
+        List of audio languages to create folders for.
+    subtitle_folders : list[str]
+        List of subtitle languages to create folders for.
+    end_seasons : int
+        Number of seasons to create folders for.
+
+    Returns
+    -------
+    None
+    """
+    import os_toolkit as ost
+    # medium tested
+    # what folder_structure example looks like for 1 season
+    # folder_structure = {
+    #     "The Big Bang Theory":{
+    #         "BigBang Theory Season 07": {
+    #             "Season 07 Audio": audio_folders,
+    #             "Season 07 Splitted Audio": audio_folders,
+    #             "Season 07 Subtitle": subtitle_folders,
+    #             }
+    #         }
+    #     }
+    
+    folder_structure = {
+        series_name:{}
+        }
+    
+    
+    for season in range(1,end_seasons+1):
+        season_str = str(season).zfill(2)
+        curr_season_structure = {
+                    f"Season {season_str} Audio": audio_folders,
+                    f"Season {season_str} Splitted Audio": audio_folders,
+                    f"Season {season_str} Subtitle": subtitle_folders,
+                    }
+                
+        folder_structure[series_name][f"{series_name} Season {season_str}"] = curr_season_structure
+        # pprint(curr_season_structure)
+    # pprint(folder_structure)
+    ost.create_folder_structure(root_folder = create_structure_at , structure = folder_structure)
+
+@beartype
+def change_audio_speed(
+    audio_paths: Union[str, Path, list[str|Path]]
+    ,speedx:float|int
+    ,output_folder: str|Path
+    # optional
+    ,prefix:str = ""
+    ,suffix:str = ""
+    ,shift_forward_sec: float|int = 0
+    # input below would get import automatically
+    ,errors:Literal["warn","raise"] = "raise"
+    ,print_errors:bool = False
+
+    # handle_multi_input parameters
+    ,progress_bar: bool = True
+    ,verbose: int = 0
+    ,alarm_done: bool = False
+    ,alarm_error: bool = False
+    ,input_extension: str|None = [".mp3",".wav",".flac",".aac",".ogg",".m4a",".wma",".alac",".aiff",".opus"]
+    ) -> None:
+
+    
+    """
+    Change subtitle speed for a single file or a folder of files.
+
+    Parameters
+    ----------
+    sub_paths : Union[str, Path, list[str|Path]]
+        Filepath(s) of the subtitle file(s) to change speed for.
+    speedx : float|int
+        Speed multiplier to apply to the subtitle timing. e.g. 0.96 for 96% of the original speed.
+    output_folder : str|Path
+        Folder to save the output subtitle file(s) to.
+    shift_forward_sec : float|int, optional
+        Number of seconds to shift the subtitle timing forward. Defaults to 0.
+    errors : Literal["warn","raise"], optional
+        How to handle errors when reading the subtitle file(s). Defaults to "raise".
+    print_errors : bool, optional
+        Whether to print error messages when reading the subtitle file(s). Defaults to False.
+
+    handle_multi_input parameters
+    ----------------------------
+    progress_bar : bool, optional
+        Whether to show a progress bar when processing folders/lists. Defaults to True.
+    verbose : int, optional
+        Verbosity level (0=quiet, 1=normal, 2=detailed output). Defaults to 0.
+    alarm_done : bool, optional
+        Play success sound after completion. Defaults to False.
+    alarm_error : bool, optional
+        Play error sound if processing fails. Defaults to False.
+    input_extension : str|None, optional
+        File extensions to process when input is a folder. Defaults to [".ass",".srt"]
+
+    Returns
+    -------
+    None
+    """
+
+    # medium tested
+    import inspect_py as inp
+    unique_input = {
+        "filepaths":audio_paths
+        ,"output_folder":output_folder
+
+        # unique inputs for variety of functions
+        ,"speedx":speedx
+        # ,"shift_forward_sec": shift_forward_sec
+        ,"prefix":prefix
+        ,"suffix":suffix
+    }
+    handle_multi_input_params = {
+        "progress_bar": progress_bar
+        ,"verbose":verbose
+        ,"alarm_done":alarm_done
+        ,"alarm_error":alarm_error
+        ,"input_extension":input_extension
+    }
+    func_temp = inp.handle_multi_input(**handle_multi_input_params)(change_audio_speed_1file)
+    result = func_temp(**unique_input)
+    return result
+
+
+@beartype
+def change_subtitle_speed(
+    sub_paths: Union[str, Path, list[str|Path]]
+    ,speedx:float|int
+    ,output_folder: str|Path
+    # optional
+    ,shift_forward_sec: float|int = 0
+    # input below would get import automatically
+    ,prefix: str = ""
+    ,suffix: str = ""
+    ,errors:Literal["warn","raise"] = "raise"
+    ,print_errors:bool = False
+
+    # handle_multi_input parameters
+    ,progress_bar: bool = True
+    ,verbose: int = 0
+    ,alarm_done: bool = False
+    ,alarm_error: bool = False
+    ,input_extension: str|None = [".ass",".srt"]
+    ) -> None:
+    
+    """
+    Change the playback speed of subtitle file(s).
+
+    This function adjusts the timing of one or more subtitle files by a given speed factor,
+    using the single-file implementation `vt.change_subtitle_speed_1file` under the hood.
+    It supports individual files, lists of files, or entire directories via the `handle_multi_input` decorator.
+
+    Parameters
+    ----------
+    sub_paths : str, Path, or list of str or Path
+        Path(s) to the input subtitle file(s). Can be a single file path, a list of file paths,
+        or a directory containing `.ass` or `.srt` files.
+    speedx : float or int
+        The speed multiplier to apply to subtitle timing. Values >1.0 speed up subtitles,
+        values <1.0 slow them down.
+    output_folder : str or Path
+        Directory where the adjusted subtitle files will be saved.
+
+    prefix : str, default ""
+        Prefix to prepend to each output filename (ignored if `replace=True` in underlying function).
+    suffix : str, default ""
+        Suffix to append to each output filename (ignored if `replace=True` in underlying function).
+    errors : {"warn", "raise"}, default "raise"
+        Error handling strategy:
+        - "warn": print a warning on failure and continue processing other files.
+        - "raise": raise an exception on the first failure.
+    print_errors : bool, default False
+        If True, prints detailed error messages when an error occurs.
+
+    progress_bar : bool, default True
+        Whether to display a progress bar when processing multiple files.
+    verbose : int, default 0
+        Verbosity level (0 = silent, higher values produce more output).
+    alarm_done : bool, default False
+        Play a notification sound upon successful completion of all files.
+    alarm_error : bool, default False
+        Play a notification sound when any file processing fails.
+    input_extension : list of str or None, default [".ass", ".srt"]
+        File extensions to include when `sub_paths` is a directory. Use `None` or `"all"` to include all files.
+
+    Returns
+    -------
+    None
+        The processed subtitle files are written to `output_folder` with adjusted timing.
+
+    Raises
+    ------
+    FileNotFoundError
+        If a specified path in `sub_paths` does not exist.
+    ValueError
+        If `speedx` is not a positive number.
+
+    Notes
+    -----
+    - Timing is modified without re-encoding video; only subtitle timestamps are rewritten.
+    - Relies on `ffmpeg` (for underlying single-file function) and requires it to be installed and on PATH.
+
+    Examples
+    --------
+    Convert a single file:
+    >>> change_subtitle_speed("subs.srt", speedx=1.5, output_folder="./out")
+
+    Batch convert multiple files with a progress bar:
+    >>> change_subtitle_speed(["a.ass","b.srt"], speedx=0.9, output_folder="./out", progress_bar=True)
+    """
+
+    # medium tested
+    import inspect_py as inp
+    unique_input = {
+        "filepaths":sub_paths
+        ,"output_folder":output_folder
+
+        # unique inputs for variety of functions
+        ,"speedx":speedx
+        ,"shift_forward_sec": shift_forward_sec
+        ,"prefix":prefix
+        ,"suffix":suffix
+    }
+    handle_multi_input_params = {
+        "progress_bar": progress_bar
+        ,"verbose":verbose
+        ,"alarm_done":alarm_done
+        ,"alarm_error":alarm_error
+        ,"input_extension":input_extension
+    }
+    func_temp = inp.handle_multi_input(**handle_multi_input_params)(change_subtitle_speed_1file)
+    result = func_temp(**unique_input)
+    return result
+
+
+@beartype
+def change_subtitle_speed_df_1file(
+        sub_file:str|Path|pd.DataFrame
+        ,speedx: int|float
+        ,shift_forward_sec: float|int = 0
+        ) -> pd.DataFrame:
+    """
+    support both str and Path, and df
+    """
+    import warnings
+    if isinstance(sub_file, (str,Path)):
+        df_sub = sub_to_df(sub_file)
+    elif isinstance(sub_file, pd.DataFrame):
+        df_sub = sub_file.copy()
+        
+    df_sub_adj = df_sub.iloc[:,[0]]
+    warnings.filterwarnings('ignore')
+    df_sub_adj['start'] = df_sub['start'].apply(lambda x: adjust_speed(x,speedx, shift_forward_sec))
+    df_sub_adj['end'] = df_sub['end'].apply(lambda x: adjust_speed(x,speedx, shift_forward_sec))
+    warnings.filterwarnings('default')
+    
+    return df_sub_adj        
+
+@beartype
+def adjust_speed(
+    time_obj: datetime.time,
+    speedx: float|int
+    ,shift_forward_sec: float|int = 0
+    ,if_negative_error_value:int|float = 0
+) -> datetime.time:
+    """
+    Adjust a datetime.time by a speed factor, using the datetime module alias directly.
+
+    Parameters
+    ----------
+    time_obj : datetime.time
+        The original time to adjust.
+    speedx : float
+        Speed factor: >1.0 makes time shorter (faster), <1.0 makes time longer (slower).
+
+    Returns
+    -------
+    datetime.time
+        The adjusted time.
+    """
+    # total seconds in the original time
+    #  Apr, 26, 2025
+    # 4o can't do it at one shot, this is from o4-mini
+    import warnings
+    total_seconds = (
+        time_obj.hour * 3600
+        + time_obj.minute * 60
+        + time_obj.second
+        + time_obj.microsecond / 1_000_000
+    )
+
+    # adjust by speed factor
+    # if adjusted_seconds is negative?
+    adjusted_seconds = total_seconds / speedx + shift_forward_sec
+
+    if adjusted_seconds < 0:
+        warnings.warn(
+            f"Adjusted seconds is negative: {adjusted_seconds}. ")
+        adjusted_seconds = if_negative_error_value
+
+    # reconstruct hours, minutes, seconds, microseconds
+    hours = int(adjusted_seconds // 3600)
+    rem = adjusted_seconds - hours * 3600
+    minutes = int(rem // 60)
+    rem -= minutes * 60
+    secs = int(rem)
+    micros = int((rem - secs) * 1_000_000)
+
+    return datetime.time(hour=hours, minute=minutes, second=secs, microsecond=micros)
+
+
+@beartype
+def change_subtitle_speed_1file(
+    sub_file:str|Path
+    ,speedx:int|float
+    ,output_folder: str|Path
+    ,shift_forward_sec: float|int = 0
+    ,prefix:str = ""
+    ,suffix:str = ""
+    ) -> None:
+    import os_toolkit as ost
+    #  write now only support srt
+    # medium tested
+    
+    df_sub_adj = change_subtitle_speed_df_1file(sub_file,speedx=speedx,shift_forward_sec=shift_forward_sec)
+    new_name = ost.new_filename( sub_file, prefix=prefix, suffix= suffix)
+    df_to_srt(df_sub_adj,new_name,output_folder=output_folder)
+
+
+@beartype
+def change_audio_speed_1file(
+    audio_path: str | Path,
+    speedx: int | float,
+    output_name: str | Path = "",
+    prefix:str = "",
+    suffix:str = "",
+    output_folder: str | Path = ""
+    ) -> None:
+    
+    """
+    Adjust audio playback speed and export to specified format.
+
+    This function modifies the playback speed of an input audio file and saves it
+    with the specified output extension (e.g., .wav, .mp3). The output format is
+    automatically determined from the output file extension.
+
+    Parameters
+    ----------
+    audio_path : str or Path
+        Path to the input audio file. Supports all formats recognized by pydub
+        (MP3, WAV, OGG, FLAC, etc.).
+    speedx : int or float
+        Speed multiplier for audio playback:
+        - Values < 1.0 will slow down the audio (e.g., 0.5 for half speed)
+        - Values > 1.0 will speed up the audio (e.g., 2.0 for double speed)
+        - Value of 1.0 maintains original speed
+    output_name : str or Path
+        Output filename including extension (determines output format).
+        Example: "output.wav" for WAV format, "fast.mp3" for MP3 format.
+    output_folder : str or Path, optional
+        Destination directory for output file. If not specified, uses the same
+        directory as the input file.
+
+    Returns
+    -------
+    None
+        Output file is saved to the specified location.
+
+    Raises
+    ------
+    FileNotFoundError
+        If the input audio file does not exist.
+    ValueError
+        If speedx is zero or negative.
+    Exception
+        For pydub-related processing errors (e.g., unsupported formats).
+
+    See Also
+    --------
+    pydub.AudioSegment : Base class used for audio manipulation.
+
+    Notes
+    -----
+    1. Requires ffmpeg to be installed for handling non-WAV formats.
+    2. For batch processing, consider wrapping this function in a loop.
+
+    Examples
+    --------
+    Slow down audio by 25% and save as WAV:
+
+    >>> change_audio_speed_1file("input.mp3", 0.75, "slow.wav", "output_dir")
+
+    Speed up audio 2x and save as MP3 in same directory:
+
+    >>> change_audio_speed_1file("sound.wav", 2.0, "fast.mp3")
+    """
+    # medium tested
+    
+    from pydub import AudioSegment
+    from pathlib import Path
+    import os
+    import os_toolkit as ost
+    
+    # Load audio file (supports MP3, WAV, etc.)
+    audio = AudioSegment.from_file(audio_path)
+
+    # Adjust speed (e.g., 0.9764x slower)
+    slowed_audio = audio._spawn(audio.raw_data, overrides={
+        "frame_rate": int(audio.frame_rate * speedx)
+    }).set_frame_rate(audio.frame_rate)
+
+    # Determine output folder
+    filepath = Path(audio_path)
+    folder_path = filepath.parent
+    output_folder_in = Path(output_folder) if output_folder else folder_path
+
+    if not os.path.exists(output_folder_in):
+        raise FileExistsError(f"Please check your output_folder path. It doesn't exist.")
+
+    # Get the output format from the file extension
+    if output_name != "":
+        output_path = output_folder_in / f"{output_name}"
+    else:
+        new_name = ost.new_filename( audio_path, prefix=prefix, suffix= suffix)
+        output_path = output_folder_in / f"{new_name}"
+
+    output_format = output_path.suffix[1:].lower()  # Remove the dot and convert to lowercase
+
+    # Export slowed audio with the correct format
+    slowed_audio.export(output_path, format=output_format)
+
 @beartype
 def create_media_info_df(
     input_video_folder:str|Path  
     ,input_video_pattern: str
     ,ep_seasons: list[str]| str
-    ,media_types: list[str]
     ,input_media_folders: list[str]
-    ,input_filname_patterns: list[str]
-    ,titles: list[str]
-    ,lang_code_3chrs: list[str]
+    ,list_of_info: list[tuple|list[str]]
+    # ,media_types: list[str]
+    # ,titles: list[str]
+    # ,lang_code_3chrs: list[str]
+    # ,input_filname_patterns: list[str]
     ,output_folder:str
     ) -> pd.DataFrame:
     """
+    list_of_info would contain ('media_type','title','lang','input_filename_pattern')
+    eg:
+        list_of_info = [
+            ("subtitle", "Portuguese_Brazilian_ori", "por", "BigBang PT <>.srt"),
+            ("subtitle", "English_ori", "eng", "BigBang FR <>_1.srt"),
+            ("subtitle", "French_ori", "fre", "BigBang FR <>_1.srt"),
+            ("audio", "French", "fre", "BigBang FR <>_FR.mp3"),
+            ("subtitle", "French_whisper", "eng", "BigBang FR <>.srt"),
+        ]
+
     helper function to create media_info combinations(pd.df) to feed in to merge_media_to_video
     there's no output_name because it uses the default name
     use <> to replace the episode_season pattern
@@ -54,6 +801,9 @@ def create_media_info_df(
             x_new = x.replace(old,new)
             result[i] = x_new
         return result
+    
+    list_of_info_splitted = list(zip(*list_of_info))
+    media_types,titles,lang_code_3chrs,input_filname_patterns  = [list(item) for item in list_of_info_splitted]
 
     lengths: list[int] = [len(media_types), len(input_media_folders), len(input_filname_patterns), len(titles), len(lang_code_3chrs)]
     if len(set(lengths)) > 1:
@@ -192,6 +942,16 @@ def df_to_srt(df: pd.DataFrame, output_name: str, output_folder: Union[str, Path
     with open(output_path, 'w', encoding='utf-8') as f:
         df_in['start'] = df_in['start'].astype(str)
         df_in['end'] = df_in['end'].astype(str)
+
+        # fix the format manually when micro seconds are 0
+        # original
+        # df_in['start'] = df_in['start'].apply(lambda x: f"{x}:00,000000" if '.' not in x else x)
+        # df_in['end'] = df_in['end'].apply(lambda x: f"{x}:00,000000" if '.' not in x else x)
+        
+        # new logic
+        df_in['start'] = df_in['start'].apply(lambda x: f"{x},000000" if '.' not in x else x)
+        df_in['end'] = df_in['end'].apply(lambda x: f"{x},000000" if '.' not in x else x)
+        
         for index, row in df_in.iterrows():
             # Write subtitle index
             f.write(f"{index + 1}\n")
@@ -210,12 +970,13 @@ def split_audio_by_sub(
     sub_paths: Union[str,Path, list[str|Path]],
     output_folder: Union[str,Path],
     prefix_names: None|str | list[str] = None,
-    out_audio_ext:str = "wav",
+    out_audio_ext:str = "mp3",
     include_sentence:bool = True,
     alarm_done:bool = False,
     verbose:int = 1,
     modify_sub:bool = False,
-    progress_bar:bool = True
+    progress_bar:bool = True,
+    create_media_folder:bool = True,
         ) -> None:
     """
     Split audio files based on associated subtitle files.
@@ -268,7 +1029,9 @@ def split_audio_by_sub(
     """
     import os
     import os_toolkit as ost
-    from tqdm.auto import tqdm
+    # tqdm.auto wouldn't work in Spyder for some unknown reasons
+    # from tqdm.auto import tqdm
+    from tqdm import tqdm
     # high tested
     
     # convert every input: using_folder_path will print out the audio and sub it uses for splitting
@@ -342,7 +1105,9 @@ def split_audio_by_sub(
                             alarm_done = alarm_done,
                             verbose = 0,
                             include_sentence = include_sentence,
-                            modify_sub = modify_sub)
+                            modify_sub = modify_sub,
+                            create_media_folder=create_media_folder
+                            )
 
 @beartype
 def modify_sub_df_time(sub_df:pd.DataFrame) -> pd.DataFrame:
@@ -365,9 +1130,12 @@ def modify_sub_df_time(sub_df:pd.DataFrame) -> pd.DataFrame:
     return sub_df_copy
 
 @beartype
-def sub_to_df(sub_path,
-              remove_stopwords=True,
-              stopwords=["♪", "\n", "<i>", "</i>", "<b>", "</b>"]) -> pd.DataFrame | List[pd.DataFrame]:
+def sub_to_df(
+    sub_path,
+    remove_stopwords=True,
+    stopwords=["♪", "<i>", "</i>", "<b>", "</b>"],
+    dropna: bool = True,
+    ) -> pd.DataFrame | List[pd.DataFrame]:
     """
     Convert a subtitle file (.ass or .srt) or multiple subtitle files in a directory to pandas DataFrame(s).
 
@@ -397,9 +1165,9 @@ def sub_to_df(sub_path,
 
     def process_file(file_path):
         if file_path.suffix.lower() == '.ass':
-            return ass_to_df(file_path, remove_stopwords=remove_stopwords, stopwords=stopwords)
+            return ass_to_df(file_path, remove_stopwords=remove_stopwords, stopwords=stopwords,dropna=dropna)
         elif file_path.suffix.lower() == '.srt':
-            return srt_to_df(file_path, remove_stopwords=remove_stopwords, stopwords=stopwords)
+            return srt_to_df(file_path, remove_stopwords=remove_stopwords, stopwords=stopwords,dropna=dropna)
         else:
             raise ValueError(f"Unsupported file extension: {file_path.suffix}")
 
@@ -424,9 +1192,13 @@ def sub_to_df(sub_path,
         raise ValueError("The provided path must be a .ass or .srt file or a directory containing such files.")
 
 @beartype
-def ass_to_df(ass_path: str | Path,
-              remove_stopwords:bool =True,
-              stopwords=["♪", "\n", "<i>", "</i>", "<b>", "</b>"]) -> pd.DataFrame | List[pd.DataFrame]:
+def ass_to_df(
+    ass_path: str | Path,
+    remove_stopwords:bool =True,
+    stopwords=["♪", "\n", "<i>", "</i>", "<b>", "</b>"]
+    ,replace_dash:bool = True
+    ,dropna: bool = True
+              ) -> pd.DataFrame | List[pd.DataFrame]:
     
 
     """
@@ -440,6 +1212,8 @@ def ass_to_df(ass_path: str | Path,
         If True, specified stopwords will be removed from the sentences. Default is True.
     stopwords : list of str, optional
         A list of stopwords to remove from the sentences. Default is ["♪", "\\n", "<i>", "</i>", "<b>", "</b>"].
+    replace_dash
+        Make it easier to paste into Excel
 
     Returns
     -------
@@ -454,6 +1228,7 @@ def ass_to_df(ass_path: str | Path,
     """
 
     # seems to work now
+    # dropna is not tested
 
     import pandas as pd
     from pathlib import Path
@@ -493,6 +1268,11 @@ def ass_to_df(ass_path: str | Path,
             'start': start_times,
             'end': end_times
         })
+        
+        if replace_dash:
+            df['sentence'] = df['sentence'].str.replace('-', '–', regex=False)
+        if dropna:
+            df = df[df['sentence'].fillna('').str.strip() != ''].reset_index(drop=True)
         return df
 
     if ass_path.is_file() and ass_path.suffix == '.ass':
@@ -591,9 +1371,9 @@ def audio_duration(media_path: str | Path | AudioSegment):
     from pydub import AudioSegment
     from datetime import datetime, timedelta
 
-    if isinstance(media_path,str, Path):
+    if isinstance(media_path,(str, Path)):
         video_audio = AudioSegment.from_file(str(media_path))
-    elif isinstance(AudioSegment):
+    elif isinstance(media_path,AudioSegment):
         video_audio = media_path
 
     # Get the duration of the audio segment in milliseconds
@@ -727,6 +1507,7 @@ def split_1audio_by_subtitle(
     verbose:int = 1,
     include_sentence:bool = True,
     modify_sub:bool = False,
+    create_media_folder:bool = True
         ) -> None:
     
     """
@@ -774,6 +1555,7 @@ def split_1audio_by_subtitle(
     import python_wizard as pw
     import py_string_tool as pst
     import datetime
+    import pandas as pd
     # Added01: remove the tags in sentence
     #   eg: '<font face="sans-serif" size="71">Sei o que procurar.</font>' => Sei o que procurar.
 
@@ -795,7 +1577,7 @@ def split_1audio_by_subtitle(
     out_audio_ext_dot = out_audio_ext if out_audio_ext[0] == "." else ("." + out_audio_ext)
     out_audio_ext_no_dot = out_audio_ext[1:] if out_audio_ext[0] == "." else ( out_audio_ext)
     
-    subs_ori: pd.DataFrame = vt.sub_to_df(subtitle_path)
+    subs_ori: pd.DataFrame = sub_to_df(subtitle_path)
 
     if modify_sub:
         subs: pd.DataFrame = modify_sub_df_time(subs_ori)
@@ -821,8 +1603,12 @@ def split_1audio_by_subtitle(
     # Iterate over subtitle sentences
     n: int = subs.shape[0]
     t04: float = time.time()
-    new_folder = output_folder + "/" + media_name
-    os.makedirs(new_folder,exist_ok=True)
+
+    if create_media_folder:
+        new_folder = output_folder + "/" + media_name
+        os.makedirs(new_folder,exist_ok=True)
+    else:
+        new_folder = output_folder
     
     for i in range(n):
         start_time: datetime.time = subs.loc[i,'start']
@@ -1004,7 +1790,7 @@ def read_sentences_from_excel(
     :return: Tuple of two lists containing Portuguese and English sentences.
     """
     import dataframe_short as ds
-
+    
     df: pd.DataFrame = pd.read_excel(file_path,sheet_name=sheet_name,nrows=nrows,usecols=[portuguese_col,english_col])
 
     portuguese_sentences = df.iloc[:,0].tolist()
@@ -1476,14 +2262,18 @@ def crop_video(
 def srt_to_df(
     srt_path: str | Path,
     remove_stopwords:bool = True,
-    stopwords: list[str] = ["♪","\n","<i>","</i>","<b>","</b>"]) -> pd.DataFrame | List[pd.DataFrame]:
+    stopwords: list[str] = ["♪","<i>","</i>","<b>","</b>"],
+    replace_dash:bool = True,
+    dropna: bool = True
+    
+    ) -> pd.DataFrame | List[pd.DataFrame]:
     # df = pd.DataFrame({
         #     'sentence': sentences,
         #     'start': start_times,
         #     'end': end_times
         # })
 
-# remove_newline will remove '\n' from the extracted text
+
     import pysrt
     import pandas as pd
     import py_string_tool as pst
@@ -1507,11 +2297,21 @@ def srt_to_df(
         if remove_stopwords:
             #FIX it's still can't replace properly 
             sentences = [pst.replace(sentence,stopwords,"") for sentence in sentences]
+            # remove_newline will remove '\n' from the extracted text
+            sentences = [sentence.replace("\n"," ") for sentence in sentences]
+
+
         df = pd.DataFrame({
             'sentence': sentences,
             'start': start_times,
             'end': end_times
         })
+        
+        if replace_dash:
+            df['sentence'] = df['sentence'].str.replace('-', '–', regex=False)
+        if dropna:
+            df = df[df['sentence'].fillna('').str.strip() != ''].reset_index(drop=True)
+
         return df
     else:
         # many srt's file using folder
@@ -1542,13 +2342,15 @@ def srt_to_Excel(
         ,index:bool = True) -> None:
     import pandas as pd
     import os
+    import python_wizard as pw
+    import os_toolkit as ost
     """ 
     Wrote on Aug 27, 2023
     I already wrote it for 1 file but it took me about 3 additional hrs to 
     make it work with multiple files in folder
     """
     # output should be total_path
-    df_sub: pd.DataFrame | List[pd.DataFrame] = srt_to_df(srt_path)
+    df_sub: pd.DataFrame | list[pd.DataFrame] = srt_to_df(srt_path)
     pd_ver = pw.package_version("pandas")
     
     if isinstance(df_sub,pd.DataFrame):
@@ -1571,7 +2373,7 @@ def srt_to_Excel(
                 df.to_excel(out_full_name[i], index=index)
 
 @beartype
-def to_ms(time_obj: datetime.time) -> float:
+def to_ms(time_obj: datetime.time) -> float|int:
     time_obj_ms = (time_obj.hour * 3600 + time_obj.minute * 60 + time_obj.second) * 1000 + time_obj.microsecond // 1000
     return time_obj_ms
 
@@ -1593,7 +2395,7 @@ del Callable
 del Dict
 
 del AudioSegment
-del sys, datetime, pw, pd, sns
+# del sys, datetime, pw, pd, sns
 del beartype, ost, pkg_resources
 
 # TODO: srt_to_Excel => similar to srt_to_csv but output as excel

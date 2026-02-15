@@ -970,7 +970,7 @@ def split_audio_by_sub(
     sub_paths: Union[str,Path, list[str|Path]],
     output_folder: Union[str,Path],
     prefix_names: None|str | list[str] = None,
-    out_audio_ext:str = "wav",
+    out_audio_ext:str = "mp3",
     include_sentence:bool = True,
     alarm_done:bool = False,
     verbose:int = 1,

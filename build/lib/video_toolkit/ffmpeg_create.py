@@ -1,13 +1,744 @@
 from pydub import AudioSegment
-from typing import Union,List,Tuple, Literal, Callable, Dict, Any
+from typing import Union,List,Tuple, Literal, Callable, Dict, Any, Optional
 from pathlib import Path
 from video_toolkit.ffmpeg_extract import *
 import pandas as pd
 from beartype import beartype
 import pkg_resources
+from video_toolkit.utils_vt import VIDEO_ALL_EXTENSIONS, AUDIO_ALL_EXTENSIONS, SUBTITLE_ALL_EXTENSIONS, CODEC_DICT, MEDIA_ALL_EXTENSIONS
 
 alarm_done_path = pkg_resources.resource_filename(__name__, 'assets/Sound Effect positive-logo-opener.wav')
 sound_error_path = pkg_resources.resource_filename(__name__, 'assets/Sound Effect Error.wav')
+
+
+def cut_front_audio(
+    filepaths: Union[str, Path,list[str|Path]]
+    ,sec: Union[int, float]
+    ,output_folder: Union[str, Path] = ""
+    # handle_multi_input parameter
+    
+    ,progress_bar: bool = True
+    ,verbose: int = 0
+    ,alarm_done: bool = True
+    ,alarm_error: bool = True
+    ,input_extension: str|None = AUDIO_ALL_EXTENSIONS
+) -> None:
+    """
+    Cuts out the first `sec` seconds from an audio file using ffmpeg.
+
+    Parameters
+    ----------
+    audio_path : str or Path
+        Path to the input audio file.
+    sec : int or float
+        Number of seconds to remove from the start.
+    output_name : str or None, optional
+        Filename for the output. If None, original filename is used.
+    output_folder : str or Path, optional
+        Directory to save the output. If empty, saves alongside the input file.
+    """
+    
+    # little tested
+    # ffmpeg version is much faster than pydub
+    import inspect_py as inp
+
+    path_input = {
+        "filepaths":filepaths
+        ,"output_folder":output_folder
+        ,"output_name":None
+        ,"sec":sec
+    }
+
+    handle_multi_input_params = {
+        "progress_bar": progress_bar
+        ,"verbose":verbose
+        ,"alarm_done":alarm_done
+        ,"alarm_error":alarm_error
+        ,"input_extension":input_extension
+    }
+    func_temp = inp.handle_multi_input(**handle_multi_input_params)(cut_front_1audio)
+    result = func_temp(**path_input)
+
+def add_front_audio(
+    filepaths: Union[str, Path,list[str|Path]]
+    ,sec: Union[int, float]
+    ,output_folder: Union[str, Path] = ""
+    # handle_multi_input parameters
+    
+    ,progress_bar: bool = True
+    ,verbose: int = 0
+    ,alarm_done: bool = True
+    ,alarm_error: bool = True
+    ,input_extension: str|None = AUDIO_ALL_EXTENSIONS
+) -> None:
+    """
+    Cuts out the first `sec` seconds from an audio file using ffmpeg.
+
+    Parameters
+    ----------
+    audio_path : str or Path
+        Path to the input audio file.
+    sec : int or float
+        Number of seconds to remove from the start.
+    output_name : str or None, optional
+        Filename for the output. If None, original filename is used.
+    output_folder : str or Path, optional
+        Directory to save the output. If empty, saves alongside the input file.
+    """
+    
+    # not tested
+    # ffmpeg version is much faster than pydub
+    import inspect_py as inp
+
+    path_input = {
+        "filepaths":filepaths
+        ,"output_folder":output_folder
+        ,"output_name":None
+        ,"sec":sec
+    }
+
+    handle_multi_input_params = {
+        "progress_bar": progress_bar
+        ,"verbose":verbose
+        ,"alarm_done":alarm_done
+        ,"alarm_error":alarm_error
+        ,"input_extension":input_extension
+    }
+    func_temp = inp.handle_multi_input(**handle_multi_input_params)(add_front_1audio)
+    result = func_temp(**path_input)
+
+def cut_back_audio(
+    filepaths: Union[str, Path,list[str|Path]]
+    ,sec: Union[int, float]
+    ,output_folder: Union[str, Path] = ""
+    # handle_multi_input parameters
+    
+    ,progress_bar: bool = True
+    ,verbose: int = 0
+    ,alarm_done: bool = True
+    ,alarm_error: bool = True
+    ,input_extension: str|None = AUDIO_ALL_EXTENSIONS
+) -> None:
+    """
+    Cuts out the first `sec` seconds from an audio file using ffmpeg.
+
+    Parameters
+    ----------
+    audio_path : str or Path
+        Path to the input audio file.
+    sec : int or float
+        Number of seconds to remove from the start.
+    output_name : str or None, optional
+        Filename for the output. If None, original filename is used.
+    output_folder : str or Path, optional
+        Directory to save the output. If empty, saves alongside the input file.
+    """
+    
+    # not tested
+    # ffmpeg version is much faster than pydub
+    import inspect_py as inp
+
+    path_input = {
+        "filepaths":filepaths
+        ,"output_folder":output_folder
+        ,"output_name":None
+        ,"sec":sec
+    }
+
+    handle_multi_input_params = {
+        "progress_bar": progress_bar
+        ,"verbose":verbose
+        ,"alarm_done":alarm_done
+        ,"alarm_error":alarm_error
+        ,"input_extension":input_extension
+    }
+    func_temp = inp.handle_multi_input(**handle_multi_input_params)(cut_back_1audio)
+    result = func_temp(**path_input)
+
+def add_back_audio(
+    filepaths: Union[str, Path,list[str|Path]]
+    ,sec: Union[int, float]
+    ,output_folder: Union[str, Path] = ""
+    # handle_multi_input parameters
+    
+    ,progress_bar: bool = True
+    ,verbose: int = 0
+    ,alarm_done: bool = True
+    ,alarm_error: bool = True
+    ,input_extension: str|None = AUDIO_ALL_EXTENSIONS
+) -> None:
+    """
+    Cuts out the first `sec` seconds from an audio file using ffmpeg.
+
+    Parameters
+    ----------
+    audio_path : str or Path
+        Path to the input audio file.
+    sec : int or float
+        Number of seconds to remove from the start.
+    output_name : str or None, optional
+        Filename for the output. If None, original filename is used.
+    output_folder : str or Path, optional
+        Directory to save the output. If empty, saves alongside the input file.
+    """
+    
+    # not tested
+    # ffmpeg version is much faster than pydub
+    import inspect_py as inp
+
+    path_input = {
+        "filepaths":filepaths
+        ,"output_folder":output_folder
+        ,"output_name":None
+        ,"sec":sec
+    }
+
+    handle_multi_input_params = {
+        "progress_bar": progress_bar
+        ,"verbose":verbose
+        ,"alarm_done":alarm_done
+        ,"alarm_error":alarm_error
+        ,"input_extension":input_extension
+    }
+    func_temp = inp.handle_multi_input(**handle_multi_input_params)(add_back_1audio)
+    result = func_temp(**path_input)
+
+
+def cut_front_1audio(
+    audio_path: Union[str, Path],
+    sec: Union[int, float],
+    output_name: Optional[str] = None,
+    output_folder: Union[str, Path] = ""
+) -> None:
+    """
+    Cuts out the first `sec` seconds from an audio file using ffmpeg.
+
+    Parameters
+    ----------
+    audio_path : str or Path
+        Path to the input audio file.
+    sec : int or float
+        Number of seconds to remove from the start.
+    output_name : str or None, optional
+        Filename for the output. If None, original filename is used.
+    output_folder : str or Path, optional
+        Directory to save the output. If empty, saves alongside the input file.
+    """
+    
+    # medium tested
+    # ffmpeg version is much faster than pydub
+    import subprocess
+    from pathlib import Path
+    import os
+
+
+    if not os.path.exists(audio_path):
+        raise FileNotFoundError("Please check the path. It doesn't exist.")
+    
+    inp = Path(audio_path)
+    out_dir = Path(output_folder) if output_folder else inp.parent
+    out_dir.mkdir(parents=True, exist_ok=True)
+
+    name = output_name or inp.name
+    out_path = out_dir / name
+
+    # Use ffmpeg to seek past the first `sec` seconds and copy streams
+    command = [
+        "ffmpeg",
+        "-y",              # overwrite if exists
+        "-ss", str(sec),   # seek to `sec`
+        "-i", str(inp),    # input file
+        "-c", "copy",      # copy codecs (no re-encode)
+        str(out_path)      # output file
+    ]
+    subprocess.run(command, check=True)
+
+
+def add_front_1audio(
+    audio_path: Union[str, Path],
+    sec: Union[int, float],
+    output_name: Optional[str] = None,
+    output_folder: Union[str, Path] = ""
+) -> None:
+    """
+    Prepends `sec` seconds of silence to an audio file using ffmpeg.
+
+    Parameters
+    ----------
+    audio_path : str or Path
+        Path to the input audio file.
+    sec : int or float
+        Number of seconds of silence to add at the front.
+    output_name : str or None, optional
+        Filename for the output. If None, the original filename is used.
+    output_folder : str or Path, optional
+        Directory to save the output. Defaults to the same folder as the input.
+    """
+    import subprocess
+    from pathlib import Path
+    import os
+
+
+    if not os.path.exists(audio_path):
+        raise FileNotFoundError("Please check the path. It doesn't exist.")
+
+    # not tested
+    inp = Path(audio_path)
+    out_dir = Path(output_folder) if output_folder else inp.parent
+    out_dir.mkdir(parents=True, exist_ok=True)
+
+    name = output_name or inp.name
+    out_path = out_dir / name
+
+    # milliseconds of silence
+    ms = int(sec * 1000)
+    # adelay accepts a single value to apply to all channels
+    delay_arg = f"{ms}"
+
+    cmd = [
+        "ffmpeg",
+        "-y",                # overwrite if exists
+        "-i", str(inp),      # input file
+        "-af", f"adelay={delay_arg}",  # prepend silence
+        str(out_path)        # output file
+    ]
+    subprocess.run(cmd, check=True)
+
+
+def cut_back_1audio(
+    audio_path: Union[str, Path],
+    sec: Union[int, float],
+    output_name: Optional[str] = None,
+    output_folder: Union[str, Path] = ""
+) -> None:
+    """
+    Cuts out the last `sec` seconds from an audio file using ffmpeg.
+
+    Parameters
+    ----------
+    audio_path : str or Path
+        Path to the input audio file.
+    sec : int or float
+        Number of seconds to remove from the end.
+    output_name : str or None, optional
+        Filename for the output. If None, original filename is used.
+    output_folder : str or Path, optional
+        Directory to save the output. Defaults to the same folder as the input.
+
+    Returns
+    -------
+    None
+    """
+    
+    # not tested
+    import subprocess
+    import json
+    from pathlib import Path
+    import os
+
+
+    if not os.path.exists(audio_path):
+        raise FileNotFoundError("Please check the path. It doesn't exist.")
+
+    inp = Path(audio_path)
+    out_dir = Path(output_folder) if output_folder else inp.parent
+    out_dir.mkdir(parents=True, exist_ok=True)
+
+    name = output_name or inp.name
+    out_path = out_dir / name
+
+    # Get duration via ffprobe
+    probe = subprocess.run(
+        ["ffprobe", "-v", "error", "-show_entries", "format=duration",
+         "-of", "json", str(inp)],
+        capture_output=True, text=True, check=True
+    )
+    duration = float(json.loads(probe.stdout)["format"]["duration"])
+    # Calculate the new duration
+    keep_duration = max(duration - sec, 0)
+
+    # FFmpeg command to cut to the new duration
+    cmd = [
+        "ffmpeg",
+        "-y",                 # overwrite
+        "-i", str(inp),
+        "-t", str(keep_duration),
+        "-c", "copy",
+        str(out_path)
+    ]
+    subprocess.run(cmd, check=True)
+
+
+def add_back_1audio(
+    audio_path: Union[str, Path],
+    sec: Union[int, float],
+    output_name: Optional[str] = None,
+    output_folder: Union[str, Path] = ""
+) -> None:
+    """
+    Appends `sec` seconds of silence to the end of an audio file using ffmpeg.
+
+    Parameters
+    ----------
+    audio_path : str or Path
+        Path to the input audio file.
+    sec : int or float
+        Number of seconds of silence to add at the end.
+    output_name : str or None, optional
+        Filename for the output. If None, uses the original filename.
+    output_folder : str or Path, optional
+        Directory to save the output file. Defaults to the same folder as the input.
+    """
+    import subprocess
+    from pathlib import Path
+    import os
+
+
+    if not os.path.exists(audio_path):
+        raise FileNotFoundError("Please check the path. It doesn't exist.")
+
+    # not tested
+    inp = Path(audio_path)
+    out_dir = Path(output_folder) if output_folder else inp.parent
+    out_dir.mkdir(parents=True, exist_ok=True)
+
+    name = output_name or inp.name
+    out_path = out_dir / name
+
+    # Use ffmpeg's apad filter to append silence
+    cmd = [
+        "ffmpeg",
+        "-y",                # overwrite output if exists
+        "-i", str(inp),      # input file
+        "-af", f"apad=pad_dur={sec}",  # append silence for `sec` seconds
+        "-c:a", "libmp3lame",  # re-encode to MP3
+        str(out_path)         # output file
+    ]
+    subprocess.run(cmd, check=True)
+
+
+@beartype
+def change_title_from_filename(
+    filepaths: Union[str, Path, list[str|Path]]
+    ,output_folder: str|Path
+
+    # input below would get import automatically
+    ,replace: bool = True
+    ,prefix: str = ""
+    ,suffix: str = ""
+    ,errors:Literal["warn","raise"] = "raise"
+    ,print_errors:bool = False
+
+    # handle_multi_input parameters
+    ,progress_bar: bool = True
+    ,verbose: int = 1
+    ,alarm_done: bool = False
+    ,alarm_error: bool = False
+    ,input_extension: str|None = [".mp3",".mp4",".wav",".srt",".mkv",".avi"]
+    ):
+    
+    """
+    Update file title metadata in batch using filenames.
+
+    This function processes one or multiple media files by updating their title metadata to match their filename.
+    Internally, it leverages the `handle_multi_input` mechanism to support a flexible range of inputs,
+    such as single file paths, lists of files, or entire directories. The actual processing is delegated to
+    the function `vt.change_title_from_filename_1file`.
+
+    Parameters
+    ----------
+    filepaths : str or Path
+        A single file path, a folder path, or a list of file paths to be processed.
+    output_folder : str or Path
+        Directory where the output files with the updated title metadata will be saved.
+
+    replace : bool, default True
+        If True, the original file is replaced by the updated file. Otherwise, a new file is created.
+    prefix : str, default ""
+        Optional prefix to add to the filename when creating a new file (applicable when `replace` is False).
+    suffix : str, default ""
+        Optional suffix to add to the filename when creating a new file (applicable when `replace` is False).
+    errors : {"warn", "raise"}, default "raise"
+        Specifies whether to issue a warning or raise an exception if an error occurs during processing.
+    print_errors : bool, default False
+        If True, prints detailed error messages when processing fails.
+
+    progress_bar : bool, default True
+        Whether to display a progress bar during batch processing.
+    verbose : int, default 1
+        Verbosity level: 0 for minimal output, higher values for more detailed processing information.
+    alarm_done : bool, default False
+        If True, plays a notification sound after successful completion.
+    alarm_error : bool, default False
+        If True, plays a notification sound when an error occurs.
+    input_extension : list of str or None, default [".mp3", ".mp4", ".wav", ".srt", ".mkv"]
+        A list of file extensions to filter by when the input is a folder. If None or "all", all files are processed.
+
+    Returns
+    -------
+    None
+        The function performs in-place updates or creates new files with the updated title metadata in the
+        specified output folder.
+
+    Notes
+    -----
+    - This function uses the `handle_multi_input` decorator (via `inp.handle_multi_input`) to extend single-file
+    processing to multiple files or folders.
+    - The title metadata is set based on the original filename (without extension) of each file.
+    - Requires that the underlying function `vt.change_title_from_filename_1file` and the `ffmpeg` tool are properly installed
+    and accessible.
+
+    Examples
+    --------
+    Update title metadata for a single file:
+    >>> change_title_from_filename("video.mp4", "./output", replace=True)
+
+    Process all media files in a folder with custom filename modifications:
+    >>> change_title_from_filename("media_folder", "./updated", replace=False, prefix="new_", suffix="_v2")
+    """
+
+    import inspect_py as inp
+
+    path_input = {
+        "filepaths":filepaths
+        ,"output_folder":output_folder
+    }
+
+    handle_multi_input_params = {
+        "progress_bar": progress_bar
+        ,"verbose":verbose
+        ,"alarm_done":alarm_done
+        ,"alarm_error":alarm_error
+        ,"input_extension":input_extension
+    }
+    func_temp = inp.handle_multi_input(**handle_multi_input_params)(change_title_from_filename_1file)
+    result = func_temp(**path_input)
+    return result
+
+
+@beartype
+def change_title_from_filename_1file(
+    filepath: str | Path
+    , replace: bool = True
+    , prefix: str = ""
+    , suffix: str = ""
+    ,errors:Literal["warn","raise"] = "raise"
+    ,print_errors:bool = False
+    ) -> None:
+    
+    """
+    Update the title metadata of a media file using its filename.
+    
+    This function sets the title metadata of a single media file (e.g., video or audio) 
+    based on its filename. It optionally renames the output file and allows for prefix/suffix customization.
+    
+    Parameters
+    ----------
+    filepath : str or Path
+        Path to the media file whose title metadata will be updated.
+    
+    replace : bool, default True
+        If True, replaces the original file with the modified one.
+        If False, creates a new file with an updated name.
+    
+    prefix : str, default ""
+        Optional prefix to prepend to the new filename if `replace` is False.
+    
+    suffix : str, default ""
+        Optional suffix to append to the new filename if `replace` is False.
+    
+    errors : {"warn", "raise"}, default "raise"
+        Behavior when an error occurs:
+        - "raise": Raise the exception.
+        - "warn": Display a warning message and continue.
+    
+    print_errors : bool, default False
+        If True, prints detailed error messages during processing.
+    
+    Returns
+    -------
+    None
+        The function performs in-place metadata editing or creates a new file, depending on `replace`.
+    
+    Raises
+    ------
+    FileNotFoundError
+        If the provided `filepath` does not exist.
+    
+    Notes
+    -----
+    - The title metadata is set to the filename (without extension).
+    - When `replace` is False and no prefix or suffix is provided, `_new` is appended to the filename.
+    - Internally, this function delegates the title-setting operation to `change_filetitle_1file`.
+    
+    Examples
+    --------
+    >>> change_title_from_filename_1file("video.mp4", replace=True)
+    
+    >>> change_title_from_filename_1file("movie.mkv", replace=False, prefix="eng_", suffix="_hd")
+    """
+
+    
+    import subprocess
+    import numpy as np
+    import os
+    from send2trash import send2trash
+    from pathlib import Path
+
+    if not os.path.exists(filepath):
+        raise FileNotFoundError("Please check the path. It doesn't exist.")
+    
+    filepath = Path(filepath)
+    filename = filepath.stem
+    new_title = filename 
+    
+    if replace:
+        new_name = f"{filename}_temp" 
+    else:
+       if prefix != "" or suffix != "":
+           new_name = f"{prefix}{filename}{suffix}"
+       else:
+           new_name = f"{filename}_new"
+            
+    output_path = filepath.with_name(f"{new_name}{filepath.suffix}")
+
+    change_filetitle_1file(
+        filepath
+        ,new_title = new_title
+        ,replace = replace
+        ,prefix =prefix
+        ,suffix =suffix
+        ,errors = errors
+        ,print_errors = print_errors
+        )
+
+
+
+
+
+@beartype
+def change_filetitle_1file(
+        filepath: str | Path
+        ,new_title: str
+        , replace: bool = False
+        , prefix: str = ""
+        , suffix: str = ""
+        ,errors:Literal["warn","raise"] = "raise"
+        ,print_errors:bool = False
+        ) -> None:
+    
+    """
+    Set or update the title metadata of a media file.
+    
+    This function modifies the title metadata of a single media file (e.g., audio or video)
+    without re-encoding. The output can either replace the original file or be saved as a new file
+    with optional prefix/suffix modifications to the name.
+    
+    Parameters
+    ----------
+    filepath : str or Path
+        Path to the input media file.
+    
+    new_title : str
+        The new title to be embedded in the file's metadata.
+    
+    replace : bool, default False
+        If True, replaces the original file with the updated one.
+        If False, creates a new file with the updated title metadata.
+    
+    prefix : str, default ""
+        Optional prefix for the output filename if `replace` is False.
+    
+    suffix : str, default ""
+        Optional suffix for the output filename if `replace` is False.
+    
+    errors : {"warn", "raise"}, default "raise"
+        Error handling behavior:
+        - "warn": Print a warning message if an error occurs.
+        - "raise": Raise an exception if an error occurs.
+    
+    print_errors : bool, default False
+        If True, prints detailed error output when an error is raised.
+    
+    Returns
+    -------
+    None
+        The function modifies or creates a file with the updated title metadata.
+    
+    Raises
+    ------
+    FileNotFoundError
+        If the specified file does not exist.
+    
+    Exception
+        If the ffmpeg command fails and `errors="raise"` is set.
+    
+    Notes
+    -----
+    - Requires `ffmpeg` to be installed and accessible via the system PATH.
+    - If `replace` is True, the original file is moved to trash and replaced by the new one.
+    - Metadata is updated without re-encoding (`-codec copy`).
+    
+    Examples
+    --------
+    >>> change_filetitle_1file("movie.mp4", new_title="My Movie", replace=False)
+    
+    >>> change_filetitle_1file("video.mkv", new_title="English Version", replace=True, errors="warn")
+    """
+
+    
+    import subprocess
+    import numpy as np
+    import os
+    from send2trash import send2trash
+    from pathlib import Path
+    # medium tested
+    
+    if not os.path.exists(filepath):
+        raise FileNotFoundError("Please check the path. It doesn't exist.")
+    
+    filepath = Path(filepath)
+    filename = filepath.stem
+    
+    if replace:
+        new_name = f"{filename}_temp" 
+    else:
+       if prefix != "" or suffix != "":
+           new_name = f"{prefix}{filename}{suffix}"
+       else:
+           new_name = f"{filename}_new"
+            
+    output_path = filepath.with_name(f"{new_name}{filepath.suffix}")
+
+    
+    command = [
+        "ffmpeg",
+        "-i", str(filepath),
+        "-metadata", f"title={new_title}",
+        "-codec", "copy",
+        str(output_path)
+    ]
+
+    command_line = " ".join(command)
+    command_np = np.array(command)
+    result = subprocess.run(command, text=True, stderr=subprocess.PIPE)
+    
+    
+    if replace:
+        send2trash(filepath)
+        output_path.rename(filepath)
+    
+    
+    if errors in ["warn"]:
+        if result.returncode != 0:
+            print("Error encountered:")
+            print(result.stderr)
+    elif errors in ["raise"]:
+        if result.returncode != 0:
+            if print_errors:
+                raise Exception(result.stderr)
+            else:
+                raise Exception()
 
 @beartype
 def _create_media_dict_info(df: pd.DataFrame) -> List[Dict[str, Any]]:
@@ -92,11 +823,15 @@ def merge_media_to_video(info_df:pd.DataFrame,errors:Literal["raise","warn","ign
                 , output_folder = curr_info_dict["output_folder"]
                 ,output_name = curr_info_dict["output_name"]
                 ,errors = "raise"
+                ,print_errors=False
                 )
         except (TypeError,UnboundLocalError) as e:
             print(f"There's an error in while processing: {curr_info_dict['input_video_path']}\n")
             print(e)
             print()
+        except FileNotFoundError as e:
+            print(e)
+            print(f"There's no file in path: {curr_info_dict['input_video_path']}\n")
         except Exception as e:
             print("This is new Error Type")
             print(e)
@@ -109,8 +844,11 @@ def merge_media_to1video(
     input_info_df:pd.DataFrame,
     output_folder: str,
     output_name: Union[str, Path] = "",
-    errors:Literal["raise","warn","ignore"] = "warn"
+    errors:Literal["raise","warn","ignore"] = "warn",
+    print_errors:bool = True
 ) -> None:
+    import numpy as np
+    # toAdd01: Add Useful OSError when any of paths aren't found
     
     """
     Merge additional media streams into a video file.
@@ -168,20 +906,46 @@ def merge_media_to1video(
     >>> merge_media_to1video(input_video_path, input_info_df, output_folder, output_name)
     """
 
-    
     # tested with 1 video
-    
-    
+
     import subprocess
     from pathlib import Path
+    import os 
+    import warnings
 
     video_path = Path(input_video_path)
-    output_path = Path(output_folder) / output_name
+    video_name = video_path.stem
+    if output_name == "":
+        output_path = Path(output_folder) / f"{video_name}.mkv"
+    else:
+        output_path = Path(output_folder) / output_name
+
+    
+    
+    if not os.path.exists(video_path):
+        if errors in ["raise"]:
+            raise FileNotFoundError(f"Please check your input video path for {video_path}")
+        elif errors in ["warn"]:
+            warnings.warn(f"Please check your input video path for {video_path}",category=UserWarning)
 
     command = ['ffmpeg', '-i', str(video_path)]
 
+    files_not_found = 0
+    file_not_found_text = ""
     for _, row in input_info_df.iterrows():
+        if not os.path.exists(str(row['input_media_path'])):
+            files_not_found += 1
+            file_not_found_text += f"\nPath media doesn't exist: {str(row['input_media_path'])}"
+
         command.extend(['-i', str(row['input_media_path'])])
+
+    if files_not_found > 0:
+        if errors in ["raise"]:
+            raise FileNotFoundError(file_not_found_text)
+        elif errors in ["warn"]:
+            warnings.warn(f"Please check your input video path for {video_path}",category=UserWarning)
+        else:
+            return
 
     command.append('-map')
     command.append('0')
@@ -213,6 +977,9 @@ def merge_media_to1video(
             sub_count += 1
 
     command.extend(['-c', 'copy', str(output_path)])
+    # command_line, command_np is for debugging
+    command_line = " ".join(command)
+    command_np = pd.DataFrame(command)
     result = subprocess.run(command, text=True, stderr=subprocess.PIPE)
     if errors in ["warn"]:
         if result.returncode != 0:
@@ -220,11 +987,15 @@ def merge_media_to1video(
             print(result.stderr)
     elif errors in ["raise"]:
         if result.returncode != 0:
-            raise Exception(result.stderr)
+            if print_errors:
+                raise Exception(result.stderr)
+            else:
+                raise Exception()
 
-@beartype
+# unlock bear type for now because I want to support list[int] as well
+# @beartype
 def export_audio(audio_segment:AudioSegment,
-                 start_end_time_dict: Dict[int,Tuple[int,int]],
+                 start_end_time_dict: Dict[int,Tuple[int,int]|List[int]],
                  output_names:Dict[int,str],
                  output_folder:str = "",
                  progress_bar:bool = True,
@@ -251,8 +1022,10 @@ def export_audio(audio_segment:AudioSegment,
         
         }
 
-    TOADD: replace => it would check if file already exists, if so depending on it's True or False, it would replace the file
     """
+    # TOADD_01: replace => it would check if file already exists, if so depending on it's True or False, it would replace the file
+    # TOADD_02: replace => when there's more filenames then timestamp
+
     import py_string_tool as pst
     clean_output_names = {}
     for inx, output_name in output_names.items():
